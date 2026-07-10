@@ -16,6 +16,14 @@ public interface SessionAgentRuntime extends AutoCloseable {
 
     void resolvePermission(UUID permissionId, String decision, String reason) throws Exception;
 
+    /**
+     * Best-effort cancel of a nested tool/sub-agent. Default: unsupported.
+     * @return true if the child was abandoned without killing the parent session
+     */
+    default boolean abandonSubagent(String subagentId) {
+        return false;
+    }
+
     @Override
     void close();
 }

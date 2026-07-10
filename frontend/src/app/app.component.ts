@@ -9,8 +9,11 @@ import { PermissionDialogComponent } from './components/permission-dialog/permis
 import { SessionDetailHeaderComponent } from './components/session-detail-header/session-detail-header.component';
 import { SessionTabsComponent, SessionTabId } from './components/session-tabs/session-tabs.component';
 import { AgentInputBarComponent } from './components/agent-input-bar/agent-input-bar.component';
+import { CodeViewerComponent } from './components/code-viewer/code-viewer.component';
+import { ToastComponent } from './components/toast/toast.component';
 import { ApiService } from './services/api.service';
 import { RealtimeService } from './services/realtime.service';
+import { ToastService } from './services/toast.service';
 import {
   AgentEvent,
   ChatMessage,
@@ -33,6 +36,8 @@ import {
     SessionDetailHeaderComponent,
     SessionTabsComponent,
     AgentInputBarComponent,
+    CodeViewerComponent,
+    ToastComponent,
   ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',
@@ -40,6 +45,7 @@ import {
 export class AppComponent implements OnInit, OnDestroy {
   private readonly api = inject(ApiService);
   private readonly realtime = inject(RealtimeService);
+  private readonly toast = inject(ToastService);
 
   sessions: Session[] = [];
   active?: Session;
@@ -50,6 +56,7 @@ export class AppComponent implements OnInit, OnDestroy {
   busy = false;
   health?: HealthInfo;
   pendingPermission?: PermissionRequest | null;
+  awaitingInputPrompt = '';
   showCreate = false;
   createTitle = '';
   createWorkspace = 'demo';
@@ -67,7 +74,7 @@ export class AppComponent implements OnInit, OnDestroy {
     this.realtime.connect();
     this.api.health().subscribe({
       next: (h) => (this.health = h),
-      error: () => (this.error = 'Backend unreachable on :8080'),
+      error: () => this.toast.error('Backend unreachable on :8080'),
     });
     this.refreshSessions();
   }
@@ -100,7 +107,7 @@ export class AppComponent implements OnInit, OnDestroy {
           this.active = list.find((s) => s.id === this.active!.id) ?? this.active;
         }
       },
-      error: (err) => (this.error = err?.error?.error || 'Failed to load sessions'),
+      error: (err) => this.toast.error(err?.error?.error || 'Failed to load sessions'),
     });
   }
 
@@ -120,8 +127,9 @@ export class AppComponent implements OnInit, OnDestroy {
         this.showCreate = false;
         this.refreshSessions();
         this.selectSession(session.id);
+        this.toast.success('Session created');
       },
-      error: (err) => (this.error = err?.error?.error || 'Failed to create session'),
+      error: (err) => this.toast.error(err?.error?.error || 'Failed to create session'),
     });
   }
 
@@ -132,6 +140,7 @@ export class AppComponent implements OnInit, OnDestroy {
     this.streamingText = '';
     this.terminalLines = [];
     this.pendingPermission = null;
+    this.awaitingInputPrompt = '';
     this.busy = false;
 
     this.api.getSession(id).subscribe({
@@ -174,6 +183,7 @@ export class AppComponent implements OnInit, OnDestroy {
     this.streamingText = '';
     this.busy = false;
     this.pendingPermission = null;
+    this.awaitingInputPrompt = '';
     this.eventSub?.unsubscribe();
   }
 
@@ -182,6 +192,7 @@ export class AppComponent implements OnInit, OnDestroy {
       return;
     }
     this.error = '';
+    this.awaitingInputPrompt = '';
     this.busy = true;
     this.streamingText = '';
     this.activeTab = 'transcript';
@@ -202,7 +213,7 @@ export class AppComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         this.busy = false;
-        this.error = err?.error?.error || 'Prompt failed';
+        this.toast.error(err?.error?.error || 'Prompt failed');
       },
     });
   }
@@ -215,7 +226,9 @@ export class AppComponent implements OnInit, OnDestroy {
       next: () => {
         this.busy = false;
         this.refreshSessions();
+        this.toast.success('Run cancelled');
       },
+      error: (err) => this.toast.error(err?.error?.error || 'Cancel failed'),
     });
   }
 
@@ -226,7 +239,9 @@ export class AppComponent implements OnInit, OnDestroy {
           this.clearActive();
         }
         this.refreshSessions();
+        this.toast.success('Session archived');
       },
+      error: (err) => this.toast.error(err?.error?.error || 'Archive failed'),
     });
   }
 
@@ -243,8 +258,82 @@ export class AppComponent implements OnInit, OnDestroy {
           this.busy = true;
           this.refreshSessions();
         },
-        error: (err) => (this.error = err?.error?.error || 'Permission resolve failed'),
+        error: (err) => this.toast.error(err?.error?.error || 'Permission resolve failed'),
       });
+  }
+
+  abandonSubagent(subId: string): void {
+    if (!this.active) {
+      return;
+    }
+    this.api.abandonSubagent(this.active.id, subId).subscribe({
+      next: (result) => {
+        const idx = this.tools.findIndex(
+          (t) => t.subagentId === subId || t.toolCallId === subId || t.id === subId
+        );
+        if (idx >= 0) {
+          const copy = [...this.tools];
+          copy[idx] = { ...copy[idx], status: 'abandoned', finishedAt: new Date().toISOString() };
+          this.tools = copy;
+        }
+        if (result.sessionCancelled) {
+          this.busy = false;
+          this.toast.success(result.message || 'Session run was cancelled');
+        } else {
+          this.toast.success(result.message || 'Sub-agent abandoned');
+        }
+        this.refreshSessions();
+      },
+      error: (err) => this.toast.error(err?.error?.error || 'Abandon failed'),
+    });
+  }
+
+  private upsertToolFromEvent(event: AgentEvent, defaults?: Partial<ToolRun>): void {
+    if (!this.active) {
+      return;
+    }
+    const payload = event.payload;
+    const toolCallId = String(payload['toolCallId'] ?? payload['subagentId'] ?? '');
+    const idx = this.tools.findIndex(
+      (t) =>
+        (toolCallId && t.toolCallId === toolCallId) ||
+        (payload['subagentId'] && t.subagentId === String(payload['subagentId'])) ||
+        (payload['toolRunId'] && t.id === String(payload['toolRunId']))
+    );
+    const existing = idx >= 0 ? this.tools[idx] : undefined;
+    const tool: ToolRun = {
+      id: String(payload['toolRunId'] ?? existing?.id ?? Date.now()),
+      sessionId: this.active.id,
+      toolCallId: toolCallId || existing?.toolCallId,
+      toolName: String(payload['toolName'] ?? existing?.toolName ?? defaults?.toolName ?? 'tool'),
+      argsJson:
+        payload['args'] != null ? String(payload['args']) : existing?.argsJson ?? defaults?.argsJson,
+      status: String(payload['status'] ?? existing?.status ?? defaults?.status ?? 'running'),
+      kind:
+        payload['kind'] != null && String(payload['kind'])
+          ? String(payload['kind'])
+          : defaults?.kind ?? existing?.kind,
+      subagentId:
+        payload['subagentId'] != null && String(payload['subagentId'])
+          ? String(payload['subagentId'])
+          : defaults?.subagentId ?? existing?.subagentId,
+      parentToolCallId:
+        payload['parentToolCallId'] != null && String(payload['parentToolCallId'])
+          ? String(payload['parentToolCallId'])
+          : defaults?.parentToolCallId ?? existing?.parentToolCallId,
+      output: existing?.output,
+      exitCode: existing?.exitCode,
+      startedAt: existing?.startedAt ?? event.timestamp,
+      finishedAt: existing?.finishedAt,
+    };
+
+    if (idx >= 0) {
+      const copy = [...this.tools];
+      copy[idx] = { ...copy[idx], ...tool };
+      this.tools = copy;
+    } else {
+      this.tools = [...this.tools, tool];
+    }
   }
 
   private onEvent(event: AgentEvent): void {
@@ -284,22 +373,20 @@ export class AppComponent implements OnInit, OnDestroy {
         break;
       }
       case 'tool_call': {
-        const tool: ToolRun = {
-          id: String(event.payload['toolRunId'] ?? Date.now()),
-          sessionId: this.active.id,
-          toolCallId: String(event.payload['toolCallId'] ?? ''),
-          toolName: String(event.payload['toolName'] ?? 'tool'),
-          argsJson: String(event.payload['args'] ?? ''),
-          status: String(event.payload['status'] ?? 'running'),
-          startedAt: event.timestamp,
-        };
-        const idx = this.tools.findIndex((t) => t.toolCallId && t.toolCallId === tool.toolCallId);
-        if (idx >= 0) {
-          const copy = [...this.tools];
-          copy[idx] = { ...copy[idx], ...tool };
-          this.tools = copy;
-        } else {
-          this.tools = [...this.tools, tool];
+        this.upsertToolFromEvent(event);
+        break;
+      }
+      case 'subagent_started':
+      case 'subagent_progress':
+      case 'subagent_finished': {
+        this.upsertToolFromEvent(event, { kind: 'subagent' });
+        break;
+      }
+      case 'input_required': {
+        const prompt = String(event.payload['prompt'] ?? event.payload['message'] ?? '');
+        if (prompt) {
+          this.awaitingInputPrompt = prompt;
+          this.busy = true;
         }
         break;
       }

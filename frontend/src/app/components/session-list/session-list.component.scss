@@ -108,6 +108,11 @@
   line-height: 1.45;
 }
 
+.sidebar.compact {
+  grid-template-rows: auto auto minmax(0, 1fr);
+  padding-top: 0.5rem;
+}
+
 .sr-only {
   position: absolute;
   width: 1px;

@@ -1,0 +1,79 @@
+<div class="code-viewer" data-testid="code-viewer">
+  @if (!sessionId) {
+    <div class="ap-empty">
+      <p>Select a session to browse workspace files.</p>
+    </div>
+  } @else if (loading && entries.length === 0 && !fileContent) {
+    <div class="ap-empty"><p>Loading files…</p></div>
+  } @else if (entries.length === 0 && !selectedPath && !loadError) {
+    <div class="ap-empty">
+      <h3>No files</h3>
+      <p>This workspace has no browsable files yet.</p>
+    </div>
+  } @else {
+    <div class="layout">
+      <aside class="tree">
+        <nav class="crumbs" aria-label="Path">
+          @for (crumb of breadcrumbs; track crumb.path; let last = $last) {
+            @if (!last) {
+              <button type="button" class="crumb" (click)="navigateTo(crumb.path)">{{ crumb.label }}</button>
+              <span class="sep">/</span>
+            } @else {
+              <span class="crumb current">{{ crumb.label }}</span>
+            }
+          }
+        </nav>
+        <ul class="entries">
+          @if (currentPath) {
+            <li>
+              <button type="button" class="entry dir" (click)="navigateTo(breadcrumbs.at(-2)?.path ?? '')">
+                <span class="icon">↩</span>
+                ..
+              </button>
+            </li>
+          }
+          @for (e of entries; track e.path) {
+            <li>
+              <button
+                type="button"
+                class="entry"
+                [class.dir]="e.directory"
+                [class.selected]="e.path === selectedPath"
+                (click)="openEntry(e)"
+              >
+                <span class="icon">{{ e.directory ? '📁' : '📄' }}</span>
+                <span class="name">{{ e.name }}</span>
+              </button>
+            </li>
+          }
+        </ul>
+      </aside>
+
+      <section class="content">
+        @if (loadError) {
+          <p class="error">{{ loadError }}</p>
+        } @else if (!selectedPath) {
+          <div class="ap-empty inline">
+            <p>Select a file to view its contents.</p>
+          </div>
+        } @else if (loading && !fileContent) {
+          <p class="muted">Loading…</p>
+        } @else if (fileContent) {
+          <header class="file-head">
+            <code>{{ fileContent.path }}</code>
+            @if (fileContent.truncated) {
+              <span class="truncated">Truncated</span>
+            }
+          </header>
+          @if (isImage) {
+            <img class="preview-image" [src]="fileContent.content" [alt]="fileContent.path" />
+          } @else if (isMarkdownPreview) {
+            <article class="markdown-body" [innerHTML]="fileContent.content | markdown"></article>
+          } @else {
+            <pre class="file-body">{{ fileContent.content }}</pre>
+          }
+        }
+      </section>
+    </div>
+  }
+</div>

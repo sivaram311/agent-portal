@@ -108,6 +108,36 @@
   text-decoration: underline;
 }
 
+.input-area {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border-top: 1px solid var(--ap-border);
+  background: rgba(30, 41, 59, 0.35);
+}
+
+.input-wait-banner {
+  padding: 0.65rem 1rem;
+  border-bottom: 1px solid rgba(245, 158, 11, 0.25);
+  background: rgba(245, 158, 11, 0.1);
+  color: #fcd34d;
+  font-size: 0.85rem;
+}
+
+.input-wait-banner strong {
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.input-wait-banner p {
+  margin: 0;
+  color: var(--ap-text-muted);
+  font-size: 0.82rem;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
 .hero {
   height: 100%;
 }

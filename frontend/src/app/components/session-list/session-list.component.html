@@ -1,16 +1,18 @@
-<aside class="sidebar">
-  <div class="sidebar-head">
-    <div class="brand">
-      <span class="brand-mark">A</span>
-      <div>
-        <div class="brand-name">Agent Portal</div>
-        <div class="brand-sub">Autonomous sessions</div>
+<aside class="sidebar" [class.compact]="compact">
+  @if (!compact) {
+    <div class="sidebar-head">
+      <div class="brand">
+        <span class="brand-mark">A</span>
+        <div>
+          <div class="brand-name">Agent Portal</div>
+          <div class="brand-sub">Autonomous sessions</div>
+        </div>
       </div>
+      <button type="button" class="ap-btn ap-btn-primary new-btn" (click)="create.emit()">
+        New session
+      </button>
     </div>
-    <button type="button" class="ap-btn ap-btn-primary new-btn" (click)="create.emit()">
-      New session
-    </button>
-  </div>
+  }
 
   <label class="search">
     <span class="sr-only">Search sessions</span>

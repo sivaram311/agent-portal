@@ -29,6 +29,16 @@ public class ToolRun {
     @Column(nullable = false, length = 32)
     private String status = "running";
 
+    /** tool | subagent */
+    @Column(length = 32)
+    private String kind = "tool";
+
+    @Column(length = 128)
+    private String parentToolCallId;
+
+    @Column(length = 128)
+    private String subagentId;
+
     @Lob
     private String output;
 
@@ -85,6 +95,30 @@ public class ToolRun {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public String getKind() {
+        return kind;
+    }
+
+    public void setKind(String kind) {
+        this.kind = kind;
+    }
+
+    public String getParentToolCallId() {
+        return parentToolCallId;
+    }
+
+    public void setParentToolCallId(String parentToolCallId) {
+        this.parentToolCallId = parentToolCallId;
+    }
+
+    public String getSubagentId() {
+        return subagentId;
+    }
+
+    public void setSubagentId(String subagentId) {
+        this.subagentId = subagentId;
     }
 
     public String getOutput() {

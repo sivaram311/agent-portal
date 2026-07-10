@@ -1,4 +1,6 @@
 <div class="panel">
+  <app-subagent-panel [tools]="tools" [busy]="busy" (abandon)="abandon.emit($event)" />
+
   <div class="tools">
     <h3>Tool runs</h3>
     @if (tools.length === 0) {

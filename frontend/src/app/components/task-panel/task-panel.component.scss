@@ -8,7 +8,7 @@
 .panel {
   height: 100%;
   display: grid;
-  grid-template-rows: minmax(0, 38%) minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 34%) minmax(0, 1fr);
   gap: 0.75rem;
   padding: 1rem;
   background: var(--ap-bg);

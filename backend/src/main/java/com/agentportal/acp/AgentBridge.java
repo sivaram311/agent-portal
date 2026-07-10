@@ -346,13 +346,44 @@ public class AgentBridge implements AutoCloseable {
         toolRunRepository.save(run);
         toolRunByCallId.put(toolCallId, run.getId());
 
+        boolean subagent = looksLikeSubagent(name, update);
+        if (subagent) {
+            run.setKind("subagent");
+            run.setSubagentId(toolCallId);
+            if (update.has("parentToolCallId")) {
+                run.setParentToolCallId(update.path("parentToolCallId").asText(null));
+            }
+            toolRunRepository.save(run);
+            String eventType = "completed".equalsIgnoreCase(status) || "failed".equalsIgnoreCase(status)
+                    || "error".equalsIgnoreCase(status) || "abandoned".equalsIgnoreCase(status)
+                    ? "subagent_finished"
+                    : ("running".equalsIgnoreCase(status) ? "subagent_started" : "subagent_progress");
+            emit(eventType, Map.of(
+                    "subagentId", toolCallId,
+                    "toolCallId", toolCallId,
+                    "toolName", name,
+                    "status", status,
+                    "toolRunId", run.getId().toString(),
+                    "kind", "subagent"
+            ));
+        }
+
         emit("tool_call", Map.of(
                 "toolCallId", toolCallId,
                 "toolName", name,
                 "status", status,
                 "args", args,
-                "toolRunId", run.getId().toString()
+                "toolRunId", run.getId().toString(),
+                "kind", run.getKind() == null ? "tool" : run.getKind(),
+                "subagentId", Objects.toString(run.getSubagentId(), "")
         ));
+    }
+
+    private boolean looksLikeSubagent(String name, JsonNode update) {
+        String n = (name == null ? "" : name).toLowerCase(Locale.ROOT);
+        String kind = update.path("kind").asText("").toLowerCase(Locale.ROOT);
+        return n.contains("agent") || n.contains("subagent") || n.contains("task")
+                || kind.contains("agent") || update.has("agentId") || update.has("subagentId");
     }
 
     private String extractToolOutput(JsonNode update) {

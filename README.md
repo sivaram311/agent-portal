@@ -14,11 +14,16 @@ The UI uses a **dark navy/teal responsive redesign** (design tokens in `frontend
 - Realtime streaming over WebSocket (STOMP/SockJS)
 - Persistent history (H2 file DB by default; PostgreSQL profile available)
 - Markdown-rendered assistant replies (marked + DOMPurify)
-- Session detail tabs: **Transcript** | **Logs** | **Code** | **Preview** (Code and Preview show empty-state placeholders until a file/preview API exists)
+- Session detail tabs: **Transcript** | **Logs** | **Code** | **Preview**
+- **Sub-agent / task panel** with Abandon (falls back to cancelling the session run when the provider cannot cancel a child alone)
+- Antigravity **soft interactive**: when the reply looks like a question, UI shows “waiting for your reply”
+- Workspace **file browser** in Code/Preview (path-safe under the session workspace)
+- Optional portal **API key** (`app.security.api-key` / `AGENT_PORTAL_API_KEY`)
 - Live task / terminal panel from agent tool events (Logs tab)
 - Permission and plan approval dialogs (**Cursor only**)
 - Cancel in-flight runs and archive sessions
 - Responsive layout: desktop sidebar, mobile session list + drawer navigation + bottom FAB
+- Playwright e2e: Realme P2 Pro, tablet 1024, desktop 1440
 
 ## Prerequisites
 
@@ -158,14 +163,16 @@ Run `agy` once interactively to sign in, or set the env vars your Antigravity in
 
 ## E2E mobile QA
 
-Playwright tests emulate **Realme P2 Pro** (360×800 CSS @ 3× DPR). See [`e2e/README.md`](e2e/README.md) for setup, `APP_URL`, and `data-testid` hooks.
+Playwright projects: **realme-p2-pro**, **tablet-1024**, **desktop-1440**. See [`e2e/README.md`](e2e/README.md).
 
 ```powershell
 cd e2e
 npm test
-# or explicitly:
+# or:
 npm run test:mobile
 ```
+
+Ops / Postgres backups: [`docs/OPS.md`](docs/OPS.md). Roadmap: [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
 ## Cursor skill for agents
 

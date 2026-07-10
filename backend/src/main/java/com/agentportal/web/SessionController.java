@@ -62,6 +62,27 @@ public class SessionController {
         return Map.of("status", "cancelled");
     }
 
+    @PostMapping("/{id}/subagents/{subId}/abandon")
+    public Map<String, Object> abandonSubagent(@PathVariable UUID id, @PathVariable String subId) {
+        return sessionService.abandonSubagent(id, subId);
+    }
+
+    @GetMapping("/{id}/files")
+    public List<FileEntryDto> listFiles(
+            @PathVariable UUID id,
+            @RequestParam(value = "path", required = false, defaultValue = "") String path
+    ) throws Exception {
+        return sessionService.listFiles(id, path);
+    }
+
+    @GetMapping("/{id}/files/content")
+    public FileContentDto readFile(
+            @PathVariable UUID id,
+            @RequestParam("path") String path
+    ) throws Exception {
+        return sessionService.readFile(id, path);
+    }
+
     @PostMapping("/{id}/permissions/{permissionId}")
     public Map<String, String> resolvePermission(
             @PathVariable UUID id,

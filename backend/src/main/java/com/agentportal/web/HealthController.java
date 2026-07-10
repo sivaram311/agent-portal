@@ -1,6 +1,7 @@
 package com.agentportal.web;
 
 import com.agentportal.config.AgentProperties;
+import com.agentportal.config.AppProperties;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -15,9 +16,11 @@ import java.util.Map;
 public class HealthController {
 
     private final AgentProperties agentProperties;
+    private final AppProperties appProperties;
 
-    public HealthController(AgentProperties agentProperties) {
+    public HealthController(AgentProperties agentProperties, AppProperties appProperties) {
         this.agentProperties = agentProperties;
+        this.appProperties = appProperties;
     }
 
     @GetMapping("/health")
@@ -45,6 +48,7 @@ public class HealthController {
         body.put("antigravityBrainRoot", brain.toString());
         body.put("antigravityBrainReadable", brainReadable);
         body.put("antigravitySkipPermissions", agentProperties.getAntigravity().isSkipPermissions());
+        body.put("portalApiKeyRequired", appProperties.getSecurity().isEnabled());
         return body;
     }
 

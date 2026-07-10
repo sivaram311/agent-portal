@@ -2,6 +2,8 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import {
   ChatMessage,
+  FileContent,
+  FileEntry,
   HealthInfo,
   PermissionRequest,
   Session,
@@ -59,5 +61,29 @@ export class ApiService {
 
   archive(id: string) {
     return this.http.post<Session>(`${this.base}/sessions/${id}/archive`, {});
+  }
+
+  abandonSubagent(sessionId: string, subId: string) {
+    return this.http.post<{
+      status: string;
+      subagentId: string;
+      toolRunId: string;
+      sessionCancelled: boolean;
+      message: string;
+    }>(`${this.base}/sessions/${sessionId}/subagents/${encodeURIComponent(subId)}/abandon`, {});
+  }
+
+  listFiles(sessionId: string, path?: string) {
+    const url = `${this.base}/sessions/${sessionId}/files`;
+    if (path) {
+      return this.http.get<FileEntry[]>(url, { params: { path } });
+    }
+    return this.http.get<FileEntry[]>(url);
+  }
+
+  readFile(sessionId: string, path: string) {
+    return this.http.get<FileContent>(`${this.base}/sessions/${sessionId}/files/content`, {
+      params: { path },
+    });
   }
 }

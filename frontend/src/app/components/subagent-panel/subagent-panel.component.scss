@@ -1,0 +1,60 @@
+.subagent-panel {
+  border: 1px solid var(--ap-border);
+  border-radius: var(--ap-radius);
+  padding: 0.65rem 0.75rem;
+  background: var(--ap-surface);
+}
+
+.subagent-panel h3 {
+  margin: 0 0 0.5rem;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ap-text-muted);
+}
+
+.muted {
+  margin: 0;
+  color: var(--ap-text-muted);
+  font-size: 0.85rem;
+}
+
+.subagent-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.subagent-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  padding: 0.45rem 0.5rem;
+  border-radius: calc(var(--ap-radius) - 2px);
+  background: rgba(148, 163, 184, 0.06);
+}
+
+.subagent-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.subagent-info strong {
+  font-size: 0.85rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.abandon-btn {
+  flex-shrink: 0;
+  min-height: var(--ap-touch);
+  min-width: var(--ap-touch);
+  padding-inline: 0.85rem;
+}

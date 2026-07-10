@@ -2,7 +2,6 @@ import { defineConfig, devices } from '@playwright/test';
 
 /**
  * Realme P2 Pro: 1080×2412 physical @ ~3x DPR → ~360×804 CSS viewport.
- * Emulated as a custom Android Chrome device for mobile UI QA.
  */
 export const realmeP2Pro = {
   ...devices['Pixel 7'],
@@ -32,6 +31,23 @@ export default defineConfig({
     {
       name: 'realme-p2-pro',
       use: { ...realmeP2Pro },
+    },
+    {
+      name: 'tablet-1024',
+      use: {
+        ...devices['iPad Pro 11'],
+        viewport: { width: 1024, height: 768 },
+        isMobile: true,
+        hasTouch: true,
+      },
+    },
+    {
+      name: 'desktop-1440',
+      use: {
+        viewport: { width: 1440, height: 900 },
+        isMobile: false,
+        hasTouch: false,
+      },
     },
   ],
   outputDir: 'test-results',

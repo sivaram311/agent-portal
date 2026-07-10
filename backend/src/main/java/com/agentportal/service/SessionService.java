@@ -13,6 +13,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.UUID;
 
@@ -25,6 +26,7 @@ public class SessionService {
     private final PermissionRequestRepository permissionRepository;
     private final AgentProcessManager processManager;
     private final AgentProperties agentProperties;
+    private final WorkspaceFileService workspaceFileService;
 
     public SessionService(
             AgentSessionRepository sessionRepository,
@@ -33,7 +35,8 @@ public class SessionService {
             PermissionRequestRepository permissionRepository,
             AgentEventRepository eventRepository,
             AgentProcessManager processManager,
-            AgentProperties agentProperties
+            AgentProperties agentProperties,
+            WorkspaceFileService workspaceFileService
     ) {
         this.sessionRepository = sessionRepository;
         this.messageRepository = messageRepository;
@@ -41,6 +44,7 @@ public class SessionService {
         this.permissionRepository = permissionRepository;
         this.processManager = processManager;
         this.agentProperties = agentProperties;
+        this.workspaceFileService = workspaceFileService;
     }
 
     @Transactional
@@ -137,6 +141,52 @@ public class SessionService {
             session.setStatus(SessionStatus.CANCELLED);
             sessionRepository.save(session);
         }
+    }
+
+    /**
+     * Abandon a nested tool/sub-agent. Marks DB row abandoned; if provider cannot
+     * cancel the child alone, falls back to cancelling the whole session run.
+     */
+    @Transactional
+    public Map<String, Object> abandonSubagent(UUID sessionId, String subagentId) {
+        AgentSession session = require(sessionId);
+        ToolRun run = toolRunRepository.findBySessionIdAndToolCallId(sessionId, subagentId)
+                .or(() -> toolRunRepository.findBySessionIdOrderByStartedAtAsc(sessionId).stream()
+                        .filter(t -> subagentId.equals(t.getSubagentId()) || subagentId.equals(t.getId().toString()))
+                        .findFirst())
+                .orElseThrow(() -> new NoSuchElementException("Sub-agent/tool not found: " + subagentId));
+
+        run.setStatus("abandoned");
+        run.setFinishedAt(Instant.now());
+        toolRunRepository.save(run);
+
+        SessionAgentRuntime runtime = processManager.get(session.getId());
+        boolean childOnly = false;
+        if (runtime != null) {
+            childOnly = runtime.abandonSubagent(subagentId);
+            if (!childOnly) {
+                runtime.cancel();
+            }
+        }
+        return Map.of(
+                "status", "abandoned",
+                "subagentId", subagentId,
+                "toolRunId", run.getId().toString(),
+                "sessionCancelled", !childOnly,
+                "message", childOnly
+                        ? "Child abandoned"
+                        : "Provider cannot abandon a single child; session run was cancelled"
+        );
+    }
+
+    public List<FileEntryDto> listFiles(UUID sessionId, String path) throws Exception {
+        AgentSession session = require(sessionId);
+        return workspaceFileService.list(Path.of(session.getWorkspacePath()), path);
+    }
+
+    public FileContentDto readFile(UUID sessionId, String path) throws Exception {
+        AgentSession session = require(sessionId);
+        return workspaceFileService.read(Path.of(session.getWorkspacePath()), path);
     }
 
     public void resolvePermission(UUID sessionId, UUID permissionId, PermissionDecisionRequest request) throws Exception {

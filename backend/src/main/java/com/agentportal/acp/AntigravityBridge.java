@@ -646,16 +646,28 @@ public class AntigravityBridge implements SessionAgentRuntime {
                 run.setSessionId(portalSessionId);
                 run.setToolCallId(key);
                 run.setToolName(key);
+                run.setKind("subagent");
+                run.setSubagentId(key);
                 run.setStatus("completed");
                 run.setOutput(content);
                 run.setFinishedAt(Instant.now());
                 toolRunRepository.save(run);
+                emit("subagent_finished", Map.of(
+                        "subagentId", key,
+                        "toolCallId", key,
+                        "toolName", key,
+                        "status", "completed",
+                        "toolRunId", run.getId().toString(),
+                        "kind", "subagent"
+                ));
                 emit("tool_call", Map.of(
                         "toolCallId", key,
                         "toolName", key,
                         "status", "completed",
                         "args", "{}",
-                        "toolRunId", run.getId().toString()
+                        "toolRunId", run.getId().toString(),
+                        "kind", "subagent",
+                        "subagentId", key
                 ));
             }
         } catch (IOException e) {
@@ -814,16 +826,43 @@ public class AntigravityBridge implements SessionAgentRuntime {
         if (assistantBuffer.isEmpty()) {
             return;
         }
+        String content = assistantBuffer.toString();
         UUID msgId = streamingAssistantMessageId.get();
         if (msgId != null) {
             messageRepository.findById(msgId).ifPresent(m -> {
-                m.setContent(assistantBuffer.toString());
+                m.setContent(content);
                 messageRepository.save(m);
             });
         }
-        emit("assistant_message", Map.of("content", assistantBuffer.toString()));
+        emit("assistant_message", Map.of("content", content));
+        maybeEmitInputRequired(content);
         streamingAssistantMessageId.set(null);
         assistantBuffer.setLength(0);
+    }
+
+    /** Soft interactive: detect when the agent asked the user a question in print-mode output. */
+    private void maybeEmitInputRequired(String content) {
+        String trimmed = content == null ? "" : content.trim();
+        if (trimmed.length() < 12) {
+            return;
+        }
+        String lower = trimmed.toLowerCase(Locale.ROOT);
+        boolean asks = trimmed.endsWith("?")
+                || lower.contains("would you like")
+                || lower.contains("do you want")
+                || lower.contains("should i")
+                || lower.contains("please confirm")
+                || lower.contains("let me know")
+                || lower.contains("which option");
+        if (!asks) {
+            return;
+        }
+        String excerpt = trimmed.length() > 280 ? trimmed.substring(trimmed.length() - 280) : trimmed;
+        emit("input_required", Map.of(
+                "provider", "antigravity",
+                "prompt", excerpt,
+                "mode", "soft"
+        ));
     }
 
     @Override

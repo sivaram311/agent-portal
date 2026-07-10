@@ -72,6 +72,7 @@
           [sessions]="sessions"
           [activeId]="active?.id"
           [search]="sessionSearch"
+          [compact]="true"
           (searchChange)="sessionSearch = $event"
           (select)="selectSession($event)"
           (create)="openCreate()"
@@ -102,27 +103,32 @@
               <app-chat [messages]="messages" [streamingText]="streamingText" />
             }
             @case ('logs') {
-              <app-task-panel [tools]="tools" [terminalLines]="terminalLines" />
+              <app-task-panel
+                [tools]="tools"
+                [terminalLines]="terminalLines"
+                [busy]="busy"
+                (abandon)="abandonSubagent($event)"
+              />
             }
             @case ('code') {
-              <div class="ap-empty">
-                <h3>Code viewer</h3>
-                <p>
-                  Workspace: <code>{{ active.workspacePath }}</code>. File browsing will appear here when a
-                  code API is available.
-                </p>
-              </div>
+              <app-code-viewer [sessionId]="active.id" />
             }
             @case ('preview') {
-              <div class="ap-empty">
-                <h3>Preview</h3>
-                <p>Run previews and live outputs will show here in a future update.</p>
-              </div>
+              <app-code-viewer [sessionId]="active.id" [previewMode]="true" />
             }
           }
         </div>
 
-        <app-agent-input-bar [busy]="busy" (send)="sendPrompt($event)" />
+        <div class="input-area">
+          @if (awaitingInputPrompt) {
+            <div class="input-wait-banner" data-testid="input-required-banner">
+              <strong>Agent is waiting for your reply</strong>
+              <p>{{ awaitingInputPrompt }}</p>
+            </div>
+          }
+
+          <app-agent-input-bar [busy]="busy" (send)="sendPrompt($event)" />
+        </div>
       </section>
     }
   </div>
@@ -175,3 +181,5 @@
     </form>
   </div>
 }
+
+<app-toast />

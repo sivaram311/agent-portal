@@ -1,0 +1,27 @@
+<section class="subagent-panel" data-testid="subagent-panel">
+  <h3>Sub-agents</h3>
+  @if (subagentTools.length === 0) {
+    <p class="muted">No sub-agents running.</p>
+  } @else {
+    <ul class="subagent-list">
+      @for (t of subagentTools; track t.id) {
+        <li class="subagent-row">
+          <div class="subagent-info">
+            <strong>{{ t.toolName }}</strong>
+            <app-status-pill [status]="t.status" />
+          </div>
+          @if (isRunning(t)) {
+            <button
+              type="button"
+              class="ap-btn ap-btn-danger abandon-btn"
+              [disabled]="busy"
+              (click)="onAbandon(t)"
+            >
+              Abandon
+            </button>
+          }
+        </li>
+      }
+    </ul>
+  }
+</section>

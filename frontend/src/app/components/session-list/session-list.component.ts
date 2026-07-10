@@ -17,6 +17,7 @@ export class SessionListComponent {
   @Input() sessions: Session[] = [];
   @Input() activeId?: string;
   @Input() search = '';
+  @Input() compact = false;
   @Output() searchChange = new EventEmitter<string>();
   @Output() select = new EventEmitter<string>();
   @Output() create = new EventEmitter<void>();

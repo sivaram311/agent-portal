@@ -41,6 +41,23 @@ export interface ToolRun {
   exitCode?: number;
   startedAt: string;
   finishedAt?: string;
+  kind?: string;
+  parentToolCallId?: string;
+  subagentId?: string;
+}
+
+export interface FileEntry {
+  name: string;
+  path: string;
+  directory: boolean;
+  size: number;
+}
+
+export interface FileContent {
+  path: string;
+  content: string;
+  mediaType: string;
+  truncated: boolean;
 }
 
 export interface PermissionRequest {

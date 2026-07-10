@@ -2,17 +2,18 @@
 
 Mobile UI validation for the Agent Portal Angular app, emulating **Realme P2 Pro** (dark navy/teal responsive shell, FAB, drawer, session tabs).
 
-## Device profile
+## Device profiles
 
-| | |
-|---|---|
-| Physical resolution | 1080 × 2412 |
-| CSS viewport | **360 × 800** |
-| Device scale factor | **3** |
-| Touch | Yes |
-| User agent | Android 14 Chrome mobile (RMX3990) |
+| Project | Viewport | Notes |
+|---------|----------|--------|
+| `realme-p2-pro` | 360×800 @3× | Phone (default `npm run test:mobile`) |
+| `tablet-1024` | 1024×768 | Tablet / pad landscape |
+| `desktop-1440` | 1440×900 | Desktop shell |
 
-Defined in `playwright.config.ts` as project `realme-p2-pro` (based on Pixel 7 device preset with custom viewport/UA).
+```powershell
+npx playwright test --project=tablet-1024
+npx playwright test --project=desktop-1440
+```
 
 ## Prerequisites
 
