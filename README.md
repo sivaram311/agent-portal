@@ -16,17 +16,17 @@ The UI uses a **dark navy/teal responsive redesign** (design tokens in `frontend
 - Markdown-rendered assistant replies (marked + DOMPurify)
 - Session detail tabs: **Transcript** | **Logs** | **Code** | **Preview** | **Changes** | **History** | **Activity**
 - **Sub-agent / task panel** with Abandon (Cursor: child-scoped mark + suppress further tool updates; other providers may cancel the session run)
-- Antigravity **soft interactive** + optional **ACP** when `agy --help` advertises it (`prefer-acp`)
-- **Change review** (git or snapshot) and **History** timeline of messages/tools/events
+- Antigravity **soft interactive** + optional **ACP** (`agy acp` / `agy --acp`, then print-mode fallback)
+- **Change review** with **Keep** / **Restore** (git or `.agent-portal/baseline` snapshot) and **History** timeline
 - **Session presets** and optional starter prompt on create
 - **Collaborator sharing** when CSS is enabled
 - Workspace **file browser** with sandbox under `agent.workspace.root`
-- **CSS JWT auth** + optional API-key fallback; session ownership when CSS is on
+- **CSS JWT auth** via `com.css:css-spring-boot-starter` (`css.resource-server.*`) + optional API-key fallback
 - Monaco Code tab (vendored) + sandboxed HTML Preview
 - Audit API + webhooks + optional per-user workspace quota
 - Capability badges in the top bar
 - Live task / terminal panel from agent tool events (Logs tab)
-- Permission and plan approval dialogs (**Cursor only**)
+- Permission and plan approval dialogs (**Cursor**; also Antigravity when ACP mode works)
 - Cancel in-flight runs and archive sessions
 - Responsive layout: desktop sidebar, mobile session list + drawer navigation + bottom FAB
 - Playwright e2e: Realme P2 Pro, tablet 1024, desktop 1440, auth shell
@@ -76,7 +76,13 @@ H2 console: `http://localhost:8080/h2-console` (JDBC URL `jdbc:h2:file:./data/ag
 
 ### CSS auth (optional locally, on in prod)
 
+Install the resource-server starter once (local Maven repo), then run CSS + portal:
+
 ```powershell
+# One-time: css-spring-boot-starter
+cd E:\MyWorkspace\centralized-security-system\clients\spring-boot-starter
+mvn -q install
+
 # Terminal A — Centralized Security
 cd E:\MyWorkspace\centralized-security-system
 mvn spring-boot:run
@@ -87,7 +93,7 @@ $env:CSS_ENABLED = "true"
 .\mvnw.cmd spring-boot:run
 ```
 
-Login overlay uses `clientId=agent-portal` against CSS (`admin`/`admin123`). See `docs/OPS.md`.
+Login overlay uses `clientId=agent-portal` against CSS (`admin`/`admin123`). JWT validation uses `css.resource-server.*` (see `docs/OPS.md`).
 
 ### PostgreSQL (optional)
 
