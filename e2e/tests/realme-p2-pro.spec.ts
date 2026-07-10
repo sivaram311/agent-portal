@@ -151,7 +151,8 @@ test.describe('Realme P2 Pro mobile UI', () => {
     await page.screenshot({ path: path.join(shotDir, '06-logs-tab.png'), fullPage: true });
 
     await detail.getByRole('tab', { name: 'Code' }).click();
-    await expect(detail.getByText('Code viewer')).toBeVisible();
+    await expect(detail.getByTestId('code-viewer')).toBeVisible();
+    await expect(detail.getByText(/No files yet|Nothing to preview|workspace/i).first()).toBeVisible();
     await page.screenshot({ path: path.join(shotDir, '07-code-tab.png'), fullPage: true });
   });
 });
