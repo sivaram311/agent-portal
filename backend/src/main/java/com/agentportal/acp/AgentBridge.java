@@ -47,6 +47,7 @@ public class AgentBridge implements AutoCloseable {
     private final StringBuilder assistantBuffer = new StringBuilder();
     private final Map<Long, UUID> pendingPermissionByAcpId = new ConcurrentHashMap<>();
     private final Map<String, UUID> toolRunByCallId = new ConcurrentHashMap<>();
+    private final Set<String> abandonedToolCallIds = ConcurrentHashMap.newKeySet();
 
     public AgentBridge(
             UUID portalSessionId,
@@ -191,6 +192,33 @@ public class AgentBridge implements AutoCloseable {
         }
     }
 
+    /**
+     * Marks the child abandoned and suppresses further terminal chunks for it.
+     * Cursor ACP cannot cancel a single nested tool without ending the turn;
+     * we keep the parent session alive (return true) so Abandon is child-scoped in the UI/DB.
+     */
+    public synchronized boolean abandonSubagent(String subagentId) {
+        if (subagentId == null || subagentId.isBlank()) {
+            return false;
+        }
+        abandonedToolCallIds.add(subagentId);
+        toolRunRepository.findBySessionIdAndToolCallId(portalSessionId, subagentId).ifPresent(run -> {
+            run.setStatus("abandoned");
+            run.setFinishedAt(Instant.now());
+            run.setKind(run.getKind() == null ? "subagent" : run.getKind());
+            run.setSubagentId(subagentId);
+            toolRunRepository.save(run);
+        });
+        emit("subagent_finished", Map.of(
+                "subagentId", subagentId,
+                "toolCallId", subagentId,
+                "status", "abandoned",
+                "kind", "subagent",
+                "childOnly", true
+        ));
+        return true;
+    }
+
     public synchronized void resolvePermission(UUID permissionId, String decision, String reason) throws Exception {
         PermissionRequest req = permissionRepository.findByIdAndSessionId(permissionId, portalSessionId)
                 .orElseThrow(() -> new NoSuchElementException("Permission not found"));
@@ -298,6 +326,9 @@ public class AgentBridge implements AutoCloseable {
                 update.path("tool_call_id").asText(null),
                 UUID.randomUUID().toString()
         );
+        if (abandonedToolCallIds.contains(toolCallId)) {
+            return;
+        }
         String name = firstNonBlank(
                 update.path("title").asText(null),
                 update.path("name").asText(null),

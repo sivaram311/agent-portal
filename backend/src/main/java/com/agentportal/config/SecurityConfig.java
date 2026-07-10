@@ -1,5 +1,7 @@
 package com.agentportal.config;
 
+import com.agentportal.security.CssJwtAuthenticationFilter;
+import com.agentportal.security.RateLimitFilter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -30,27 +32,49 @@ import java.util.List;
 public class SecurityConfig {
 
     private final AppProperties appProperties;
+    private final CssProperties cssProperties;
+    private final CssJwtAuthenticationFilter cssJwtAuthenticationFilter;
+    private final RateLimitFilter rateLimitFilter;
 
-    public SecurityConfig(AppProperties appProperties) {
+    public SecurityConfig(
+            AppProperties appProperties,
+            CssProperties cssProperties,
+            CssJwtAuthenticationFilter cssJwtAuthenticationFilter,
+            RateLimitFilter rateLimitFilter
+    ) {
         this.appProperties = appProperties;
+        this.cssProperties = cssProperties;
+        this.cssJwtAuthenticationFilter = cssJwtAuthenticationFilter;
+        this.rateLimitFilter = rateLimitFilter;
     }
 
     @Bean
     @Order(1)
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        boolean requireAuth = cssProperties.isEnabled() || appProperties.getSecurity().isEnabled();
+
         http.csrf(csrf -> csrf.disable())
                 .cors(Customizer.withDefaults())
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> {
-                    auth.requestMatchers("/api/health", "/h2-console/**", "/ws/**", "/ws").permitAll();
-                    if (appProperties.getSecurity().isEnabled()) {
-                        auth.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll();
+                    auth.requestMatchers(
+                            "/api/health",
+                            "/api/auth/config",
+                            "/h2-console/**",
+                            "/ws/**",
+                            "/ws"
+                    ).permitAll();
+                    auth.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll();
+                    if (requireAuth) {
                         auth.requestMatchers("/api/**").authenticated();
                     } else {
                         auth.anyRequest().permitAll();
                     }
                 })
                 .headers(h -> h.frameOptions(f -> f.sameOrigin()));
+
+        http.addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class);
+        http.addFilterBefore(cssJwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         if (appProperties.getSecurity().isEnabled()) {
             http.addFilterBefore(apiKeyFilter(), UsernamePasswordAuthenticationFilter.class);
@@ -79,8 +103,13 @@ public class SecurityConfig {
                     HttpServletResponse response,
                     FilterChain filterChain
             ) throws ServletException, IOException {
+                if (SecurityContextHolder.getContext().getAuthentication() != null) {
+                    filterChain.doFilter(request, response);
+                    return;
+                }
                 String path = request.getRequestURI();
-                if (path.startsWith("/api/health") || path.startsWith("/ws") || "OPTIONS".equalsIgnoreCase(request.getMethod())) {
+                if (path.startsWith("/api/health") || path.startsWith("/api/auth/config")
+                        || path.startsWith("/ws") || "OPTIONS".equalsIgnoreCase(request.getMethod())) {
                     filterChain.doFilter(request, response);
                     return;
                 }
@@ -90,10 +119,8 @@ public class SecurityConfig {
                 }
                 String key = request.getHeader("X-API-Key");
                 if (key == null || key.isBlank()) {
-                    String auth = request.getHeader("Authorization");
-                    if (auth != null && auth.regionMatches(true, 0, "Bearer ", 0, 7)) {
-                        key = auth.substring(7).trim();
-                    }
+                    filterChain.doFilter(request, response);
+                    return;
                 }
                 if (expected.equals(key)) {
                     var authentication = new UsernamePasswordAuthenticationToken(
@@ -102,12 +129,8 @@ public class SecurityConfig {
                             AuthorityUtils.createAuthorityList("ROLE_API")
                     );
                     SecurityContextHolder.getContext().setAuthentication(authentication);
-                    filterChain.doFilter(request, response);
-                } else {
-                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                    response.setContentType("application/json");
-                    response.getWriter().write("{\"error\":\"Unauthorized — set X-API-Key\"}");
                 }
+                filterChain.doFilter(request, response);
             }
         };
     }

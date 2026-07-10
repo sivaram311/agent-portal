@@ -79,11 +79,20 @@
   color: var(--ap-text-muted);
   padding: 0.35rem 0.6rem;
   border-radius: 999px;
+  border: 1px solid var(--ap-border);
   background: rgba(34, 197, 94, 0.1);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 18rem;
+  max-width: min(42vw, 28rem);
+}
+
+.user-badge {
+  font-size: 0.78rem;
+  color: var(--ap-accent);
+  padding: 0.3rem 0.55rem;
+  border: 1px solid color-mix(in srgb, var(--ap-accent) 35%, transparent);
+  border-radius: 999px;
 }
 
 .health.warn {

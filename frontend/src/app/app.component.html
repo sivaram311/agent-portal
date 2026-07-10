@@ -1,4 +1,8 @@
 <div class="shell" [class.mobile]="isMobile" [class.detail-open]="showMobileDetail">
+  @if (showLogin) {
+    <app-login-overlay (signedIn)="onSignedIn()" />
+  }
+
   @if (drawerOpen) {
     <button type="button" class="drawer-backdrop" aria-label="Close menu" (click)="drawerOpen = false"></button>
   }
@@ -42,7 +46,19 @@
             Cursor {{ health.cursorCommandExists ? '✓' : '✗' }}
             · key {{ health.apiKeyConfigured ? '✓' : '✗' }}
             · Agy {{ health.antigravityCommandExists ? '✓' : '✗' }}
+            @if (health.cssEnabled) {
+              · CSS ✓
+            }
+            @if (health.antigravityInteractiveMode) {
+              · soft-Q&A
+            }
           </span>
+        }
+        @if (signedInAs) {
+          <span class="user-badge" data-testid="user-badge">{{ signedInAs }}</span>
+          <button type="button" class="ap-btn ap-btn-ghost" (click)="logout()" data-testid="logout-btn">
+            Sign out
+          </button>
         }
         <button type="button" class="ap-btn ap-btn-primary desktop-new" (click)="openCreate()">
           New session

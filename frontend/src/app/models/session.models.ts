@@ -89,4 +89,8 @@ export interface HealthInfo {
   antigravityBrainRoot?: string;
   antigravityBrainReadable?: boolean;
   antigravitySkipPermissions?: boolean;
+  antigravityInteractiveMode?: boolean;
+  portalApiKeyRequired?: boolean;
+  cssEnabled?: boolean;
+  cssClientId?: string;
 }

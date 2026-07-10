@@ -1,18 +1,21 @@
 import { Component, Input, OnChanges, SimpleChanges, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ApiService } from '../../services/api.service';
 import { FileContent, FileEntry } from '../../models/session.models';
 import { MarkdownPipe } from '../../pipes/markdown.pipe';
+import { MonacoViewerComponent } from '../monaco-viewer/monaco-viewer.component';
 
 @Component({
   selector: 'app-code-viewer',
   standalone: true,
-  imports: [CommonModule, MarkdownPipe],
+  imports: [CommonModule, MarkdownPipe, MonacoViewerComponent],
   templateUrl: './code-viewer.component.html',
   styleUrl: './code-viewer.component.scss',
 })
 export class CodeViewerComponent implements OnChanges {
   private readonly api = inject(ApiService);
+  private readonly sanitizer = inject(DomSanitizer);
 
   @Input() sessionId?: string;
   @Input() previewMode = false;
@@ -23,18 +26,23 @@ export class CodeViewerComponent implements OnChanges {
   fileContent?: FileContent;
   loading = false;
   loadError = '';
+  htmlPreviewUrl?: SafeResourceUrl;
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['sessionId']) {
       this.currentPath = '';
       this.selectedPath = undefined;
       this.fileContent = undefined;
+      this.htmlPreviewUrl = undefined;
       this.loadError = '';
       if (this.sessionId) {
         this.loadDirectory('');
       } else {
         this.entries = [];
       }
+    }
+    if (changes['previewMode'] && this.fileContent) {
+      this.refreshHtmlPreview();
     }
   }
 
@@ -60,6 +68,14 @@ export class CodeViewerComponent implements OnChanges {
       !!this.fileContent &&
       !this.isImage
     );
+  }
+
+  get isHtmlPreview(): boolean {
+    if (!this.previewMode || !this.selectedPath || !this.fileContent || this.isImage) {
+      return false;
+    }
+    const p = this.selectedPath.toLowerCase();
+    return p.endsWith('.html') || p.endsWith('.htm');
   }
 
   get isImage(): boolean {
@@ -101,10 +117,12 @@ export class CodeViewerComponent implements OnChanges {
     this.selectedPath = path;
     this.loading = true;
     this.loadError = '';
+    this.htmlPreviewUrl = undefined;
     this.api.readFile(this.sessionId, path).subscribe({
       next: (content) => {
         this.fileContent = content;
         this.loading = false;
+        this.refreshHtmlPreview();
       },
       error: (err) => {
         this.loading = false;
@@ -117,6 +135,17 @@ export class CodeViewerComponent implements OnChanges {
   navigateTo(path: string): void {
     this.selectedPath = undefined;
     this.fileContent = undefined;
+    this.htmlPreviewUrl = undefined;
     this.loadDirectory(path);
+  }
+
+  private refreshHtmlPreview(): void {
+    if (!this.isHtmlPreview || !this.fileContent) {
+      this.htmlPreviewUrl = undefined;
+      return;
+    }
+    const blob = new Blob([this.fileContent.content], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    this.htmlPreviewUrl = this.sanitizer.bypassSecurityTrustResourceUrl(url);
   }
 }

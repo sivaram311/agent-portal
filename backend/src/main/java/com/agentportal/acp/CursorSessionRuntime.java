@@ -37,6 +37,11 @@ public class CursorSessionRuntime implements SessionAgentRuntime {
     }
 
     @Override
+    public boolean abandonSubagent(String subagentId) {
+        return bridge.abandonSubagent(subagentId);
+    }
+
+    @Override
     public void close() {
         bridge.close();
     }

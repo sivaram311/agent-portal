@@ -1,0 +1,41 @@
+<div class="overlay" data-testid="login-overlay">
+  <form class="card" (ngSubmit)="submit()">
+    <div class="brand">
+      <span class="mark">A</span>
+      <div>
+        <h1>Agent Portal</h1>
+        <p>Sign in with Centralized Security</p>
+      </div>
+    </div>
+
+    <label>
+      Username
+      <input
+        name="username"
+        [(ngModel)]="username"
+        autocomplete="username"
+        required
+        data-testid="login-username"
+      />
+    </label>
+    <label>
+      Password
+      <input
+        type="password"
+        name="password"
+        [(ngModel)]="password"
+        autocomplete="current-password"
+        required
+        data-testid="login-password"
+      />
+    </label>
+
+    @if (error) {
+      <p class="error" data-testid="login-error">{{ error }}</p>
+    }
+
+    <button type="submit" class="ap-btn ap-btn-primary" [disabled]="busy()" data-testid="login-submit">
+      {{ busy() ? 'Signing in…' : 'Sign in' }}
+    </button>
+  </form>
+</div>

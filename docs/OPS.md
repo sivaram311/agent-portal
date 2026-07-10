@@ -24,9 +24,22 @@ docker compose exec -T postgres psql -U agent agentportal < backup.sql
 
 ## API key (optional)
 
-Set `AGENT_PORTAL_API_KEY` or `app.security.api-key`. Clients must send `X-API-Key` (or `Authorization: Bearer …`). `/api/health` stays open.
+Set `AGENT_PORTAL_API_KEY` or `app.security.api-key`. Clients must send `X-API-Key`. `/api/health` and `/api/auth/config` stay open.
 
-Frontend: store key in `localStorage.agentPortalApiKey` (interceptor reads it when present).
+Frontend: store key in `localStorage.agentPortalApiKey` (interceptor reads it when present). Prefer CSS JWT for multi-app SSO.
+
+## Centralized Security (CSS)
+
+Agent Portal is a CSS **resource server** (`clientId: agent-portal`).
+
+1. Run CSS on `:9000`
+2. Enable portal auth: `CSS_ENABLED=true` (or `css.enabled=true` / `application-prod.properties`)
+3. Open the portal — login overlay posts to `POST {css.auth-url}/auth/login` with `clientId=agent-portal`
+4. API calls send `Authorization: Bearer <accessToken>`; SockJS may pass `access_token` query param
+
+Dev users (seeded in CSS): `admin` / `admin123`, `demo` / `demo123`.
+
+JWKS: `http://localhost:9000/.well-known/jwks.json`
 
 ## Production notes
 
@@ -34,3 +47,4 @@ Frontend: store key in `localStorage.agentPortalApiKey` (interceptor reads it wh
 - Replace `http://*:4200` CORS with concrete origins
 - Prefer `agent.antigravity.skip-permissions=false` when interactive permissions exist
 - Disable H2 console (`spring.h2.console.enabled=false`) — already off on postgres profile
+- Keep `css.enabled=true` and do not ship with open `/api/**`

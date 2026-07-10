@@ -55,6 +55,8 @@ public class AgentProperties {
         private String command = "agy";
         private String brainRoot = "";
         private boolean skipPermissions = true;
+        /** Soft interactive: detect question-like replies and emit input_required. */
+        private boolean interactiveMode = true;
         private String printTimeout = "5m";
         private long pollIntervalMs = 500;
 
@@ -80,6 +82,14 @@ public class AgentProperties {
 
         public void setSkipPermissions(boolean skipPermissions) {
             this.skipPermissions = skipPermissions;
+        }
+
+        public boolean isInteractiveMode() {
+            return interactiveMode;
+        }
+
+        public void setInteractiveMode(boolean interactiveMode) {
+            this.interactiveMode = interactiveMode;
         }
 
         public String getPrintTimeout() {

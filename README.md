@@ -15,10 +15,13 @@ The UI uses a **dark navy/teal responsive redesign** (design tokens in `frontend
 - Persistent history (H2 file DB by default; PostgreSQL profile available)
 - Markdown-rendered assistant replies (marked + DOMPurify)
 - Session detail tabs: **Transcript** | **Logs** | **Code** | **Preview**
-- **Sub-agent / task panel** with Abandon (falls back to cancelling the session run when the provider cannot cancel a child alone)
+- **Sub-agent / task panel** with Abandon (Cursor: child-scoped mark + suppress further tool updates; other providers may cancel the session run)
 - Antigravity **soft interactive**: when the reply looks like a question, UI shows “waiting for your reply”
 - Workspace **file browser** in Code/Preview (path-safe under the session workspace)
 - Optional portal **API key** (`app.security.api-key` / `AGENT_PORTAL_API_KEY`)
+- **CSS JWT auth** (resource server): login via Centralized Security (`clientId: agent-portal`), optional local API-key fallback
+- Monaco Code tab + sandboxed HTML Preview for `.html`
+- Audit events for create / prompt / cancel / abandon / archive
 - Live task / terminal panel from agent tool events (Logs tab)
 - Permission and plan approval dialogs (**Cursor only**)
 - Cancel in-flight runs and archive sessions
@@ -65,7 +68,23 @@ java -jar target\backend-0.0.1-SNAPSHOT.jar
 
 API: `http://localhost:8080`  
 Health: `http://localhost:8080/api/health`  
+Auth config: `http://localhost:8080/api/auth/config`  
 H2 console: `http://localhost:8080/h2-console` (JDBC URL `jdbc:h2:file:./data/agent-portal`)
+
+### CSS auth (optional locally, on in prod)
+
+```powershell
+# Terminal A — Centralized Security
+cd E:\MyWorkspace\centralized-security-system
+mvn spring-boot:run
+
+# Terminal B — Agent Portal with CSS
+cd E:\MyWorkspace\agent-portal\backend
+$env:CSS_ENABLED = "true"
+.\mvnw.cmd spring-boot:run
+```
+
+Login overlay uses `clientId=agent-portal` against CSS (`admin`/`admin123`). See `docs/OPS.md`.
 
 ### PostgreSQL (optional)
 

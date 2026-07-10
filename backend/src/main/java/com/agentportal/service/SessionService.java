@@ -27,6 +27,7 @@ public class SessionService {
     private final AgentProcessManager processManager;
     private final AgentProperties agentProperties;
     private final WorkspaceFileService workspaceFileService;
+    private final AuditService auditService;
 
     public SessionService(
             AgentSessionRepository sessionRepository,
@@ -36,7 +37,8 @@ public class SessionService {
             AgentEventRepository eventRepository,
             AgentProcessManager processManager,
             AgentProperties agentProperties,
-            WorkspaceFileService workspaceFileService
+            WorkspaceFileService workspaceFileService,
+            AuditService auditService
     ) {
         this.sessionRepository = sessionRepository;
         this.messageRepository = messageRepository;
@@ -45,6 +47,7 @@ public class SessionService {
         this.processManager = processManager;
         this.agentProperties = agentProperties;
         this.workspaceFileService = workspaceFileService;
+        this.auditService = auditService;
     }
 
     @Transactional
@@ -68,6 +71,7 @@ public class SessionService {
         session.setStatus(SessionStatus.IDLE);
         session.setProvider(provider);
         session = sessionRepository.save(session);
+        auditService.record("session.create", session.getId().toString(), provider + " @ " + workspace);
         return SessionDto.from(session);
     }
 
@@ -129,6 +133,7 @@ public class SessionService {
 
         SessionAgentRuntime runtime = processManager.getOrStart(session);
         runtime.prompt(request.prompt());
+        auditService.record("session.prompt", id.toString(), "len=" + request.prompt().length());
         return MessageDto.from(userMsg);
     }
 
@@ -141,6 +146,7 @@ public class SessionService {
             session.setStatus(SessionStatus.CANCELLED);
             sessionRepository.save(session);
         }
+        auditService.record("session.cancel", id.toString(), null);
     }
 
     /**
@@ -168,6 +174,11 @@ public class SessionService {
                 runtime.cancel();
             }
         }
+        auditService.record(
+                "subagent.abandon",
+                sessionId.toString(),
+                subagentId + " childOnly=" + childOnly
+        );
         return Map.of(
                 "status", "abandoned",
                 "subagentId", subagentId,
@@ -204,6 +215,7 @@ public class SessionService {
         AgentSession session = require(id);
         processManager.stop(id);
         session.setStatus(SessionStatus.ARCHIVED);
+        auditService.record("session.archive", id.toString(), null);
         return SessionDto.from(sessionRepository.save(session));
     }
 

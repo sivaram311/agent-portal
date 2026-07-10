@@ -11,7 +11,9 @@ import { SessionTabsComponent, SessionTabId } from './components/session-tabs/se
 import { AgentInputBarComponent } from './components/agent-input-bar/agent-input-bar.component';
 import { CodeViewerComponent } from './components/code-viewer/code-viewer.component';
 import { ToastComponent } from './components/toast/toast.component';
+import { LoginOverlayComponent } from './components/login-overlay/login-overlay.component';
 import { ApiService } from './services/api.service';
+import { AuthService } from './services/auth.service';
 import { RealtimeService } from './services/realtime.service';
 import { ToastService } from './services/toast.service';
 import {
@@ -38,12 +40,14 @@ import {
     AgentInputBarComponent,
     CodeViewerComponent,
     ToastComponent,
+    LoginOverlayComponent,
   ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',
 })
 export class AppComponent implements OnInit, OnDestroy {
   private readonly api = inject(ApiService);
+  private readonly auth = inject(AuthService);
   private readonly realtime = inject(RealtimeService);
   private readonly toast = inject(ToastService);
 
@@ -69,9 +73,45 @@ export class AppComponent implements OnInit, OnDestroy {
 
   private eventSub?: Subscription;
 
+  get authReady(): boolean {
+    return this.auth.ready();
+  }
+
+  get showLogin(): boolean {
+    return this.auth.requiresLogin();
+  }
+
+  get signedInAs(): string | null {
+    return this.auth.username();
+  }
+
   ngOnInit(): void {
     this.updateViewport();
-    this.realtime.connect();
+    void this.boot();
+  }
+
+  private async boot(): Promise<void> {
+    await this.auth.bootstrap();
+    if (this.auth.requiresLogin()) {
+      return;
+    }
+    this.afterAuth();
+  }
+
+  onSignedIn(): void {
+    this.afterAuth();
+  }
+
+  async logout(): Promise<void> {
+    await this.auth.logout();
+    this.sessions = [];
+    this.active = undefined;
+    this.messages = [];
+    this.tools = [];
+  }
+
+  private afterAuth(): void {
+    this.realtime.reconnect();
     this.api.health().subscribe({
       next: (h) => (this.health = h),
       error: () => this.toast.error('Backend unreachable on :8080'),

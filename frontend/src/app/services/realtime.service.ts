@@ -1,12 +1,14 @@
-import { Injectable, OnDestroy } from '@angular/core';
+import { Injectable, OnDestroy, inject } from '@angular/core';
 import { Client, IMessage } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import { Observable, Subject } from 'rxjs';
 import { AgentEvent } from '../models/session.models';
 import { wsUrl } from './backend-url';
+import { AuthService } from './auth.service';
 
 @Injectable({ providedIn: 'root' })
 export class RealtimeService implements OnDestroy {
+  private readonly auth = inject(AuthService);
   private client?: Client;
   private readonly events$ = new Subject<AgentEvent>();
   private activeSessionId?: string;
@@ -17,7 +19,12 @@ export class RealtimeService implements OnDestroy {
       return;
     }
     this.client = new Client({
-      webSocketFactory: () => new SockJS(wsUrl()),
+      webSocketFactory: () => {
+        const token = this.auth.getAccessToken();
+        const base = wsUrl();
+        const url = token ? `${base}?access_token=${encodeURIComponent(token)}` : base;
+        return new SockJS(url);
+      },
       reconnectDelay: 3000,
       onConnect: () => {
         if (this.activeSessionId) {
@@ -26,6 +33,12 @@ export class RealtimeService implements OnDestroy {
       },
     });
     this.client.activate();
+  }
+
+  reconnect(): void {
+    void this.client?.deactivate();
+    this.client = undefined;
+    this.connect();
   }
 
   watchSession(sessionId: string): Observable<AgentEvent> {

@@ -69,8 +69,16 @@
             <img class="preview-image" [src]="fileContent.content" [alt]="fileContent.path" />
           } @else if (isMarkdownPreview) {
             <article class="markdown-body" [innerHTML]="fileContent.content | markdown"></article>
+          } @else if (isHtmlPreview && htmlPreviewUrl) {
+            <iframe
+              class="html-preview"
+              title="HTML preview"
+              sandbox="allow-scripts"
+              [src]="htmlPreviewUrl"
+              data-testid="html-preview"
+            ></iframe>
           } @else {
-            <pre class="file-body">{{ fileContent.content }}</pre>
+            <app-monaco-viewer [content]="fileContent.content" [path]="fileContent.path" />
           }
         }
       </section>

@@ -842,6 +842,9 @@ public class AntigravityBridge implements SessionAgentRuntime {
 
     /** Soft interactive: detect when the agent asked the user a question in print-mode output. */
     private void maybeEmitInputRequired(String content) {
+        if (!properties.getAntigravity().isInteractiveMode()) {
+            return;
+        }
         String trimmed = content == null ? "" : content.trim();
         if (trimmed.length() < 12) {
             return;
@@ -853,15 +856,22 @@ public class AntigravityBridge implements SessionAgentRuntime {
                 || lower.contains("should i")
                 || lower.contains("please confirm")
                 || lower.contains("let me know")
-                || lower.contains("which option");
+                || lower.contains("which option")
+                || lower.contains("reply with")
+                || lower.contains("choose one")
+                || lower.contains("what would you prefer")
+                || lower.contains("awaiting your")
+                || lower.contains("need your input");
         if (!asks) {
             return;
         }
         String excerpt = trimmed.length() > 280 ? trimmed.substring(trimmed.length() - 280) : trimmed;
+        setStatus(SessionStatus.WAITING_PERMISSION);
         emit("input_required", Map.of(
                 "provider", "antigravity",
                 "prompt", excerpt,
-                "mode", "soft"
+                "mode", "soft",
+                "hint", "Send a follow-up message to continue this conversation"
         ));
     }
 
