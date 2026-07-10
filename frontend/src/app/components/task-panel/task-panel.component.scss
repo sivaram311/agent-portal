@@ -1,0 +1,127 @@
+:host {
+  display: block;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.panel {
+  height: 100%;
+  display: grid;
+  grid-template-rows: minmax(0, 38%) minmax(0, 1fr);
+  gap: 0.75rem;
+  padding: 1rem;
+  background: var(--ap-bg);
+  color: var(--ap-text);
+  min-height: 0;
+}
+
+.tools {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-height: 0;
+  overflow: auto;
+}
+
+.tools h3 {
+  margin: 0;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ap-text-muted);
+}
+
+.tool {
+  border: 1px solid var(--ap-border);
+  border-radius: var(--ap-radius);
+  padding: 0.55rem 0.65rem;
+  background: var(--ap-surface);
+}
+
+.tool-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.pill {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.15rem 0.4rem;
+  border-radius: 0.3rem;
+  background: var(--ap-accent-soft);
+  color: #5eead4;
+}
+
+.args {
+  margin: 0.4rem 0 0;
+  font-size: 0.7rem;
+  color: var(--ap-text-muted);
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 4.5rem;
+  overflow: auto;
+  font-family: var(--ap-mono);
+}
+
+.muted {
+  color: var(--ap-text-muted);
+  font-size: 0.85rem;
+}
+
+.terminal {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--ap-radius);
+  overflow: hidden;
+  border: 1px solid var(--ap-border);
+  background: #020617;
+}
+
+.terminal-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.45rem 0.65rem;
+  background: #0b1220;
+}
+
+.terminal-bar span {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background: #334155;
+}
+
+.terminal-bar span:nth-child(1) {
+  background: #ef4444;
+}
+.terminal-bar span:nth-child(2) {
+  background: #f59e0b;
+}
+.terminal-bar span:nth-child(3) {
+  background: #22c55e;
+}
+
+.terminal-bar label {
+  margin-left: 0.4rem;
+  font-size: 0.7rem;
+  color: var(--ap-text-muted);
+}
+
+.terminal-body {
+  margin: 0;
+  padding: 0.75rem;
+  overflow: auto;
+  flex: 1;
+  font-family: var(--ap-mono);
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: #5eead4;
+  white-space: pre-wrap;
+  word-break: break-word;
+}

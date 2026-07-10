@@ -1,0 +1,70 @@
+:host {
+  display: block;
+}
+
+.head {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+  padding: 0.9rem 1.1rem;
+  border-bottom: 1px solid var(--ap-border);
+  background: rgba(30, 41, 59, 0.72);
+  backdrop-filter: blur(10px);
+}
+
+.left {
+  display: flex;
+  gap: 0.65rem;
+  min-width: 0;
+  align-items: flex-start;
+}
+
+.back {
+  min-width: var(--ap-touch);
+  padding-inline: 0.7rem;
+  flex-shrink: 0;
+}
+
+.titles {
+  min-width: 0;
+}
+
+h2 {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 650;
+  line-height: 1.25;
+}
+
+.path {
+  margin: 0.3rem 0 0;
+  font-size: 0.78rem;
+  color: var(--ap-text-muted);
+  word-break: break-all;
+}
+
+.note {
+  margin: 0.35rem 0 0;
+  font-size: 0.75rem;
+  color: #5eead4;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+@media (max-width: 640px) {
+  .head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .actions {
+    justify-content: flex-start;
+  }
+}

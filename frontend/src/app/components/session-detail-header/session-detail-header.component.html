@@ -1,0 +1,28 @@
+@if (session) {
+  <header class="head">
+    <div class="left">
+      @if (showBack) {
+        <button type="button" class="ap-btn ap-btn-ghost back" (click)="back.emit()" aria-label="Back">
+          ←
+        </button>
+      }
+      <div class="titles">
+        <h2>{{ session.title }}</h2>
+        <p class="path">{{ session.workspacePath }}</p>
+        @if (session.provider === 'antigravity') {
+          <p class="note">Streaming from Antigravity transcript / brain artifacts</p>
+        }
+      </div>
+    </div>
+    <div class="actions">
+      <app-agent-type-badge [provider]="session.provider" />
+      <app-status-pill [status]="session.status" />
+      @if (busy) {
+        <button type="button" class="ap-btn ap-btn-ghost" (click)="cancel.emit()">Cancel</button>
+      }
+      <button type="button" class="ap-btn ap-btn-danger" (click)="archive.emit(session.id)">
+        Archive
+      </button>
+    </div>
+  </header>
+}

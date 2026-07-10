@@ -1,0 +1,51 @@
+<aside class="sidebar">
+  <div class="sidebar-head">
+    <div class="brand">
+      <span class="brand-mark">A</span>
+      <div>
+        <div class="brand-name">Agent Portal</div>
+        <div class="brand-sub">Autonomous sessions</div>
+      </div>
+    </div>
+    <button type="button" class="ap-btn ap-btn-primary new-btn" (click)="create.emit()">
+      New session
+    </button>
+  </div>
+
+  <label class="search">
+    <span class="sr-only">Search sessions</span>
+    <input
+      type="search"
+      [ngModel]="search"
+      (ngModelChange)="onSearch($event)"
+      placeholder="Search sessions…"
+    />
+  </label>
+
+  <div class="filters" role="tablist" aria-label="Session filters">
+    @for (f of ['all', 'active', 'failed', 'archived']; track f) {
+      <button
+        type="button"
+        class="chip"
+        [class.on]="filter === f"
+        (click)="setFilter($any(f))"
+      >
+        {{ f }}
+      </button>
+    }
+  </div>
+
+  <div class="session-list">
+    @if (filtered.length === 0) {
+      <p class="empty">No sessions match. Create one to start.</p>
+    }
+    @for (s of filtered; track s.id) {
+      <app-session-card
+        [session]="s"
+        [active]="s.id === activeId"
+        (select)="select.emit($event)"
+        (archive)="archive.emit($event)"
+      />
+    }
+  </div>
+</aside>

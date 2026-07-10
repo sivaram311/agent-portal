@@ -1,0 +1,29 @@
+<section class="chat">
+  <div class="messages" #scrollBox>
+    @if (messages.length === 0 && !streamingText) {
+      <div class="ap-empty">
+        <h3>No messages yet</h3>
+        <p>Ask the agent to inspect, edit, or run tasks using the input below.</p>
+      </div>
+    }
+    @for (m of messages; track m.id) {
+      <article class="bubble" [class.user]="m.role === 'USER'" [class.assistant]="m.role === 'ASSISTANT'">
+        <div class="role">{{ m.role === 'USER' ? 'You' : 'Agent' }}</div>
+        @if (m.role === 'ASSISTANT') {
+          <div class="md" [innerHTML]="m.content | markdown"></div>
+        } @else {
+          <div class="plain">{{ m.content }}</div>
+        }
+      </article>
+    }
+    @if (streamingText) {
+      <article class="bubble assistant streaming">
+        <div class="role">Agent</div>
+        <div class="md">
+          <div [innerHTML]="streamingText | markdown"></div>
+          <span class="caret"></span>
+        </div>
+      </article>
+    }
+  </div>
+</section>

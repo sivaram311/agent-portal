@@ -1,0 +1,120 @@
+:host {
+  display: block;
+  height: 100%;
+  min-height: 0;
+}
+
+.sidebar {
+  height: 100%;
+  display: grid;
+  grid-template-rows: auto auto auto minmax(0, 1fr);
+  gap: 0.75rem;
+  padding: 1rem;
+  padding-top: calc(1rem + var(--ap-safe-top));
+  background: var(--ap-surface);
+  border-right: 1px solid var(--ap-border);
+  min-height: 0;
+}
+
+.sidebar-head {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.brand {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.brand-mark {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.75rem;
+  display: grid;
+  place-content: center;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--ap-accent), #0ea5e9);
+  color: #042f2e;
+}
+
+.brand-name {
+  font-weight: 700;
+  font-size: 0.98rem;
+}
+
+.brand-sub {
+  font-size: 0.72rem;
+  color: var(--ap-text-muted);
+}
+
+.new-btn {
+  width: 100%;
+}
+
+.search input {
+  width: 100%;
+  min-height: var(--ap-touch);
+  border-radius: var(--ap-radius);
+  border: 1px solid var(--ap-border);
+  background: var(--ap-bg);
+  padding: 0.65rem 0.85rem;
+  outline: none;
+}
+
+.search input:focus {
+  border-color: rgba(20, 184, 166, 0.55);
+  box-shadow: 0 0 0 3px var(--ap-accent-soft);
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.chip {
+  border: 1px solid var(--ap-border);
+  background: transparent;
+  color: var(--ap-text-muted);
+  border-radius: 999px;
+  padding: 0.35rem 0.7rem;
+  min-height: 2rem;
+  font-size: 0.75rem;
+  text-transform: capitalize;
+  font-weight: 600;
+}
+
+.chip.on {
+  background: var(--ap-accent-soft);
+  border-color: rgba(20, 184, 166, 0.45);
+  color: #5eead4;
+}
+
+.session-list {
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  min-height: 0;
+  padding-bottom: 0.5rem;
+}
+
+.empty {
+  margin: 1rem 0.25rem;
+  color: var(--ap-text-muted);
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}

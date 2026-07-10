@@ -1,0 +1,49 @@
+:host {
+  display: block;
+}
+
+.tabs {
+  display: flex;
+  gap: 0.25rem;
+  padding: 0.55rem 1rem 0;
+  border-bottom: 1px solid var(--ap-border);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.tab {
+  border: 0;
+  background: transparent;
+  color: var(--ap-text-muted);
+  min-height: var(--ap-touch);
+  padding: 0.55rem 0.95rem;
+  border-radius: var(--ap-radius) var(--ap-radius) 0 0;
+  font-weight: 600;
+  font-size: 0.88rem;
+  position: relative;
+  white-space: nowrap;
+}
+
+.tab:hover {
+  color: var(--ap-text);
+  background: rgba(148, 163, 184, 0.06);
+}
+
+.tab.on {
+  color: #5eead4;
+}
+
+.tab.on::after {
+  content: "";
+  position: absolute;
+  left: 0.7rem;
+  right: 0.7rem;
+  bottom: 0;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--ap-accent);
+}

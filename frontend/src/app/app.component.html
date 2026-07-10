@@ -1,0 +1,177 @@
+<div class="shell" [class.mobile]="isMobile" [class.detail-open]="showMobileDetail">
+  @if (drawerOpen) {
+    <button type="button" class="drawer-backdrop" aria-label="Close menu" (click)="drawerOpen = false"></button>
+  }
+
+  <aside class="nav-pane" [class.open]="drawerOpen">
+    <app-session-list
+      [sessions]="sessions"
+      [activeId]="active?.id"
+      [search]="sessionSearch"
+      (searchChange)="sessionSearch = $event"
+      (select)="selectSession($event)"
+      (create)="openCreate()"
+      (archive)="archiveSession($event)"
+    />
+  </aside>
+
+  <div class="workspace">
+    <header class="topbar">
+      <div class="topbar-left">
+        @if (isMobile && active) {
+          <button type="button" class="ap-btn ap-btn-ghost icon-btn" (click)="drawerOpen = !drawerOpen" aria-label="Menu">
+            ☰
+          </button>
+        }
+        <div class="brand-inline">
+          <span class="mark">A</span>
+          <strong>Agent Portal</strong>
+        </div>
+      </div>
+      <div class="topbar-right">
+        @if (health) {
+          <span
+            class="health"
+            [class.warn]="
+              !health.cursorCommandExists ||
+              !health.apiKeyConfigured ||
+              health.antigravityCommandExists === false
+            "
+            title="Provider health"
+          >
+            Cursor {{ health.cursorCommandExists ? '✓' : '✗' }}
+            · key {{ health.apiKeyConfigured ? '✓' : '✗' }}
+            · Agy {{ health.antigravityCommandExists ? '✓' : '✗' }}
+          </span>
+        }
+        <button type="button" class="ap-btn ap-btn-primary desktop-new" (click)="openCreate()">
+          New session
+        </button>
+      </div>
+    </header>
+
+    @if (error) {
+      <div class="banner">
+        <span>{{ error }}</span>
+        <button type="button" (click)="error = ''">Dismiss</button>
+      </div>
+    }
+
+    @if (showMobileList) {
+      <div class="mobile-list" data-testid="mobile-session-list">
+        <label class="mobile-search">
+          <input
+            type="search"
+            [(ngModel)]="sessionSearch"
+            name="mobileSearch"
+            placeholder="Search sessions…"
+            data-testid="mobile-search"
+          />
+        </label>
+        <app-session-list
+          [sessions]="sessions"
+          [activeId]="active?.id"
+          [search]="sessionSearch"
+          (searchChange)="sessionSearch = $event"
+          (select)="selectSession($event)"
+          (create)="openCreate()"
+          (archive)="archiveSession($event)"
+        />
+      </div>
+    } @else if (!active) {
+      <div class="ap-empty hero">
+        <h3>Select or create a session</h3>
+        <p>Choose Cursor or Antigravity and stream agent runs in realtime across desktop, tablet, and phone.</p>
+        <button type="button" class="ap-btn ap-btn-primary" (click)="openCreate()">New session</button>
+      </div>
+    } @else {
+      <section class="detail" data-testid="session-detail">
+        <app-session-detail-header
+          [session]="active"
+          [busy]="busy"
+          [showBack]="isMobile"
+          (back)="clearActive()"
+          (cancel)="cancelRun()"
+          (archive)="archiveSession($event)"
+        />
+        <app-session-tabs [active]="activeTab" (activeChange)="activeTab = $event" />
+
+        <div class="tab-body">
+          @switch (activeTab) {
+            @case ('transcript') {
+              <app-chat [messages]="messages" [streamingText]="streamingText" />
+            }
+            @case ('logs') {
+              <app-task-panel [tools]="tools" [terminalLines]="terminalLines" />
+            }
+            @case ('code') {
+              <div class="ap-empty">
+                <h3>Code viewer</h3>
+                <p>
+                  Workspace: <code>{{ active.workspacePath }}</code>. File browsing will appear here when a
+                  code API is available.
+                </p>
+              </div>
+            }
+            @case ('preview') {
+              <div class="ap-empty">
+                <h3>Preview</h3>
+                <p>Run previews and live outputs will show here in a future update.</p>
+              </div>
+            }
+          }
+        </div>
+
+        <app-agent-input-bar [busy]="busy" (send)="sendPrompt($event)" />
+      </section>
+    }
+  </div>
+
+  @if (isMobile && !active) {
+    <button type="button" class="fab" (click)="openCreate()" aria-label="New session" data-testid="fab-new-session">+</button>
+  }
+</div>
+
+@if (active?.provider !== 'antigravity') {
+  <app-permission-dialog [permission]="pendingPermission" (decide)="onPermissionDecide($event)" />
+}
+
+@if (showCreate) {
+  <div class="backdrop">
+    <form class="dialog" (ngSubmit)="createSession()" data-testid="create-session-dialog">
+      <h3>New agent session</h3>
+
+      <fieldset class="provider-pick">
+        <legend>Provider</legend>
+        <label class="radio">
+          <input type="radio" name="provider" [(ngModel)]="createProvider" value="cursor" />
+          <span>
+            <strong>Cursor</strong>
+            <small>ACP streaming, mid-turn permissions</small>
+          </span>
+        </label>
+        <label class="radio">
+          <input type="radio" name="provider" [(ngModel)]="createProvider" value="antigravity" />
+          <span>
+            <strong>Antigravity</strong>
+            <small>Near-realtime via brain transcript / messages</small>
+          </span>
+        </label>
+      </fieldset>
+
+      <label>
+        Title
+        <input [(ngModel)]="createTitle" name="title" placeholder="Optional" />
+      </label>
+      <label>
+        Workspace path
+        <input [(ngModel)]="createWorkspace" name="workspace" required placeholder="demo or absolute path" />
+      </label>
+      <p class="hint">Relative paths resolve under the configured workspace root. Provider cannot be changed later.</p>
+      <div class="actions">
+        <button type="button" class="ap-btn ap-btn-ghost" (click)="showCreate = false">Cancel</button>
+        <button type="submit" class="ap-btn ap-btn-primary">Create & connect</button>
+      </div>
+    </form>
+  </div>
+}

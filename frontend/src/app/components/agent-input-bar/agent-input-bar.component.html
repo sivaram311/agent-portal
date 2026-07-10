@@ -1,0 +1,17 @@
+<form class="bar" (ngSubmit)="submit()">
+  <textarea
+    [(ngModel)]="draft"
+    name="draft"
+    rows="2"
+    [placeholder]="placeholder"
+    [disabled]="busy || disabled"
+    (keydown.control.enter)="submit()"
+  ></textarea>
+  <button
+    type="submit"
+    class="ap-btn ap-btn-primary send"
+    [disabled]="busy || disabled || !draft.trim()"
+  >
+    {{ busy ? 'Running…' : 'Send' }}
+  </button>
+</form>

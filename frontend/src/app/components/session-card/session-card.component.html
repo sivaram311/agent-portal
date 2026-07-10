@@ -1,0 +1,25 @@
+<button
+  type="button"
+  class="card"
+  data-testid="session-card"
+  [class.active]="active"
+  (click)="select.emit(session.id)"
+>
+  <div class="top">
+    <strong class="title">{{ session.title }}</strong>
+    <span class="time">{{ relativeTime(session.updatedAt) }}</span>
+  </div>
+  <p class="path">{{ session.workspacePath }}</p>
+  <div class="meta">
+    <app-agent-type-badge [provider]="session.provider" />
+    <app-status-pill [status]="session.status" />
+    <button
+      type="button"
+      class="archive"
+      title="Archive"
+      (click)="$event.stopPropagation(); archive.emit(session.id)"
+    >
+      Archive
+    </button>
+  </div>
+</button>

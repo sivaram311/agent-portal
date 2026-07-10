@@ -1,0 +1,98 @@
+# Agent Portal E2E (Playwright)
+
+Mobile UI validation for the Agent Portal Angular app, emulating **Realme P2 Pro** (dark navy/teal responsive shell, FAB, drawer, session tabs).
+
+## Device profile
+
+| | |
+|---|---|
+| Physical resolution | 1080 × 2412 |
+| CSS viewport | **360 × 800** |
+| Device scale factor | **3** |
+| Touch | Yes |
+| User agent | Android 14 Chrome mobile (RMX3990) |
+
+Defined in `playwright.config.ts` as project `realme-p2-pro` (based on Pixel 7 device preset with custom viewport/UA).
+
+## Prerequisites
+
+- Node.js 22+
+- Agent Portal frontend running on port **4200** (`cd frontend && npm start`)
+- Backend on **8080** if tests create sessions or load existing data from the API
+
+Install dependencies once:
+
+```powershell
+cd e2e
+npm install
+npx playwright install chromium
+```
+
+## Run
+
+Default base URL is `http://127.0.0.1:4200` (from `playwright.config.ts`).
+
+```powershell
+cd e2e
+npm test
+```
+
+Same as targeting the Realme project explicitly:
+
+```powershell
+npm run test:mobile
+```
+
+Against a remote or LAN host (frontend bound via `ng serve --host 0.0.0.0`):
+
+```powershell
+$env:APP_URL = "http://103.118.183.185:4200"
+npm run test:mobile
+```
+
+Other scripts:
+
+| Script | Purpose |
+|--------|---------|
+| `npm run test:ui` | Playwright UI mode |
+| `npm run headed` | Headed browser on Realme profile |
+| `npm run report` | Open HTML report (`playwright show-report`) |
+
+## Output
+
+- **Screenshots:** `e2e/screenshots/realme-p2-pro/` (`01-home.png` … `07-code-tab.png`)
+- **HTML report:** `e2e/playwright-report/` (open with `npm run report`)
+- **Artifacts on failure:** `e2e/test-results/` (trace, video when enabled)
+
+## What the suite checks
+
+File: `tests/realme-p2-pro.spec.ts`
+
+1. Viewport is 360×800 with no horizontal overflow on home
+2. Brand chrome and **New Session** FAB (≥ 44px touch target, bottom-right on mobile)
+3. Create-session dialog fits narrow screen; Cursor / Antigravity provider radios; Cancel closes dialog
+4. Mobile session list: search input, filter chips (all / active / failed / archived)
+5. Session detail: tabs **Transcript**, **Logs**, **Code**, **Preview**; prompt input near bottom; Logs and Code empty states
+
+If no sessions exist, the detail test creates one via the FAB (Antigravity + workspace `demo`).
+
+## `data-testid` hooks
+
+Stable selectors used by tests (and recommended for new UI work):
+
+| `data-testid` | Element |
+|---------------|---------|
+| `fab-new-session` | Mobile/desktop floating “+” new session button |
+| `create-session-dialog` | New session modal form |
+| `mobile-session-list` | Mobile session list panel |
+| `mobile-search` | Session search input |
+| `session-card` | Individual session card in the list |
+| `session-detail` | Active session detail pane (tabs + input) |
+
+Additional assertions use roles/labels (e.g. tab names, “New agent session” heading, “Code viewer” empty state).
+
+## Notes
+
+- Tests run **serially** (`workers: 1`) to avoid conflicting session state.
+- Set `APP_URL` to match how you open the app in a browser; API/WebSocket calls use the same hostname on port 8080 automatically (`frontend/src/app/services/backend-url.ts`).
+- For CI, set `CI=1` to enable retries and forbid `.only` tests.

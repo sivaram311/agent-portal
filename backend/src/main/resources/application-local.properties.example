@@ -1,0 +1,6 @@
+# Copy to application-local.properties (gitignored) for machine-specific paths.
+# Spring Boot loads application-local.properties automatically when present.
+
+# agent.cursor.command=C:\\Users\\YOU\\AppData\\Local\\cursor-agent\\agent.cmd
+# agent.antigravity.command=C:\\Users\\YOU\\AppData\\Local\\agy\\bin\\agy.exe
+# agent.workspace.root=E:/path/to/agent-portal/workspaces

@@ -1,0 +1,27 @@
+<div class="panel">
+  <div class="tools">
+    <h3>Tool runs</h3>
+    @if (tools.length === 0) {
+      <p class="muted">No tool runs yet.</p>
+    }
+    @for (t of tools; track t.id) {
+      <article class="tool">
+        <div class="tool-head">
+          <strong>{{ t.toolName }}</strong>
+          <span class="pill">{{ t.status }}</span>
+        </div>
+        @if (t.argsJson) {
+          <pre class="args">{{ t.argsJson }}</pre>
+        }
+      </article>
+    }
+  </div>
+
+  <div class="terminal">
+    <div class="terminal-bar">
+      <span></span><span></span><span></span>
+      <label>terminal</label>
+    </div>
+    <pre class="terminal-body" #terminalBody>@for (line of terminalLines; track $index) {{{ line }}}@if (terminalLines.length === 0) {Waiting for agent tool output…}</pre>
+  </div>
+</div>

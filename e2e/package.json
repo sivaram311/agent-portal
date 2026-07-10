@@ -1,0 +1,15 @@
+{
+  "name": "agent-portal-e2e",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test": "playwright test",
+    "test:mobile": "playwright test --project=realme-p2-pro",
+    "test:ui": "playwright test --ui",
+    "report": "playwright show-report",
+    "headed": "playwright test --project=realme-p2-pro --headed"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.52.0"
+  }
+}

@@ -1,0 +1,14 @@
+<nav class="tabs" role="tablist" aria-label="Session views">
+  @for (t of tabs; track t.id) {
+    <button
+      type="button"
+      role="tab"
+      class="tab"
+      [class.on]="active === t.id"
+      [attr.aria-selected]="active === t.id"
+      (click)="select(t.id)"
+    >
+      {{ t.label }}
+    </button>
+  }
+</nav>

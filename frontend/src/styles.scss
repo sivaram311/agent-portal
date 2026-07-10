@@ -1,0 +1,108 @@
+@use "./app/theme/tokens";
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: var(--ap-font);
+  background: var(--ap-bg);
+  color: var(--ap-text);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+a {
+  color: var(--ap-accent);
+}
+
+::selection {
+  background: rgba(20, 184, 166, 0.35);
+}
+
+/* Shared utility classes used across components */
+.ap-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: var(--ap-touch);
+  padding: 0.55rem 1rem;
+  border: 0;
+  border-radius: var(--ap-radius);
+  font-weight: 600;
+  transition: background 160ms ease, border-color 160ms ease, opacity 160ms ease;
+}
+
+.ap-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.ap-btn-primary {
+  background: var(--ap-accent);
+  color: #042f2e;
+}
+
+.ap-btn-primary:hover:not(:disabled) {
+  background: var(--ap-accent-hover);
+}
+
+.ap-btn-ghost {
+  background: transparent;
+  border: 1px solid var(--ap-border);
+  color: var(--ap-text);
+}
+
+.ap-btn-ghost:hover:not(:disabled) {
+  background: rgba(148, 163, 184, 0.08);
+}
+
+.ap-btn-danger {
+  background: rgba(239, 68, 68, 0.15);
+  color: #fecaca;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+}
+
+.ap-empty {
+  display: grid;
+  place-content: center;
+  text-align: center;
+  gap: 0.5rem;
+  padding: 2rem 1.25rem;
+  color: var(--ap-text-muted);
+  min-height: 12rem;
+}
+
+.ap-empty h3 {
+  margin: 0;
+  color: var(--ap-text);
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.ap-empty p {
+  margin: 0;
+  max-width: 28rem;
+  line-height: 1.5;
+  font-size: 0.9rem;
+}

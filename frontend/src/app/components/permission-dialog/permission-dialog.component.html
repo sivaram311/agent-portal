@@ -1,0 +1,37 @@
+@if (permission) {
+  <div class="backdrop">
+    <div class="dialog" role="dialog" aria-modal="true">
+      <h3>{{ isPlan ? 'Approve plan' : 'Permission required' }}</h3>
+      <p class="sub">
+        The agent is waiting for your decision before continuing.
+      </p>
+
+      @if (isPlan && permission.planMarkdown) {
+        <pre class="body">{{ permission.planMarkdown }}</pre>
+      } @else {
+        <pre class="body">{{ permission.detailsJson }}</pre>
+      }
+
+      <div class="actions">
+        @if (isPlan) {
+          <button type="button" class="btn ghost" (click)="decide.emit({ decision: 'reject', reason: 'Rejected in portal' })">
+            Reject
+          </button>
+          <button type="button" class="btn primary" (click)="decide.emit({ decision: 'accept' })">
+            Accept plan
+          </button>
+        } @else {
+          <button type="button" class="btn ghost" (click)="decide.emit({ decision: 'reject-once' })">
+            Reject
+          </button>
+          <button type="button" class="btn" (click)="decide.emit({ decision: 'allow-always' })">
+            Always allow
+          </button>
+          <button type="button" class="btn primary" (click)="decide.emit({ decision: 'allow-once' })">
+            Allow once
+          </button>
+        }
+      </div>
+    </div>
+  </div>
+}
