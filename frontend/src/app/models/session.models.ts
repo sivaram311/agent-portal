@@ -137,3 +137,45 @@ export interface SessionEventRow {
   createdAt: string;
   payload: Record<string, unknown>;
 }
+
+export type GuidanceKind = 'RULE' | 'SKILL';
+
+export interface GuidancePack {
+  id: string;
+  kind: GuidanceKind;
+  slug: string;
+  title: string;
+  description?: string;
+  bodyMarkdown: string;
+  globs?: string;
+  alwaysApply: boolean;
+  enabledByDefault: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SessionGuidanceItem {
+  id: string;
+  packId?: string | null;
+  kind: GuidanceKind;
+  title: string;
+  bodyMarkdown: string;
+  enabled: boolean;
+  sortOrder: number;
+  sessionOnly: boolean;
+}
+
+export interface SessionGuidance {
+  items: SessionGuidanceItem[];
+  effective: SessionGuidanceItem[];
+}
+
+export interface GuidanceTemplate {
+  kind: GuidanceKind | string;
+  slug: string;
+  title: string;
+  description: string;
+  bodyMarkdown: string;
+  alwaysApply: boolean;
+}
+

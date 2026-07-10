@@ -155,4 +155,17 @@ public class SessionController {
     public SessionDto unarchive(@PathVariable UUID id) {
         return sessionService.unarchive(id);
     }
+
+    @GetMapping("/{id}/guidance")
+    public SessionGuidanceDto getGuidance(@PathVariable UUID id) {
+        return sessionService.getGuidance(id);
+    }
+
+    @PutMapping("/{id}/guidance")
+    public SessionGuidanceDto putGuidance(
+            @PathVariable UUID id,
+            @RequestBody UpdateSessionGuidanceRequest request
+    ) {
+        return sessionService.putGuidance(id, request);
+    }
 }

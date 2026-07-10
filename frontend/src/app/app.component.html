@@ -55,6 +55,9 @@
         }
         @if (signedInAs) {
           <span class="user-badge" data-testid="user-badge">{{ signedInAs }}</span>
+          <button type="button" class="ap-btn ap-btn-ghost" (click)="openGuidanceSettings()" data-testid="guidance-settings-btn">
+            Rules
+          </button>
           <button type="button" class="ap-btn ap-btn-ghost" (click)="logout()" data-testid="logout-btn">
             Sign out
           </button>
@@ -181,6 +184,9 @@
             @case ('history') {
               <app-history-panel [sessionId]="active.id" [messages]="messages" [tools]="tools" />
             }
+            @case ('guidance') {
+              <app-guidance-panel [sessionId]="active.id" />
+            }
           }
         </div>
 
@@ -259,13 +265,24 @@
         Starter prompt (optional)
         <textarea [(ngModel)]="createStarterPrompt" name="starter" rows="3" placeholder="Sent automatically after create"></textarea>
       </label>
-      <p class="hint">Relative paths resolve under the configured workspace root. Provider cannot be changed later.</p>
+      <label class="check-row">
+        <input type="checkbox" [(ngModel)]="createUseGuidanceDefaults" name="useGuidance" />
+        <span>Use my Rules &amp; Skills defaults</span>
+      </label>
+      <p class="hint">
+        Relative paths resolve under the configured workspace root. Provider cannot be changed later.
+        Customize packs anytime under the session <strong>Guidance</strong> tab or top-bar <strong>Rules</strong>.
+      </p>
       <div class="actions">
         <button type="button" class="ap-btn ap-btn-ghost" (click)="showCreate = false">Cancel</button>
         <button type="submit" class="ap-btn ap-btn-primary">Create & connect</button>
       </div>
     </form>
   </div>
+}
+
+@if (showGuidanceSettings) {
+  <app-guidance-settings (closed)="showGuidanceSettings = false" />
 }
 
 <app-toast />

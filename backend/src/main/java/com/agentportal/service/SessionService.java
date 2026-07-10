@@ -41,6 +41,7 @@ public class SessionService {
     private final CssProperties cssProperties;
     private final ObjectMapper objectMapper;
     private final TransactionTemplate transactionTemplate;
+    private final GuidanceService guidanceService;
 
     public SessionService(
             AgentSessionRepository sessionRepository,
@@ -57,7 +58,8 @@ public class SessionService {
             AuditService auditService,
             CssProperties cssProperties,
             ObjectMapper objectMapper,
-            TransactionTemplate transactionTemplate
+            TransactionTemplate transactionTemplate,
+            GuidanceService guidanceService
     ) {
         this.sessionRepository = sessionRepository;
         this.messageRepository = messageRepository;
@@ -74,6 +76,7 @@ public class SessionService {
         this.cssProperties = cssProperties;
         this.objectMapper = objectMapper;
         this.transactionTemplate = transactionTemplate;
+        this.guidanceService = guidanceService;
     }
 
     @Transactional
@@ -99,6 +102,13 @@ public class SessionService {
         session.setProvider(provider);
         session.setOwnerUsername(CurrentUser.usernameOrAnonymous());
         session = sessionRepository.save(session);
+        boolean useDefaults = request.useGuidanceDefaults() == null || request.useGuidanceDefaults();
+        guidanceService.seedDefaultsForNewSession(session.getId(), useDefaults);
+        try {
+            guidanceService.materializeForSession(session.getWorkspacePath(), session.getId());
+        } catch (Exception e) {
+            // Non-fatal at create — prompt path will retry
+        }
         workspaceChangeService.captureBaseline(session.getId(), workspace);
         auditService.record("session.create", session.getId().toString(), provider + " @ " + workspace);
         return SessionDto.from(session);
@@ -186,8 +196,11 @@ public class SessionService {
         }
         AgentSession session = sessionRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Session not found: " + id));
+        guidanceService.materializeForSession(session.getWorkspacePath(), session.getId());
+        String prefix = guidanceService.buildPromptPrefix(session.getId());
+        String agentPrompt = prefix.isBlank() ? request.prompt() : prefix + request.prompt();
         SessionAgentRuntime runtime = processManager.getOrStart(session);
-        runtime.prompt(request.prompt());
+        runtime.prompt(agentPrompt);
         return MessageDto.from(userMsg);
     }
 
@@ -379,6 +392,23 @@ public class SessionService {
         session.setStatus(SessionStatus.IDLE);
         auditService.record("session.unarchive", id.toString(), null);
         return SessionDto.from(sessionRepository.save(session));
+    }
+
+    public SessionGuidanceDto getGuidance(UUID id) {
+        require(id);
+        return guidanceService.getSessionGuidance(id);
+    }
+
+    @Transactional
+    public SessionGuidanceDto putGuidance(UUID id, UpdateSessionGuidanceRequest request) {
+        AgentSession session = requireOwnerOnly(id);
+        SessionGuidanceDto dto = guidanceService.putSessionGuidance(
+                id,
+                request,
+                new GuidanceService.PathAwareSession(session.getWorkspacePath())
+        );
+        auditService.record("session.guidance", id.toString(), "items=" + (request.items() == null ? 0 : request.items().size()));
+        return dto;
     }
 
     public boolean canAccess(UUID id) {

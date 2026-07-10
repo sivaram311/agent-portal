@@ -1,0 +1,92 @@
+<div class="backdrop" (click)="closed.emit()">
+  <section class="panel" data-testid="guidance-settings" (click)="$event.stopPropagation()">
+    <header>
+      <div>
+        <h2>Rules &amp; Skills</h2>
+        <p class="sub">Global defaults for your new sessions. Session Guidance can override per run.</p>
+      </div>
+      <button type="button" class="ap-btn ap-btn-ghost" (click)="closed.emit()" aria-label="Close">✕</button>
+    </header>
+
+    <div class="tabs" role="tablist">
+      <button type="button" class="tab" [class.on]="tab === 'RULE'" (click)="setTab('RULE')">Rules</button>
+      <button type="button" class="tab" [class.on]="tab === 'SKILL'" (click)="setTab('SKILL')">Skills</button>
+    </div>
+
+    <div class="toolbar">
+      <button type="button" class="ap-btn ap-btn-primary" (click)="startCreate()">
+        Add {{ tab === 'RULE' ? 'rule' : 'skill' }}
+      </button>
+      <button type="button" class="ap-btn ap-btn-ghost" (click)="installTemplates()">Install starters</button>
+    </div>
+
+    @if (isEditorOpen) {
+      <form class="editor" (ngSubmit)="save()">
+        <h3>{{ editing ? 'Edit' : 'New' }} {{ tab === 'RULE' ? 'rule' : 'skill' }}</h3>
+        <label>
+          Title
+          <input [(ngModel)]="draftTitle" name="gTitle" required />
+        </label>
+        <label>
+          Short description
+          <input [(ngModel)]="draftDescription" name="gDesc" placeholder="Shown in lists and skill summaries" />
+        </label>
+        @if (tab === 'RULE') {
+          <label>
+            Globs (optional)
+            <input [(ngModel)]="draftGlobs" name="gGlobs" placeholder="e.g. **/*.ts" />
+          </label>
+          <label class="check">
+            <input type="checkbox" [(ngModel)]="draftAlwaysApply" name="gAlways" />
+            Always apply
+          </label>
+        }
+        <label class="check">
+          <input type="checkbox" [(ngModel)]="draftEnabledByDefault" name="gDefault" />
+          Enable for new sessions
+        </label>
+        <label>
+          Body (markdown)
+          <textarea [(ngModel)]="draftBody" name="gBody" rows="8" required></textarea>
+        </label>
+        <div class="actions">
+          <button type="button" class="ap-btn ap-btn-ghost" (click)="cancelEdit()">Cancel</button>
+          <button type="submit" class="ap-btn ap-btn-primary" [disabled]="saving">Save</button>
+        </div>
+      </form>
+    } @else if (loading) {
+      <p class="muted">Loading…</p>
+    } @else if (filtered.length === 0) {
+      <div class="ap-empty compact">
+        <h3>No {{ tab === 'RULE' ? 'rules' : 'skills' }} yet</h3>
+        <p>
+          {{ tab === 'RULE' ? 'Rules always tell the agent how to behave.' : 'Skills are playbooks for specific jobs.' }}
+        </p>
+        <button type="button" class="ap-btn ap-btn-primary" (click)="startCreate()">
+          Add your first {{ tab === 'RULE' ? 'rule' : 'skill' }}
+        </button>
+      </div>
+    } @else {
+      <ul class="cards">
+        @for (p of filtered; track p.id) {
+          <li class="card">
+            <div class="card-top">
+              <strong>{{ p.title }}</strong>
+              <label class="switch" [title]="p.enabledByDefault ? 'On for new sessions' : 'Off for new sessions'">
+                <input type="checkbox" [checked]="p.enabledByDefault" (change)="toggleDefault(p)" />
+                <span>Default</span>
+              </label>
+            </div>
+            @if (p.description) {
+              <p class="desc">{{ p.description }}</p>
+            }
+            <div class="card-actions">
+              <button type="button" class="ap-btn ap-btn-ghost" (click)="startEdit(p)">Edit</button>
+              <button type="button" class="ap-btn ap-btn-ghost danger" (click)="remove(p)">Delete</button>
+            </div>
+          </li>
+        }
+      </ul>
+    }
+  </section>
+</div>

@@ -1,0 +1,136 @@
+:host {
+  display: block;
+  height: 100%;
+  min-height: 0;
+  overflow: auto;
+}
+
+.guidance {
+  padding: 0.85rem 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: flex-start;
+}
+
+h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.sub {
+  margin: 0.25rem 0 0;
+  font-size: 0.8rem;
+  color: var(--ap-text-muted);
+  line-height: 1.4;
+  max-width: 36rem;
+}
+
+.effective {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.effective .label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ap-text-muted);
+  margin-right: 0.25rem;
+}
+
+.chip {
+  border: 1px solid rgba(20, 184, 166, 0.35);
+  background: var(--ap-accent-soft);
+  color: #5eead4;
+  border-radius: 999px;
+  padding: 0.2rem 0.55rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.chip.skill {
+  border-color: rgba(14, 165, 233, 0.35);
+  background: rgba(14, 165, 233, 0.14);
+  color: #7dd3fc;
+}
+
+.section h4 {
+  margin: 0 0 0.45rem;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ap-text-muted);
+}
+
+.checklist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.checklist label {
+  display: flex;
+  gap: 0.65rem;
+  align-items: flex-start;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--ap-border);
+  border-radius: var(--ap-radius);
+  background: var(--ap-surface);
+  min-height: var(--ap-touch);
+}
+
+.meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.meta small {
+  color: var(--ap-text-muted);
+  font-size: 0.75rem;
+  line-height: 1.35;
+}
+
+textarea {
+  width: 100%;
+  border: 1px solid var(--ap-border);
+  border-radius: var(--ap-radius);
+  background: rgba(15, 23, 42, 0.75);
+  padding: 0.65rem 0.75rem;
+  color: var(--ap-text);
+  resize: vertical;
+  min-height: 5rem;
+}
+
+.muted {
+  color: var(--ap-text-muted);
+}
+
+.ap-empty.compact {
+  min-height: 7rem;
+  padding: 1rem 0.5rem;
+}
+
+@media (max-width: 639px) {
+  .guidance {
+    padding: 0.75rem;
+  }
+
+  header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

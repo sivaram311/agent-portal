@@ -84,6 +84,7 @@ public class HealthController {
         capabilities.put("presets", true);
         capabilities.put("historyReplay", true);
         capabilities.put("webhooks", true);
+        capabilities.put("guidanceRulesSkills", true);
         body.put("capabilities", capabilities);
         body.put("cursorModel", agentProperties.getCursor().getModel());
         body.put("antigravityModel", agentProperties.getAntigravity().getModel());

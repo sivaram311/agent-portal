@@ -41,9 +41,26 @@ java -jar target\backend-0.0.1-SNAPSHOT.jar
 
 | Service | URL |
 |---------|-----|
-| UI | `http://<PUBLIC_HOST>:4200` |
-| API | `http://<PUBLIC_HOST>:8080` |
-| CSS | `http://<PUBLIC_HOST>:9000` |
+| UI | `http://<PUBLIC_HOST>:4200` or [https://delena.buzz/](https://delena.buzz/) via Cloudflare → NGINX |
+| API | `http://<PUBLIC_HOST>:8080` (also `https://delena.buzz/api/` via NGINX) |
+| CSS | `http://<PUBLIC_HOST>:9000` (also `https://delena.buzz/auth/` via NGINX) |
+
+### Cloudflare + NGINX (delena.buzz)
+
+Full runbook: [DELENA-PROXY.md](DELENA-PROXY.md). Source configs: `E:\Source\Deployment\`.
+
+| Check | Expect |
+|-------|--------|
+| nginx running | `Get-Process nginx` / `E:\Source\Deployment\scripts\status-nginx.ps1` |
+| Firewall | Inbound **NGINX HTTP 80** allow (Cloudflare must reach origin) |
+| SSL/TLS mode | **Flexible** until origin has real TLS on 443 |
+| `CSS_AUTH_URL` | `https://delena.buzz` when users open the site over HTTPS |
+| `APP_CORS_ORIGINS` | Include `https://delena.buzz` and `https://www.delena.buzz` |
+| CSS CORS | `https://delena.buzz` in CSS `allowed-origin-patterns` + CSS JAR restarted |
+
+Mixed content (HTTPS page → HTTP `/auth/login`) is blocked by browsers; the portal client matches auth calls to the page origin/protocol.
+
+If login returns **403 Invalid CORS request**, restart CSS after ensuring `https://delena.buzz` is in `centralized-security-system` `css.cors.allowed-origin-patterns`.
 
 **Optional API-only container** (no Cursor/Agy on Windows):
 
@@ -179,6 +196,33 @@ Use these for TLS / tunnel cutover (e.g. pointing `delena.buzz` at the host) —
 
 - `POST /api/sessions/{id}/unarchive` — restore an `ARCHIVED` session to `IDLE`
 - List includes archived sessions so the UI filter can show them
+
+## Rules & Skills (guidance)
+
+Per-user library + per-session overrides.
+
+| Scope | Where | Behavior |
+|-------|--------|----------|
+| Global | Top-bar **Rules** → Rules & Skills sheet | CRUD packs; **Default** toggle = enabled for new sessions |
+| Session | **Guidance** tab | Checklist of library packs + optional session-only note; **Effective** chips |
+
+**Precedence:** session checklist wins. Create dialog option **Use my Rules & Skills defaults** (on by default) copies enabled packs onto the new session.
+
+**Delivery**
+
+- **Cursor:** writes managed files under the session workspace:
+  - `.cursor/rules/<slug>.mdc`
+  - `.cursor/skills/<slug>/SKILL.md`
+  - `AGENTS.md` index  
+  Files include `<!-- agent-portal-managed -->` and are rewritten on guidance save / each prompt.
+- **Antigravity (and Cursor fallback):** compact instruction **prefix** prepended to the agent prompt (rules full text + skill summaries). Chat history stores only the user’s raw message.
+
+APIs:
+
+- `GET/POST/PATCH/DELETE /api/guidance/packs`
+- `GET/PUT /api/guidance/defaults`
+- `GET /api/guidance/templates` + `POST /api/guidance/templates/install`
+- `GET/PUT /api/sessions/{id}/guidance`
 
 ## Sharing
 

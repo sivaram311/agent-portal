@@ -1,0 +1,58 @@
+<div class="guidance" data-testid="guidance-panel">
+  <header>
+    <div>
+      <h3>Guidance</h3>
+      <p class="sub">Choose which global packs apply to this session. Changes take effect on the next prompt.</p>
+    </div>
+    <button type="button" class="ap-btn ap-btn-primary" (click)="save()" [disabled]="saving || loading">
+      {{ saving ? 'Saving…' : 'Save' }}
+    </button>
+  </header>
+
+  @if (effective.length) {
+    <div class="effective" aria-label="Effective guidance">
+      <span class="label">Effective</span>
+      @for (e of effective; track e.id) {
+        <span class="chip" [class.skill]="e.kind === 'SKILL'">{{ e.title }}</span>
+      }
+    </div>
+  }
+
+  @if (loading) {
+    <p class="muted">Loading…</p>
+  } @else {
+    <section class="section">
+      <h4>Library packs</h4>
+      @if (packs.length === 0) {
+        <div class="ap-empty compact">
+          <h3>No packs in your library</h3>
+          <p>Open Rules &amp; Skills from the top bar to create globals, then enable them here.</p>
+        </div>
+      } @else {
+        <ul class="checklist">
+          @for (p of packs; track p.id) {
+            <li>
+              <label>
+                <input type="checkbox" [(ngModel)]="enabledMap[p.id]" [name]="'pack-' + p.id" />
+                <span class="meta">
+                  <strong>{{ p.title }}</strong>
+                  <small>{{ p.kind === 'RULE' ? 'Rule' : 'Skill' }}@if (p.description) { · {{ p.description }} }</small>
+                </span>
+              </label>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+
+    <section class="section">
+      <h4>Session-only note</h4>
+      <textarea
+        [(ngModel)]="sessionNote"
+        name="sessionNote"
+        rows="4"
+        placeholder="Optional instructions for this session only…"
+      ></textarea>
+    </section>
+  }
+</div>

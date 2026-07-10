@@ -14,13 +14,14 @@ The UI uses a **dark navy/teal responsive redesign** (design tokens in `frontend
 - Realtime streaming over WebSocket (STOMP/SockJS) with CSS-aware WS auth
 - Persistent history (H2 file DB by default; PostgreSQL profile available)
 - Markdown-rendered assistant replies (marked + DOMPurify) with **message timestamps**
-- Session detail tabs: **Transcript** | **Logs** | **Code** | **Preview** | **Changes** | **History** | **Activity** (horizontally scrollable on phones)
+- Session detail tabs: **Transcript** | **Logs** | **Code** | **Preview** | **Changes** | **History** | **Guidance** | **Activity** (horizontally scrollable on phones)
 - **Sub-agent / task panel** with Abandon (Cursor: child-scoped mark + suppress further tool updates; other providers may cancel the session run)
 - Antigravity **soft interactive** + optional **ACP** (`agy acp` / `agy --acp`, then print-mode fallback)
 - Cursor ACP **stale `session/load` recovery** — timed-out loads restart the ACP process and fall back to `session/new`
 - **Change review** with **Keep** / **Restore** (git or `.agent-portal/baseline` snapshot) and **History** timeline
 - **Session presets** and optional starter prompt on create
 - **Collaborator sharing** when CSS is enabled (share bar with busy/disabled states)
+- **Rules & Skills** — per-user library (global defaults) + per-session **Guidance** tab; materializes `.cursor/rules` / `.cursor/skills` for Cursor and a prompt prefix for Antigravity
 - Workspace **file browser** with sandbox under `agent.workspace.root`
 - **CSS JWT auth** via `com.css:css-spring-boot-starter` (`css.resource-server.*`) + optional API-key fallback
 - Monaco Code tab (vendored) + sandboxed HTML Preview
@@ -135,9 +136,9 @@ cd frontend
 npm start
 ```
 
-`npm start` runs `ng serve --host 0.0.0.0 --port 4200`, so the UI is reachable on your LAN/public IP (not only localhost).
+`npm start` runs `ng serve --host 0.0.0.0 --port 4200` (**development mode** — the console banner is expected). For a production build without that banner, use `ng build` and serve `dist/` behind NGINX.
 
-UI: `http://localhost:4200` (or `http://<your-ip>:4200`)
+UI: `http://localhost:4200` (or `https://delena.buzz` via Cloudflare → NGINX — see [docs/OPS.md](docs/OPS.md) and `E:\Source\Deployment\nginx-setup.md`).
 
 ### API / WebSocket host
 
@@ -163,7 +164,8 @@ For access from other machines, allow inbound TCP **4200** (Angular dev server) 
 6. For Antigravity: tools auto-run when `agent.antigravity.skip-permissions=true`.
 7. Use **Cancel** to stop an in-flight run; **Archive** / **Restore** from the session list filters.
 8. Long-press a truncated workspace path on mobile to copy it.
-9. Refresh the page — history reloads from the database.
+9. Configure **Rules & Skills** from the top-bar **Rules** button; tweak per session on the **Guidance** tab.
+10. Refresh the page — history reloads from the database.
 
 ## Provider comparison
 
@@ -192,6 +194,16 @@ Antigravity streaming is **near-realtime** (sub-second polling of growing brain 
 - Near-realtime updates come from brain artifacts plus `.agent-portal-reply.txt` and the stdout capture file; portal runs use skip-permissions for unattended execution.
 - On some Windows installs `transcript.jsonl` stays empty due to an upstream path bug (`/Users/...` vs `%USERPROFILE%`); the portal therefore also watches brain `messages/` and task logs when present.
 - If Google later ships `agy --acp`, the bridge can be swapped without changing the Angular event model.
+
+## Rules & Skills
+
+1. Sign in → top-bar **Rules** → create rules/skills (or **Install starters**).
+2. Toggle **Default** on packs you want on every new session.
+3. Create a session (defaults applied when “Use my Rules & Skills defaults” is checked).
+4. Open the session **Guidance** tab to enable/disable packs or add a session-only note.
+5. Next prompt materializes `.cursor/rules` + `.cursor/skills` (Cursor) and/or a prompt prefix (Antigravity).
+
+Details: [docs/OPS.md](docs/OPS.md#rules--skills-guidance).
 
 ## SockJS / `global is not defined`
 
@@ -232,7 +244,9 @@ npm test
 npm run test:mobile
 ```
 
-Ops / Postgres backups: [`docs/OPS.md`](docs/OPS.md). Roadmap: [`docs/ROADMAP.md`](docs/ROADMAP.md).
+Ops / Postgres backups: [`docs/OPS.md`](docs/OPS.md).  
+delena.buzz / Cloudflare / NGINX: [`docs/DELENA-PROXY.md`](docs/DELENA-PROXY.md).  
+Roadmap: [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
 ## Cursor skill for agents
 

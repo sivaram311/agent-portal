@@ -16,6 +16,8 @@ import { CapabilityBadgesComponent } from './components/capability-badges/capabi
 import { AuditPanelComponent } from './components/audit-panel/audit-panel.component';
 import { ChangesPanelComponent } from './components/changes-panel/changes-panel.component';
 import { HistoryPanelComponent } from './components/history-panel/history-panel.component';
+import { GuidanceSettingsComponent } from './components/guidance-settings/guidance-settings.component';
+import { GuidancePanelComponent } from './components/guidance-panel/guidance-panel.component';
 import { ApiService } from './services/api.service';
 import { AuthService } from './services/auth.service';
 import { RealtimeService } from './services/realtime.service';
@@ -50,6 +52,8 @@ import {
     AuditPanelComponent,
     ChangesPanelComponent,
     HistoryPanelComponent,
+    GuidanceSettingsComponent,
+    GuidancePanelComponent,
   ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',
@@ -75,6 +79,7 @@ export class AppComponent implements OnInit, OnDestroy {
   createWorkspace = 'demo';
   createProvider: 'cursor' | 'antigravity' = 'cursor';
   createStarterPrompt = '';
+  createUseGuidanceDefaults = true;
   presets: SessionPreset[] = [];
   selectedPresetId = '';
   shareUsername = '';
@@ -85,6 +90,7 @@ export class AppComponent implements OnInit, OnDestroy {
   activeTab: SessionTabId = 'transcript';
   drawerOpen = false;
   isMobile = false;
+  showGuidanceSettings = false;
 
   private eventSub?: Subscription;
 
@@ -173,11 +179,17 @@ export class AppComponent implements OnInit, OnDestroy {
     this.createWorkspace = 'demo';
     this.createProvider = 'cursor';
     this.createStarterPrompt = '';
+    this.createUseGuidanceDefaults = true;
     this.selectedPresetId = '';
     this.api.presets().subscribe({
       next: (p) => (this.presets = p),
       error: () => (this.presets = []),
     });
+  }
+
+  openGuidanceSettings(): void {
+    this.showGuidanceSettings = true;
+    this.drawerOpen = false;
   }
 
   applyPreset(id: string): void {
@@ -196,7 +208,7 @@ export class AppComponent implements OnInit, OnDestroy {
     const title = this.createTitle.trim() || 'New session';
     const workspace = this.createWorkspace.trim() || 'demo';
     const starter = this.createStarterPrompt.trim();
-    this.api.createSession(title, workspace, this.createProvider).subscribe({
+    this.api.createSession(title, workspace, this.createProvider, this.createUseGuidanceDefaults).subscribe({
       next: (session) => {
         this.showCreate = false;
         this.refreshSessions();

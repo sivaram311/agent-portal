@@ -70,7 +70,7 @@ export class AuthService {
       throw new Error('Auth config not loaded');
     }
     const data = await firstValueFrom(
-      this.http.post<LoginResponse>(`${cfg.authUrl}${cfg.loginPath}`, {
+      this.http.post<LoginResponse>(`${this.authBase(cfg)}${cfg.loginPath}`, {
         username,
         password,
         clientId: cfg.clientId,
@@ -87,7 +87,7 @@ export class AuthService {
       try {
         await firstValueFrom(
           this.http.post(
-            `${cfg.authUrl}/auth/logout`,
+            `${this.authBase(cfg)}/auth/logout`,
             { clientId: cfg.clientId },
             { headers: { Authorization: `Bearer ${token}` } }
           )
@@ -114,7 +114,7 @@ export class AuthService {
     }
     try {
       const data = await firstValueFrom(
-        this.http.post<LoginResponse>(`${cfg.authUrl}${cfg.refreshPath}`, {
+        this.http.post<LoginResponse>(`${this.authBase(cfg)}${cfg.refreshPath}`, {
           refreshToken: refresh,
           clientId: cfg.clientId,
         })
@@ -124,6 +124,29 @@ export class AuthService {
     } catch {
       return false;
     }
+  }
+
+  /**
+   * Prefer same-origin when CSS is reverse-proxied on this host so HTTPS pages
+   * never call http://…/auth (mixed content blocked by the browser).
+   */
+  private authBase(cfg: AuthConfig): string {
+    const configured = (cfg.authUrl || '').trim();
+    if (!configured || configured.startsWith('/')) {
+      return configured.replace(/\/$/, '');
+    }
+    try {
+      const parsed = new URL(configured);
+      if (parsed.hostname === window.location.hostname) {
+        return window.location.origin;
+      }
+    } catch {
+      // fall through
+    }
+    if (typeof window !== 'undefined' && window.location.protocol === 'https:' && configured.startsWith('http:')) {
+      return 'https:' + configured.slice('http:'.length);
+    }
+    return configured.replace(/\/$/, '');
   }
 
   private storeTokens(data: LoginResponse): void {

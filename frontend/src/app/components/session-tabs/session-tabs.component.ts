@@ -1,7 +1,15 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
-export type SessionTabId = 'code' | 'transcript' | 'logs' | 'preview' | 'activity' | 'changes' | 'history';
+export type SessionTabId =
+  | 'code'
+  | 'transcript'
+  | 'logs'
+  | 'preview'
+  | 'activity'
+  | 'changes'
+  | 'history'
+  | 'guidance';
 
 @Component({
   selector: 'app-session-tabs',
@@ -21,6 +29,7 @@ export class SessionTabsComponent {
     { id: 'preview', label: 'Preview' },
     { id: 'changes', label: 'Changes' },
     { id: 'history', label: 'History' },
+    { id: 'guidance', label: 'Guidance' },
     { id: 'activity', label: 'Activity' },
   ];
 

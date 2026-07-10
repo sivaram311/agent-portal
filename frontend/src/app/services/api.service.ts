@@ -12,6 +12,10 @@ import {
   FileChange,
   SessionPreset,
   SessionEventRow,
+  GuidancePack,
+  GuidanceKind,
+  SessionGuidance,
+  GuidanceTemplate,
 } from '../models/session.models';
 import { apiBaseUrl } from './backend-url';
 
@@ -32,8 +36,13 @@ export class ApiService {
     return this.http.get<Session[]>(`${this.base}/sessions`);
   }
 
-  createSession(title: string, workspacePath: string, provider: string) {
-    return this.http.post<Session>(`${this.base}/sessions`, { title, workspacePath, provider });
+  createSession(title: string, workspacePath: string, provider: string, useGuidanceDefaults = true) {
+    return this.http.post<Session>(`${this.base}/sessions`, {
+      title,
+      workspacePath,
+      provider,
+      useGuidanceDefaults,
+    });
   }
 
   getSession(id: string) {
@@ -150,5 +159,65 @@ export class ApiService {
 
   removeCollaborator(sessionId: string, username: string) {
     return this.http.delete(`${this.base}/sessions/${sessionId}/collaborators/${encodeURIComponent(username)}`);
+  }
+
+  listGuidancePacks(kind?: GuidanceKind) {
+    const q = kind ? `?kind=${kind}` : '';
+    return this.http.get<GuidancePack[]>(`${this.base}/guidance/packs${q}`);
+  }
+
+  createGuidancePack(body: {
+    kind: GuidanceKind;
+    title: string;
+    description?: string;
+    bodyMarkdown: string;
+    globs?: string;
+    alwaysApply?: boolean;
+    enabledByDefault?: boolean;
+    slug?: string;
+  }) {
+    return this.http.post<GuidancePack>(`${this.base}/guidance/packs`, body);
+  }
+
+  updateGuidancePack(id: string, body: Partial<GuidancePack>) {
+    return this.http.patch<GuidancePack>(`${this.base}/guidance/packs/${id}`, body);
+  }
+
+  deleteGuidancePack(id: string) {
+    return this.http.delete(`${this.base}/guidance/packs/${id}`);
+  }
+
+  getGuidanceDefaults() {
+    return this.http.get<GuidancePack[]>(`${this.base}/guidance/defaults`);
+  }
+
+  putGuidanceDefaults(enabledPackIds: string[]) {
+    return this.http.put<GuidancePack[]>(`${this.base}/guidance/defaults`, { enabledPackIds });
+  }
+
+  guidanceTemplates() {
+    return this.http.get<GuidanceTemplate[]>(`${this.base}/guidance/templates`);
+  }
+
+  installGuidanceTemplates() {
+    return this.http.post<GuidancePack[]>(`${this.base}/guidance/templates/install`, {});
+  }
+
+  getSessionGuidance(sessionId: string) {
+    return this.http.get<SessionGuidance>(`${this.base}/sessions/${sessionId}/guidance`);
+  }
+
+  putSessionGuidance(
+    sessionId: string,
+    items: {
+      packId?: string | null;
+      enabled?: boolean;
+      sortOrder?: number;
+      title?: string;
+      sessionBody?: string;
+      kind?: GuidanceKind;
+    }[]
+  ) {
+    return this.http.put<SessionGuidance>(`${this.base}/sessions/${sessionId}/guidance`, { items });
   }
 }
