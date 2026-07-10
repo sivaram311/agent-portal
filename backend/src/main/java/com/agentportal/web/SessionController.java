@@ -83,6 +83,43 @@ public class SessionController {
         return sessionService.readFile(id, path);
     }
 
+    @GetMapping("/{id}/changes")
+    public List<FileChangeDto> changes(@PathVariable UUID id) throws Exception {
+        return sessionService.listChanges(id);
+    }
+
+    @GetMapping("/{id}/changes/diff")
+    public FileChangeDto changeDiff(
+            @PathVariable UUID id,
+            @RequestParam("path") String path
+    ) throws Exception {
+        return sessionService.diffFile(id, path);
+    }
+
+    @GetMapping("/{id}/events")
+    public List<Map<String, Object>> events(@PathVariable UUID id) {
+        return sessionService.events(id);
+    }
+
+    @GetMapping("/{id}/collaborators")
+    public List<Map<String, Object>> collaborators(@PathVariable UUID id) {
+        return sessionService.listCollaborators(id);
+    }
+
+    @PostMapping("/{id}/collaborators")
+    public Map<String, Object> addCollaborator(
+            @PathVariable UUID id,
+            @RequestBody Map<String, String> body
+    ) {
+        return sessionService.addCollaborator(id, body.get("username"));
+    }
+
+    @DeleteMapping("/{id}/collaborators/{username}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void removeCollaborator(@PathVariable UUID id, @PathVariable String username) {
+        sessionService.removeCollaborator(id, username);
+    }
+
     @PostMapping("/{id}/permissions/{permissionId}")
     public Map<String, String> resolvePermission(
             @PathVariable UUID id,

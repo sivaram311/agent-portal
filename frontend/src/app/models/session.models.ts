@@ -107,3 +107,33 @@ export interface AuditEvent {
   details: string;
   createdAt: string;
 }
+
+export interface FileChange {
+  path: string;
+  status: string;
+  size: number;
+  unifiedDiff?: string | null;
+  source?: string | null;
+}
+
+export interface SessionPreset {
+  id: string;
+  title: string;
+  provider: string;
+  workspacePath: string;
+  starterPrompt: string;
+}
+
+export interface HistoryItem {
+  kind: 'message' | 'tool' | 'event';
+  at: string;
+  title: string;
+  detail: string;
+}
+
+export interface SessionEventRow {
+  id: string;
+  type: string;
+  createdAt: string;
+  payload: Record<string, unknown>;
+}

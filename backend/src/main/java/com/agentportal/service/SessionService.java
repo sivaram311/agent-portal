@@ -1,6 +1,7 @@
 package com.agentportal.service;
 
 import com.agentportal.acp.AgentProcessManager;
+import com.agentportal.acp.CursorSessionRuntime;
 import com.agentportal.acp.SessionAgentRuntime;
 import com.agentportal.config.AgentProperties;
 import com.agentportal.config.CssProperties;
@@ -8,16 +9,16 @@ import com.agentportal.domain.*;
 import com.agentportal.dto.*;
 import com.agentportal.repo.*;
 import com.agentportal.security.CurrentUser;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
-import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class SessionService {
@@ -26,11 +27,16 @@ public class SessionService {
     private final ChatMessageRepository messageRepository;
     private final ToolRunRepository toolRunRepository;
     private final PermissionRequestRepository permissionRepository;
+    private final AgentEventRepository eventRepository;
+    private final SessionCollaboratorRepository collaboratorRepository;
     private final AgentProcessManager processManager;
     private final AgentProperties agentProperties;
     private final WorkspaceFileService workspaceFileService;
+    private final WorkspaceChangeService workspaceChangeService;
+    private final WorkspaceQuotaService workspaceQuotaService;
     private final AuditService auditService;
     private final CssProperties cssProperties;
+    private final ObjectMapper objectMapper;
 
     public SessionService(
             AgentSessionRepository sessionRepository,
@@ -38,26 +44,36 @@ public class SessionService {
             ToolRunRepository toolRunRepository,
             PermissionRequestRepository permissionRepository,
             AgentEventRepository eventRepository,
+            SessionCollaboratorRepository collaboratorRepository,
             AgentProcessManager processManager,
             AgentProperties agentProperties,
             WorkspaceFileService workspaceFileService,
+            WorkspaceChangeService workspaceChangeService,
+            WorkspaceQuotaService workspaceQuotaService,
             AuditService auditService,
-            CssProperties cssProperties
+            CssProperties cssProperties,
+            ObjectMapper objectMapper
     ) {
         this.sessionRepository = sessionRepository;
         this.messageRepository = messageRepository;
         this.toolRunRepository = toolRunRepository;
         this.permissionRepository = permissionRepository;
+        this.eventRepository = eventRepository;
+        this.collaboratorRepository = collaboratorRepository;
         this.processManager = processManager;
         this.agentProperties = agentProperties;
         this.workspaceFileService = workspaceFileService;
+        this.workspaceChangeService = workspaceChangeService;
+        this.workspaceQuotaService = workspaceQuotaService;
         this.auditService = auditService;
         this.cssProperties = cssProperties;
+        this.objectMapper = objectMapper;
     }
 
     @Transactional
-    public SessionDto create(CreateSessionRequest request) {
+    public SessionDto create(CreateSessionRequest request) throws Exception {
         Path workspace = resolveWorkspace(request.workspacePath());
+        workspaceQuotaService.assertWithinQuota(workspace);
         try {
             Files.createDirectories(workspace);
         } catch (Exception e) {
@@ -77,6 +93,7 @@ public class SessionService {
         session.setProvider(provider);
         session.setOwnerUsername(CurrentUser.usernameOrAnonymous());
         session = sessionRepository.save(session);
+        workspaceChangeService.captureBaseline(session.getId(), workspace);
         auditService.record("session.create", session.getId().toString(), provider + " @ " + workspace);
         return SessionDto.from(session);
     }
@@ -90,9 +107,11 @@ public class SessionService {
                         .map(SessionDto::from)
                         .toList();
             }
-            return sessionRepository
-                    .findByOwnerUsernameAndStatusNotOrderByUpdatedAtDesc(user, SessionStatus.ARCHIVED)
-                    .stream()
+            Set<UUID> collabIds = collaboratorRepository.findByUsername(user).stream()
+                    .map(SessionCollaborator::getSessionId)
+                    .collect(Collectors.toSet());
+            return sessionRepository.findByStatusNotOrderByUpdatedAtDesc(SessionStatus.ARCHIVED).stream()
+                    .filter(s -> user.equals(s.getOwnerUsername()) || collabIds.contains(s.getId()))
                     .map(SessionDto::from)
                     .toList();
         }
@@ -116,6 +135,24 @@ public class SessionService {
         return toolRunRepository.findBySessionIdOrderByStartedAtAsc(id).stream().map(ToolRunDto::from).toList();
     }
 
+    public List<Map<String, Object>> events(UUID id) {
+        require(id);
+        return eventRepository.findBySessionIdOrderByCreatedAtAsc(id).stream().map(e -> {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("id", e.getId().toString());
+            m.put("type", e.getType());
+            m.put("createdAt", e.getCreatedAt().toString());
+            try {
+                m.put("payload", e.getPayloadJson() == null || e.getPayloadJson().isBlank()
+                        ? Map.of()
+                        : objectMapper.readValue(e.getPayloadJson(), new TypeReference<Map<String, Object>>() {}));
+            } catch (Exception ex) {
+                m.put("payload", Map.of("raw", e.getPayloadJson()));
+            }
+            return m;
+        }).toList();
+    }
+
     public List<PermissionDto> pendingPermissions(UUID id) {
         require(id);
         return permissionRepository.findBySessionIdAndStatusOrderByCreatedAtDesc(id, PermissionStatus.PENDING)
@@ -137,6 +174,10 @@ public class SessionService {
                 || session.getStatus() == SessionStatus.WAITING_PLAN)) {
             throw new IllegalStateException("Session already has an active run");
         }
+
+        Path workspace = Path.of(session.getWorkspacePath());
+        workspaceQuotaService.assertWithinQuota(workspace);
+        workspaceChangeService.captureBaseline(id, workspace);
 
         ChatMessage userMsg = new ChatMessage();
         userMsg.setSessionId(id);
@@ -211,13 +252,63 @@ public class SessionService {
         return workspaceFileService.read(Path.of(session.getWorkspacePath()), path);
     }
 
+    public List<FileChangeDto> listChanges(UUID sessionId) throws Exception {
+        AgentSession session = require(sessionId);
+        return workspaceChangeService.listChanges(sessionId, Path.of(session.getWorkspacePath()));
+    }
+
+    public FileChangeDto diffFile(UUID sessionId, String path) throws Exception {
+        AgentSession session = require(sessionId);
+        return workspaceChangeService.diffFile(sessionId, Path.of(session.getWorkspacePath()), path);
+    }
+
+    public List<Map<String, Object>> listCollaborators(UUID sessionId) {
+        requireOwnerOnly(sessionId);
+        return collaboratorRepository.findBySessionIdOrderByCreatedAtAsc(sessionId).stream()
+                .map(c -> Map.<String, Object>of(
+                        "username", c.getUsername(),
+                        "role", c.getRole(),
+                        "createdAt", c.getCreatedAt().toString()
+                ))
+                .toList();
+    }
+
+    @Transactional
+    public Map<String, Object> addCollaborator(UUID sessionId, String username) {
+        AgentSession session = requireOwnerOnly(sessionId);
+        String user = username == null ? "" : username.trim();
+        if (user.isBlank()) {
+            throw new IllegalArgumentException("username required");
+        }
+        if (user.equals(session.getOwnerUsername())) {
+            throw new IllegalArgumentException("Owner is already the session owner");
+        }
+        SessionCollaborator existing = collaboratorRepository.findBySessionIdAndUsername(sessionId, user).orElse(null);
+        if (existing == null) {
+            SessionCollaborator c = new SessionCollaborator();
+            c.setSessionId(sessionId);
+            c.setUsername(user);
+            c.setRole("collaborator");
+            collaboratorRepository.save(c);
+        }
+        auditService.record("session.share", sessionId.toString(), user);
+        return Map.of("status", "ok", "username", user);
+    }
+
+    @Transactional
+    public void removeCollaborator(UUID sessionId, String username) {
+        requireOwnerOnly(sessionId);
+        collaboratorRepository.deleteBySessionIdAndUsername(sessionId, username);
+        auditService.record("session.unshare", sessionId.toString(), username);
+    }
+
     public void resolvePermission(UUID sessionId, UUID permissionId, PermissionDecisionRequest request) throws Exception {
         AgentSession session = require(sessionId);
-        if ("antigravity".equalsIgnoreCase(session.getProvider())) {
-            throw new IllegalStateException(
-                    "Antigravity sessions do not support mid-turn permission prompts in this version.");
-        }
         SessionAgentRuntime runtime = processManager.getOrStart(session);
+        if ("antigravity".equalsIgnoreCase(session.getProvider()) && !(runtime instanceof CursorSessionRuntime)) {
+            throw new IllegalStateException(
+                    "Antigravity print-mode does not support mid-turn permission prompts.");
+        }
         runtime.resolvePermission(permissionId, request.decision(), request.reason());
     }
 
@@ -230,7 +321,6 @@ public class SessionService {
         return SessionDto.from(sessionRepository.save(session));
     }
 
-    /** Used by STOMP interceptor — returns true if caller may watch this session. */
     public boolean canAccess(UUID id) {
         try {
             require(id);
@@ -243,11 +333,27 @@ public class SessionService {
     private AgentSession require(UUID id) {
         AgentSession session = sessionRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Session not found: " + id));
-        assertOwner(session);
+        assertAccess(session);
         return session;
     }
 
-    private void assertOwner(AgentSession session) {
+    private AgentSession requireOwnerOnly(UUID id) {
+        AgentSession session = sessionRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Session not found: " + id));
+        if (!enforceOwnership()) {
+            return session;
+        }
+        if (CurrentUser.isAdmin()) {
+            return session;
+        }
+        String user = CurrentUser.usernameOrAnonymous();
+        if (!user.equals(session.getOwnerUsername())) {
+            throw new NoSuchElementException("Session not found: " + id);
+        }
+        return session;
+    }
+
+    private void assertAccess(AgentSession session) {
         if (!enforceOwnership()) {
             return;
         }
@@ -256,13 +362,13 @@ public class SessionService {
         }
         String user = CurrentUser.usernameOrAnonymous();
         String owner = session.getOwnerUsername();
-        if (owner == null || owner.isBlank()) {
-            // Legacy rows: only visible when auth is off, or to admin (handled above).
-            throw new NoSuchElementException("Session not found: " + session.getId());
+        if (owner != null && owner.equals(user)) {
+            return;
         }
-        if (!owner.equals(user)) {
-            throw new NoSuchElementException("Session not found: " + session.getId());
+        if (collaboratorRepository.findBySessionIdAndUsername(session.getId(), user).isPresent()) {
+            return;
         }
+        throw new NoSuchElementException("Session not found: " + session.getId());
     }
 
     private boolean enforceOwnership() {
@@ -273,10 +379,6 @@ public class SessionService {
         return (int) (messageRepository.maxSequence(sessionId) + 1);
     }
 
-    /**
-     * Relative paths resolve under agent.workspace.root.
-     * Absolute paths are allowed only when they stay under that root.
-     */
     private Path resolveWorkspace(String requested) {
         Path root = Path.of(agentProperties.getWorkspace().getRoot()).toAbsolutePath().normalize();
         if (requested == null || requested.isBlank()) {

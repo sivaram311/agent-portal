@@ -109,6 +109,22 @@
           (cancel)="cancelRun()"
           (archive)="archiveSession($event)"
         />
+        @if (health?.cssEnabled) {
+          <div class="share-bar" data-testid="share-bar">
+            <input
+              [(ngModel)]="shareUsername"
+              name="shareUser"
+              placeholder="Share with CSS username"
+              data-testid="share-username"
+            />
+            <button type="button" class="ap-btn ap-btn-ghost" (click)="shareSession()">Share</button>
+            @for (c of collaborators; track c.username) {
+              <button type="button" class="chip" (click)="unshare(c.username)" [title]="'Remove ' + c.username">
+                {{ c.username }} ×
+              </button>
+            }
+          </div>
+        }
         <app-session-tabs [active]="activeTab" (activeChange)="activeTab = $event" />
 
         <div class="tab-body">
@@ -132,6 +148,12 @@
             }
             @case ('activity') {
               <app-audit-panel [sessionId]="active.id" />
+            }
+            @case ('changes') {
+              <app-changes-panel [sessionId]="active.id" />
+            }
+            @case ('history') {
+              <app-history-panel [sessionId]="active.id" [messages]="messages" [tools]="tools" />
             }
           }
         </div>
@@ -164,6 +186,23 @@
     <form class="dialog" (ngSubmit)="createSession()" data-testid="create-session-dialog">
       <h3>New agent session</h3>
 
+      @if (presets.length) {
+        <label>
+          Preset
+          <select
+            name="preset"
+            [ngModel]="selectedPresetId"
+            (ngModelChange)="applyPreset($event)"
+            data-testid="preset-select"
+          >
+            <option value="">Custom</option>
+            @for (p of presets; track p.id) {
+              <option [value]="p.id">{{ p.title }}</option>
+            }
+          </select>
+        </label>
+      }
+
       <fieldset class="provider-pick">
         <legend>Provider</legend>
         <label class="radio">
@@ -177,7 +216,7 @@
           <input type="radio" name="provider" [(ngModel)]="createProvider" value="antigravity" />
           <span>
             <strong>Antigravity</strong>
-            <small>Near-realtime via brain transcript / messages</small>
+            <small>ACP when available, else soft print-mode Q&amp;A</small>
           </span>
         </label>
       </fieldset>
@@ -189,6 +228,10 @@
       <label>
         Workspace path
         <input [(ngModel)]="createWorkspace" name="workspace" required placeholder="demo or absolute path" />
+      </label>
+      <label>
+        Starter prompt (optional)
+        <textarea [(ngModel)]="createStarterPrompt" name="starter" rows="3" placeholder="Sent automatically after create"></textarea>
       </label>
       <p class="hint">Relative paths resolve under the configured workspace root. Provider cannot be changed later.</p>
       <div class="actions">

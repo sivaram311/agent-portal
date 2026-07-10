@@ -9,6 +9,7 @@ public class AppProperties {
 
     private final Cors cors = new Cors();
     private final Security security = new Security();
+    private final Webhooks webhooks = new Webhooks();
 
     public Cors getCors() {
         return cors;
@@ -16,6 +17,10 @@ public class AppProperties {
 
     public Security getSecurity() {
         return security;
+    }
+
+    public Webhooks getWebhooks() {
+        return webhooks;
     }
 
     public static class Cors {
@@ -31,7 +36,6 @@ public class AppProperties {
     }
 
     public static class Security {
-        /** When non-blank, require header X-API-Key (or Authorization: Bearer) for /api/** except /api/health. */
         private String apiKey = "";
 
         public String getApiKey() {
@@ -44,6 +48,19 @@ public class AppProperties {
 
         public boolean isEnabled() {
             return apiKey != null && !apiKey.isBlank();
+        }
+    }
+
+    public static class Webhooks {
+        /** Optional POST URL for run lifecycle events. */
+        private String url = "";
+
+        public String getUrl() {
+            return url;
+        }
+
+        public void setUrl(String url) {
+            this.url = url;
         }
     }
 }

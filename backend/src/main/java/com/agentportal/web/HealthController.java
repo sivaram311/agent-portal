@@ -65,17 +65,28 @@ public class HealthController {
         body.put("portalApiKeyRequired", appProperties.getSecurity().isEnabled());
         body.put("cssEnabled", cssProperties.isEnabled());
         body.put("cssClientId", cssProperties.getClientId());
-        body.put("capabilities", Map.of(
-                "cursorPermissions", true,
-                "cursorSubagentAbandonChildOnly", true,
-                "antigravitySoftInteractive", agentProperties.getAntigravity().isInteractiveMode(),
-                "antigravityMidTurnPermissions", false,
-                "sessionOwnership", cssProperties.isEnabled(),
-                "websocketAuth", cssProperties.isEnabled(),
-                "auditApi", true,
-                "codePreview", true,
-                "htmlPreview", true
-        ));
+        Map<String, Object> capabilities = new LinkedHashMap<>();
+        capabilities.put("cursorPermissions", true);
+        capabilities.put("cursorSubagentAbandonChildOnly", true);
+        capabilities.put("antigravitySoftInteractive", agentProperties.getAntigravity().isInteractiveMode());
+        capabilities.put(
+                "antigravityMidTurnPermissions",
+                Boolean.TRUE.equals(antigravityCapabilityService.probe().get("supportsAcp"))
+                        && agentProperties.getAntigravity().isPreferAcp()
+        );
+        capabilities.put("sessionOwnership", cssProperties.isEnabled());
+        capabilities.put("websocketAuth", cssProperties.isEnabled());
+        capabilities.put("auditApi", true);
+        capabilities.put("codePreview", true);
+        capabilities.put("htmlPreview", true);
+        capabilities.put("changeReview", true);
+        capabilities.put("sessionSharing", cssProperties.isEnabled());
+        capabilities.put("presets", true);
+        capabilities.put("historyReplay", true);
+        capabilities.put("webhooks", true);
+        body.put("capabilities", capabilities);
+        body.put("cursorModel", agentProperties.getCursor().getModel());
+        body.put("antigravityModel", agentProperties.getAntigravity().getModel());
         return body;
     }
 

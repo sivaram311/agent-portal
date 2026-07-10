@@ -1,0 +1,25 @@
+<div class="history" data-testid="history-panel">
+  <header>
+    <h3>History</h3>
+    <button type="button" class="ap-btn ap-btn-ghost" (click)="reload()">Refresh</button>
+  </header>
+  @if (loading) {
+    <p class="muted">Loading timeline…</p>
+  } @else if (error) {
+    <p class="error">{{ error }}</p>
+  } @else if (items.length === 0) {
+    <p class="muted">No history yet.</p>
+  } @else {
+    <ol>
+      @for (item of items; track item.at + item.title + item.kind) {
+        <li [attr.data-kind]="item.kind">
+          <div class="row">
+            <strong>{{ item.title }}</strong>
+            <time>{{ item.at | date: 'short' }}</time>
+          </div>
+          <p>{{ item.detail }}</p>
+        </li>
+      }
+    </ol>
+  }
+</div>

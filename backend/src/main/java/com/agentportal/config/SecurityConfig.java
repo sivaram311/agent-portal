@@ -60,6 +60,7 @@ public class SecurityConfig {
                     auth.requestMatchers(
                             "/api/health",
                             "/api/auth/config",
+                            "/api/presets",
                             "/h2-console/**"
                     ).permitAll();
                     auth.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll();

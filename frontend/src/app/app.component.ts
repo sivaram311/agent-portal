@@ -14,6 +14,8 @@ import { ToastComponent } from './components/toast/toast.component';
 import { LoginOverlayComponent } from './components/login-overlay/login-overlay.component';
 import { CapabilityBadgesComponent } from './components/capability-badges/capability-badges.component';
 import { AuditPanelComponent } from './components/audit-panel/audit-panel.component';
+import { ChangesPanelComponent } from './components/changes-panel/changes-panel.component';
+import { HistoryPanelComponent } from './components/history-panel/history-panel.component';
 import { ApiService } from './services/api.service';
 import { AuthService } from './services/auth.service';
 import { RealtimeService } from './services/realtime.service';
@@ -24,6 +26,7 @@ import {
   HealthInfo,
   PermissionRequest,
   Session,
+  SessionPreset,
   ToolRun,
 } from './models/session.models';
 
@@ -45,6 +48,8 @@ import {
     LoginOverlayComponent,
     CapabilityBadgesComponent,
     AuditPanelComponent,
+    ChangesPanelComponent,
+    HistoryPanelComponent,
   ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',
@@ -69,6 +74,11 @@ export class AppComponent implements OnInit, OnDestroy {
   createTitle = '';
   createWorkspace = 'demo';
   createProvider: 'cursor' | 'antigravity' = 'cursor';
+  createStarterPrompt = '';
+  presets: SessionPreset[] = [];
+  selectedPresetId = '';
+  shareUsername = '';
+  collaborators: { username: string; role: string }[] = [];
   error = '';
   sessionSearch = '';
   activeTab: SessionTabId = 'transcript';
@@ -161,17 +171,39 @@ export class AppComponent implements OnInit, OnDestroy {
     this.createTitle = '';
     this.createWorkspace = 'demo';
     this.createProvider = 'cursor';
+    this.createStarterPrompt = '';
+    this.selectedPresetId = '';
+    this.api.presets().subscribe({
+      next: (p) => (this.presets = p),
+      error: () => (this.presets = []),
+    });
+  }
+
+  applyPreset(id: string): void {
+    this.selectedPresetId = id;
+    const preset = this.presets.find((p) => p.id === id);
+    if (!preset) {
+      return;
+    }
+    this.createTitle = preset.title;
+    this.createWorkspace = preset.workspacePath;
+    this.createProvider = preset.provider === 'antigravity' ? 'antigravity' : 'cursor';
+    this.createStarterPrompt = preset.starterPrompt;
   }
 
   createSession(): void {
     const title = this.createTitle.trim() || 'New session';
     const workspace = this.createWorkspace.trim() || 'demo';
+    const starter = this.createStarterPrompt.trim();
     this.api.createSession(title, workspace, this.createProvider).subscribe({
       next: (session) => {
         this.showCreate = false;
         this.refreshSessions();
         this.selectSession(session.id);
         this.toast.success('Session created');
+        if (starter) {
+          setTimeout(() => this.sendPrompt(starter), 400);
+        }
       },
       error: (err) => this.toast.error(err?.error?.error || 'Failed to create session'),
     });
@@ -215,8 +247,43 @@ export class AppComponent implements OnInit, OnDestroy {
         }
       },
     });
+    this.reloadCollaborators(id);
 
     this.eventSub = this.realtime.watchSession(id).subscribe((event) => this.onEvent(event));
+  }
+
+  reloadCollaborators(id: string): void {
+    this.api.listCollaborators(id).subscribe({
+      next: (c) => (this.collaborators = c),
+      error: () => (this.collaborators = []),
+    });
+  }
+
+  shareSession(): void {
+    if (!this.active || !this.shareUsername.trim()) {
+      return;
+    }
+    this.api.addCollaborator(this.active.id, this.shareUsername.trim()).subscribe({
+      next: () => {
+        this.toast.success('Collaborator added');
+        this.shareUsername = '';
+        this.reloadCollaborators(this.active!.id);
+      },
+      error: (err) => this.toast.error(err?.error?.error || 'Share failed'),
+    });
+  }
+
+  unshare(username: string): void {
+    if (!this.active) {
+      return;
+    }
+    this.api.removeCollaborator(this.active.id, username).subscribe({
+      next: () => {
+        this.toast.success('Removed');
+        this.reloadCollaborators(this.active!.id);
+      },
+      error: (err) => this.toast.error(err?.error?.error || 'Remove failed'),
+    });
   }
 
   clearActive(): void {

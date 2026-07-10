@@ -3,9 +3,12 @@ package com.agentportal.acp;
 import com.agentportal.config.AgentProperties;
 import com.agentportal.domain.AgentSession;
 import com.agentportal.repo.*;
+import com.agentportal.service.AntigravityCapabilityService;
 import com.agentportal.service.SessionEventBus;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PreDestroy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.Locale;
@@ -19,6 +22,8 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 public class AgentProcessManager {
 
+    private static final Logger log = LoggerFactory.getLogger(AgentProcessManager.class);
+
     private final Map<UUID, SessionAgentRuntime> runtimes = new ConcurrentHashMap<>();
     private final AgentProperties properties;
     private final ObjectMapper mapper;
@@ -28,6 +33,7 @@ public class AgentProcessManager {
     private final AgentEventRepository eventRepository;
     private final ToolRunRepository toolRunRepository;
     private final PermissionRequestRepository permissionRepository;
+    private final AntigravityCapabilityService antigravityCapabilityService;
 
     public AgentProcessManager(
             AgentProperties properties,
@@ -37,7 +43,8 @@ public class AgentProcessManager {
             ChatMessageRepository messageRepository,
             AgentEventRepository eventRepository,
             ToolRunRepository toolRunRepository,
-            PermissionRequestRepository permissionRepository
+            PermissionRequestRepository permissionRepository,
+            AntigravityCapabilityService antigravityCapabilityService
     ) {
         this.properties = properties;
         this.mapper = mapper;
@@ -47,6 +54,7 @@ public class AgentProcessManager {
         this.eventRepository = eventRepository;
         this.toolRunRepository = toolRunRepository;
         this.permissionRepository = permissionRepository;
+        this.antigravityCapabilityService = antigravityCapabilityService;
     }
 
     public SessionAgentRuntime getOrStart(AgentSession session) throws Exception {
@@ -80,6 +88,31 @@ public class AgentProcessManager {
     private SessionAgentRuntime createRuntime(AgentSession session) throws Exception {
         String provider = normalizeProvider(session.getProvider());
         if ("antigravity".equals(provider)) {
+            if (shouldUseAntigravityAcp()) {
+                try {
+                    AgentBridge bridge = new AgentBridge(
+                            session.getId(),
+                            session.getWorkspacePath(),
+                            session.getCursorSessionId(),
+                            properties,
+                            mapper,
+                            eventBus,
+                            sessionRepository,
+                            messageRepository,
+                            eventRepository,
+                            toolRunRepository,
+                            permissionRepository,
+                            properties.isDefaultAutoApprove(),
+                            properties.getAntigravity().getCommand(),
+                            "acp"
+                    );
+                    bridge.start();
+                    log.info("Antigravity session {} using ACP mode", session.getId());
+                    return CursorSessionRuntime.fromBridge(bridge);
+                } catch (Exception e) {
+                    log.warn("Antigravity ACP start failed, falling back to print-mode: {}", e.getMessage());
+                }
+            }
             return new AntigravityBridge(
                     session.getId(),
                     session.getWorkspacePath(),
@@ -112,21 +145,32 @@ public class AgentProcessManager {
         return CursorSessionRuntime.fromBridge(bridge);
     }
 
+    private boolean shouldUseAntigravityAcp() {
+        if (!properties.getAntigravity().isPreferAcp()) {
+            return false;
+        }
+        String protocol = properties.getAntigravity().getInteractiveProtocol();
+        if ("soft".equalsIgnoreCase(protocol) || "none".equalsIgnoreCase(protocol)) {
+            return false;
+        }
+        Map<String, Object> caps = antigravityCapabilityService.probe();
+        Object supports = caps.get("supportsAcp");
+        return Boolean.TRUE.equals(supports);
+    }
+
     public static String normalizeProvider(String provider) {
         if (provider == null || provider.isBlank()) {
             return "cursor";
         }
         String p = provider.trim().toLowerCase(Locale.ROOT);
         return switch (p) {
-            case "antigravity", "agy", "google-antigravity" -> "antigravity";
-            case "cursor", "cursor-cli", "agent" -> "cursor";
-            default -> throw new IllegalArgumentException("Unsupported provider: " + provider + " (use cursor or antigravity)");
+            case "antigravity", "agy", "gemini" -> "antigravity";
+            default -> "cursor";
         };
     }
 
     @PreDestroy
     public void shutdown() {
-        runtimes.forEach((id, runtime) -> runtime.close());
-        runtimes.clear();
+        runtimes.keySet().forEach(this::stop);
     }
 }

@@ -40,6 +40,8 @@ public class AgentBridge implements AutoCloseable {
     private final ToolRunRepository toolRunRepository;
     private final PermissionRequestRepository permissionRepository;
     private final boolean autoApprove;
+    private final String acpCliCommand;
+    private final String acpSubcommand;
 
     private AcpClient client;
     private String cursorSessionId;
@@ -63,6 +65,27 @@ public class AgentBridge implements AutoCloseable {
             PermissionRequestRepository permissionRepository,
             boolean autoApprove
     ) {
+        this(portalSessionId, workspacePath, existingCursorSessionId, properties, mapper, eventBus,
+                sessionRepository, messageRepository, eventRepository, toolRunRepository, permissionRepository,
+                autoApprove, null, null);
+    }
+
+    public AgentBridge(
+            UUID portalSessionId,
+            String workspacePath,
+            String existingCursorSessionId,
+            AgentProperties properties,
+            ObjectMapper mapper,
+            SessionEventBus eventBus,
+            AgentSessionRepository sessionRepository,
+            ChatMessageRepository messageRepository,
+            AgentEventRepository eventRepository,
+            ToolRunRepository toolRunRepository,
+            PermissionRequestRepository permissionRepository,
+            boolean autoApprove,
+            String acpCliCommand,
+            String acpSubcommand
+    ) {
         this.portalSessionId = portalSessionId;
         this.workspacePath = workspacePath;
         this.cursorSessionId = existingCursorSessionId;
@@ -75,6 +98,8 @@ public class AgentBridge implements AutoCloseable {
         this.toolRunRepository = toolRunRepository;
         this.permissionRepository = permissionRepository;
         this.autoApprove = autoApprove;
+        this.acpCliCommand = acpCliCommand;
+        this.acpSubcommand = acpSubcommand;
     }
 
     public synchronized void start() throws Exception {
@@ -142,19 +167,33 @@ public class AgentBridge implements AutoCloseable {
     }
 
     private List<String> buildCommand() {
-        String cmd = properties.getCursor().getCommand();
+        String cmd = acpCliCommand != null ? acpCliCommand : properties.getCursor().getCommand();
         List<String> command = new ArrayList<>();
         if (cmd.toLowerCase(Locale.ROOT).endsWith(".cmd") || cmd.toLowerCase(Locale.ROOT).endsWith(".bat")) {
             command.add("cmd.exe");
             command.add("/c");
         }
         command.add(cmd);
-        String apiKey = properties.getCursor().getApiKey();
-        if (apiKey != null && !apiKey.isBlank()) {
-            command.add("--api-key");
-            command.add(apiKey);
+        boolean agyAcp = acpCliCommand != null;
+        if (!agyAcp) {
+            String apiKey = properties.getCursor().getApiKey();
+            if (apiKey != null && !apiKey.isBlank()) {
+                command.add("--api-key");
+                command.add(apiKey);
+            }
+            String model = properties.getCursor().getModel();
+            if (model != null && !model.isBlank()) {
+                command.add("--model");
+                command.add(model);
+            }
+        } else {
+            String model = properties.getAntigravity().getModel();
+            if (model != null && !model.isBlank()) {
+                command.add("--model");
+                command.add(model);
+            }
         }
-        command.add("acp");
+        command.add(acpSubcommand != null ? acpSubcommand : "acp");
         return command;
     }
 

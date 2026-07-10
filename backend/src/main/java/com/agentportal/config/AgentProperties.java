@@ -33,6 +33,7 @@ public class AgentProperties {
     public static class Cursor {
         private String command = "agent";
         private String apiKey = "";
+        private String model = "";
 
         public String getCommand() {
             return command;
@@ -49,6 +50,14 @@ public class AgentProperties {
         public void setApiKey(String apiKey) {
             this.apiKey = apiKey;
         }
+
+        public String getModel() {
+            return model;
+        }
+
+        public void setModel(String model) {
+            this.model = model;
+        }
     }
 
     public static class Antigravity {
@@ -64,6 +73,9 @@ public class AgentProperties {
         private String interactiveProtocol = "auto";
         private String printTimeout = "5m";
         private long pollIntervalMs = 500;
+        private String model = "";
+        /** When true and CLI supports ACP, prefer long-lived ACP over print-mode. */
+        private boolean preferAcp = true;
 
         public String getCommand() {
             return command;
@@ -120,10 +132,28 @@ public class AgentProperties {
         public void setPollIntervalMs(long pollIntervalMs) {
             this.pollIntervalMs = pollIntervalMs;
         }
+
+        public String getModel() {
+            return model;
+        }
+
+        public void setModel(String model) {
+            this.model = model;
+        }
+
+        public boolean isPreferAcp() {
+            return preferAcp;
+        }
+
+        public void setPreferAcp(boolean preferAcp) {
+            this.preferAcp = preferAcp;
+        }
     }
 
     public static class Workspace {
         private String root = "./workspaces";
+        /** 0 = unlimited. */
+        private long quotaBytesPerUser = 0;
 
         public String getRoot() {
             return root;
@@ -131,6 +161,14 @@ public class AgentProperties {
 
         public void setRoot(String root) {
             this.root = root;
+        }
+
+        public long getQuotaBytesPerUser() {
+            return quotaBytesPerUser;
+        }
+
+        public void setQuotaBytesPerUser(long quotaBytesPerUser) {
+            this.quotaBytesPerUser = quotaBytesPerUser;
         }
     }
 }

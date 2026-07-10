@@ -9,6 +9,9 @@ import {
   Session,
   ToolRun,
   AuditEvent,
+  FileChange,
+  SessionPreset,
+  SessionEventRow,
 } from '../models/session.models';
 import { apiBaseUrl } from './backend-url';
 
@@ -19,6 +22,10 @@ export class ApiService {
 
   health() {
     return this.http.get<HealthInfo>(`${this.base}/health`);
+  }
+
+  presets() {
+    return this.http.get<SessionPreset[]>(`${this.base}/presets`);
   }
 
   listSessions() {
@@ -94,5 +101,36 @@ export class ApiService {
       params['sessionId'] = sessionId;
     }
     return this.http.get<AuditEvent[]>(`${this.base}/audit`, { params });
+  }
+
+  listChanges(sessionId: string) {
+    return this.http.get<FileChange[]>(`${this.base}/sessions/${sessionId}/changes`);
+  }
+
+  diffChange(sessionId: string, path: string) {
+    return this.http.get<FileChange>(`${this.base}/sessions/${sessionId}/changes/diff`, {
+      params: { path },
+    });
+  }
+
+  events(sessionId: string) {
+    return this.http.get<SessionEventRow[]>(`${this.base}/sessions/${sessionId}/events`);
+  }
+
+  listCollaborators(sessionId: string) {
+    return this.http.get<{ username: string; role: string; createdAt: string }[]>(
+      `${this.base}/sessions/${sessionId}/collaborators`
+    );
+  }
+
+  addCollaborator(sessionId: string, username: string) {
+    return this.http.post<{ status: string; username: string }>(
+      `${this.base}/sessions/${sessionId}/collaborators`,
+      { username }
+    );
+  }
+
+  removeCollaborator(sessionId: string, username: string) {
+    return this.http.delete(`${this.base}/sessions/${sessionId}/collaborators/${encodeURIComponent(username)}`);
   }
 }

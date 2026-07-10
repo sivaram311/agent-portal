@@ -1,0 +1,57 @@
+.history {
+  height: 100%;
+  overflow: auto;
+  padding: 0.75rem 1rem;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+h3 {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.55rem;
+}
+
+li {
+  border: 1px solid var(--ap-border);
+  border-radius: 0.55rem;
+  padding: 0.55rem 0.65rem;
+  background: rgba(15, 23, 42, 0.35);
+}
+
+li[data-kind='tool'] {
+  border-color: color-mix(in srgb, var(--ap-accent) 35%, transparent);
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+}
+
+p {
+  margin: 0.3rem 0 0;
+  font-size: 0.75rem;
+  color: var(--ap-text-muted);
+}
+
+.muted {
+  color: var(--ap-text-muted);
+}
+
+.error {
+  color: #fca5a5;
+}

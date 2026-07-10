@@ -1,0 +1,35 @@
+<div class="changes" data-testid="changes-panel">
+  <header>
+    <h3>Changes</h3>
+    <button type="button" class="ap-btn ap-btn-ghost" (click)="reload()">Refresh</button>
+  </header>
+  @if (loading) {
+    <p class="muted">Scanning workspace…</p>
+  } @else if (error) {
+    <p class="error">{{ error }}</p>
+  } @else if (changes.length === 0) {
+    <p class="muted">No file changes detected since the last prompt baseline (or git is clean).</p>
+  } @else {
+    <div class="layout">
+      <ul>
+        @for (c of changes; track c.path) {
+          <li>
+            <button type="button" (click)="open(c)" [class.active]="selected?.path === c.path">
+              <span class="status" [attr.data-status]="c.status">{{ c.status }}</span>
+              <code>{{ c.path }}</code>
+            </button>
+          </li>
+        }
+      </ul>
+      <section>
+        @if (selected?.unifiedDiff) {
+          <pre>{{ selected!.unifiedDiff }}</pre>
+        } @else if (selected) {
+          <p class="muted">Select a text file to view a unified diff.</p>
+        } @else {
+          <p class="muted">Pick a changed file.</p>
+        }
+      </section>
+    </div>
+  }
+</div>
