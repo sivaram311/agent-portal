@@ -96,6 +96,22 @@ public class SessionController {
         return sessionService.diffFile(id, path);
     }
 
+    @PostMapping("/{id}/changes/accept")
+    public Map<String, Object> acceptChange(
+            @PathVariable UUID id,
+            @RequestBody Map<String, String> body
+    ) throws Exception {
+        return sessionService.acceptChange(id, body.get("path"));
+    }
+
+    @PostMapping("/{id}/changes/reject")
+    public Map<String, Object> rejectChange(
+            @PathVariable UUID id,
+            @RequestBody Map<String, String> body
+    ) throws Exception {
+        return sessionService.rejectChange(id, body.get("path"));
+    }
+
     @GetMapping("/{id}/events")
     public List<Map<String, Object>> events(@PathVariable UUID id) {
         return sessionService.events(id);

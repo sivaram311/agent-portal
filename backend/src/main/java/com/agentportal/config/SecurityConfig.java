@@ -1,11 +1,12 @@
 package com.agentportal.config;
 
-import com.agentportal.security.CssJwtAuthenticationFilter;
 import com.agentportal.security.RateLimitFilter;
+import com.css.resourceserver.CssJwtAuthenticationFilter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -33,13 +34,13 @@ public class SecurityConfig {
 
     private final AppProperties appProperties;
     private final CssProperties cssProperties;
-    private final CssJwtAuthenticationFilter cssJwtAuthenticationFilter;
+    private final ObjectProvider<CssJwtAuthenticationFilter> cssJwtAuthenticationFilter;
     private final RateLimitFilter rateLimitFilter;
 
     public SecurityConfig(
             AppProperties appProperties,
             CssProperties cssProperties,
-            CssJwtAuthenticationFilter cssJwtAuthenticationFilter,
+            ObjectProvider<CssJwtAuthenticationFilter> cssJwtAuthenticationFilter,
             RateLimitFilter rateLimitFilter
     ) {
         this.appProperties = appProperties;
@@ -79,7 +80,10 @@ public class SecurityConfig {
                 .headers(h -> h.frameOptions(f -> f.sameOrigin()));
 
         http.addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class);
-        http.addFilterBefore(cssJwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+        CssJwtAuthenticationFilter cssFilter = cssJwtAuthenticationFilter.getIfAvailable();
+        if (cssFilter != null) {
+            http.addFilterBefore(cssFilter, UsernamePasswordAuthenticationFilter.class);
+        }
 
         if (appProperties.getSecurity().isEnabled()) {
             http.addFilterBefore(apiKeyFilter(), UsernamePasswordAuthenticationFilter.class);
@@ -114,6 +118,7 @@ public class SecurityConfig {
                 }
                 String path = request.getRequestURI();
                 if (path.startsWith("/api/health") || path.startsWith("/api/auth/config")
+                        || path.startsWith("/api/presets")
                         || path.startsWith("/ws") || "OPTIONS".equalsIgnoreCase(request.getMethod())) {
                     filterChain.doFilter(request, response);
                     return;

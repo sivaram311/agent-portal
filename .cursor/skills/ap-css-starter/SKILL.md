@@ -13,12 +13,13 @@ Replace copy-pasted `CssJwtValidator` / filter with `com.css:css-spring-boot-sta
 ## Location
 `E:\MyWorkspace\centralized-security-system\clients\spring-boot-starter\`
 
-## Build plan
-1. Implement auto-config + properties (`css.resource-server.*`).
-2. Port JWKS RS256 validation matching agent-portal `CssJwtValidator`.
-3. Document dependency + YAML in CSS README and agent-portal OPS.
-4. Optionally migrate agent-portal to the starter in a follow-up (keep local classes until published).
+## Status
+- Starter implemented with JWKS RS256 validation
+- Agent Portal consumes it via Maven (`css.resource-server.*`)
+- Set `css.resource-server.register-servlet-filter=false` when wiring the filter in `SecurityFilterChain`
 
-## Constraints
-- Starter must not depend on CSS server internals
-- Compatible with Spring Boot 3.3+
+## Build
+```powershell
+cd E:\MyWorkspace\centralized-security-system\clients\spring-boot-starter
+mvn -q install
+```

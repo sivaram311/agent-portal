@@ -113,6 +113,20 @@ export class ApiService {
     });
   }
 
+  acceptChange(sessionId: string, path: string) {
+    return this.http.post<{ status: string; path: string }>(
+      `${this.base}/sessions/${sessionId}/changes/accept`,
+      { path }
+    );
+  }
+
+  rejectChange(sessionId: string, path: string) {
+    return this.http.post<{ status: string; path: string }>(
+      `${this.base}/sessions/${sessionId}/changes/reject`,
+      { path }
+    );
+  }
+
   events(sessionId: string) {
     return this.http.get<SessionEventRow[]>(`${this.base}/sessions/${sessionId}/events`);
   }

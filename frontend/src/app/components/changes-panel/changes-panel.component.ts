@@ -55,4 +55,30 @@ export class ChangesPanelComponent implements OnChanges {
       error: (err) => (this.error = err?.error?.error || 'Failed to load diff'),
     });
   }
+
+  accept(): void {
+    if (!this.sessionId || !this.selected) {
+      return;
+    }
+    this.api.acceptChange(this.sessionId, this.selected.path).subscribe({
+      next: () => {
+        this.selected = undefined;
+        this.reload();
+      },
+      error: (err) => (this.error = err?.error?.error || 'Accept failed'),
+    });
+  }
+
+  reject(): void {
+    if (!this.sessionId || !this.selected) {
+      return;
+    }
+    this.api.rejectChange(this.sessionId, this.selected.path).subscribe({
+      next: () => {
+        this.selected = undefined;
+        this.reload();
+      },
+      error: (err) => (this.error = err?.error?.error || 'Reject failed'),
+    });
+  }
 }

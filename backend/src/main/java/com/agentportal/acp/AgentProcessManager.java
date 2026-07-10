@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
@@ -89,28 +90,35 @@ public class AgentProcessManager {
         String provider = normalizeProvider(session.getProvider());
         if ("antigravity".equals(provider)) {
             if (shouldUseAntigravityAcp()) {
-                try {
-                    AgentBridge bridge = new AgentBridge(
-                            session.getId(),
-                            session.getWorkspacePath(),
-                            session.getCursorSessionId(),
-                            properties,
-                            mapper,
-                            eventBus,
-                            sessionRepository,
-                            messageRepository,
-                            eventRepository,
-                            toolRunRepository,
-                            permissionRepository,
-                            properties.isDefaultAutoApprove(),
-                            properties.getAntigravity().getCommand(),
-                            "acp"
-                    );
-                    bridge.start();
-                    log.info("Antigravity session {} using ACP mode", session.getId());
-                    return CursorSessionRuntime.fromBridge(bridge);
-                } catch (Exception e) {
-                    log.warn("Antigravity ACP start failed, falling back to print-mode: {}", e.getMessage());
+                Exception last = null;
+                for (String sub : List.of("acp", "--acp")) {
+                    try {
+                        AgentBridge bridge = new AgentBridge(
+                                session.getId(),
+                                session.getWorkspacePath(),
+                                session.getCursorSessionId(),
+                                properties,
+                                mapper,
+                                eventBus,
+                                sessionRepository,
+                                messageRepository,
+                                eventRepository,
+                                toolRunRepository,
+                                permissionRepository,
+                                properties.isDefaultAutoApprove(),
+                                properties.getAntigravity().getCommand(),
+                                sub
+                        );
+                        bridge.start();
+                        log.info("Antigravity session {} using ACP mode ({})", session.getId(), sub);
+                        return CursorSessionRuntime.fromBridge(bridge);
+                    } catch (Exception e) {
+                        last = e;
+                        log.warn("Antigravity ACP launch with '{}' failed: {}", sub, e.getMessage());
+                    }
+                }
+                if (last != null) {
+                    log.warn("Antigravity ACP unavailable, falling back to print-mode: {}", last.getMessage());
                 }
             }
             return new AntigravityBridge(

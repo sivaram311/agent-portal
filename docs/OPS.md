@@ -43,7 +43,7 @@ Dev users (seeded in CSS): `admin` / `admin123`, `demo` / `demo123`.
 
 JWKS: `http://localhost:9000/.well-known/jwks.json`
 
-Reusable starter (optional migration): `centralized-security-system/clients/spring-boot-starter` (`com.css:css-spring-boot-starter`).
+Reusable starter: portal depends on `com.css:css-spring-boot-starter` (`css.resource-server.*` mirrors `css.*`). Keep `css.auth-url` for the login overlay.
 
 ## Workspace sandbox
 
@@ -73,6 +73,8 @@ Optional `?sessionId=` filter. UI: session **Activity** tab.
 
 - `GET /api/sessions/{id}/changes` — git porcelain when `.git` exists, else snapshot vs last prompt baseline
 - `GET /api/sessions/{id}/changes/diff?path=` — unified diff for text files
+- `POST /api/sessions/{id}/changes/accept` `{ "path" }` — keep current file
+- `POST /api/sessions/{id}/changes/reject` `{ "path" }` — restore from `.agent-portal/baseline/...` or `git checkout`
 - `GET /api/sessions/{id}/events` — persisted agent events for History tab
 
 ## Sharing

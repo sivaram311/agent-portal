@@ -9,7 +9,7 @@ Prioritized improvements and the Cursor skills (subagents) that own each track.
 | P0 | Sub-agent panel | `ap-subagents` | Implemented (child-scoped Cursor abandon) |
 | P0 | Antigravity interactive | `ap-agy-interactive` | Soft Q&A + ACP attempt when CLI supports `--acp` |
 | P1 | Code + Preview | `ap-code-preview` | Monaco + HTML preview |
-| P1 | Diff / change review | `ap-diff-review` | Changes tab (git or snapshot baseline) |
+| P1 | Diff / change review | `ap-diff-review` | Changes tab + Keep/Restore |
 | P1 | Auth + harden | `ap-security` | CSS JWT + optional API key |
 | P1 | Session isolation | `ap-isolation` | Owner + collaborators |
 | P1 | WebSocket auth | `ap-ws-auth` | SockJS token + STOMP ACL |
@@ -21,7 +21,7 @@ Prioritized improvements and the Cursor skills (subagents) that own each track.
 | P2 | E2E | `ap-e2e` | Device projects + auth.spec |
 | P3 | Webhooks & quotas | `ap-webhooks-quotas` | `app.webhooks.url` + quota bytes |
 | P3 | Ops | `ap-ops` | [OPS.md](OPS.md) |
-| P3 | CSS starter | `ap-css-starter` | Starter shipped; portal still in-repo JWT |
+| P3 | CSS starter | `ap-css-starter` | Portal uses `com.css:css-spring-boot-starter` |
 
 ## How to use
 

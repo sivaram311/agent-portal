@@ -262,6 +262,20 @@ public class SessionService {
         return workspaceChangeService.diffFile(sessionId, Path.of(session.getWorkspacePath()), path);
     }
 
+    public Map<String, Object> acceptChange(UUID sessionId, String path) throws Exception {
+        AgentSession session = require(sessionId);
+        Map<String, Object> result = workspaceChangeService.accept(sessionId, Path.of(session.getWorkspacePath()), path);
+        auditService.record("change.accept", sessionId.toString(), path);
+        return result;
+    }
+
+    public Map<String, Object> rejectChange(UUID sessionId, String path) throws Exception {
+        AgentSession session = require(sessionId);
+        Map<String, Object> result = workspaceChangeService.reject(sessionId, Path.of(session.getWorkspacePath()), path);
+        auditService.record("change.reject", sessionId.toString(), path);
+        return result;
+    }
+
     public List<Map<String, Object>> listCollaborators(UUID sessionId) {
         requireOwnerOnly(sessionId);
         return collaboratorRepository.findBySessionIdOrderByCreatedAtAsc(sessionId).stream()

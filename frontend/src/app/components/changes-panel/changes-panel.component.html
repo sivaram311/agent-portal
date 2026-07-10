@@ -22,10 +22,20 @@
         }
       </ul>
       <section>
+        @if (selected) {
+          <div class="actions">
+            <button type="button" class="ap-btn ap-btn-primary" (click)="accept()" data-testid="change-accept">
+              Keep
+            </button>
+            <button type="button" class="ap-btn ap-btn-ghost" (click)="reject()" data-testid="change-reject">
+              Restore
+            </button>
+          </div>
+        }
         @if (selected?.unifiedDiff) {
           <pre>{{ selected!.unifiedDiff }}</pre>
         } @else if (selected) {
-          <p class="muted">Select a text file to view a unified diff.</p>
+          <p class="muted">Binary or empty diff — Keep leaves the file; Restore reverts from baseline/git.</p>
         } @else {
           <p class="muted">Pick a changed file.</p>
         }
