@@ -2,11 +2,18 @@
 # Dot-source this file to load functions into your session:
 #   . .\AgentApi.ps1
 #
-# Development login example only; do not hardcode credentials in scripts:
-#   Connect-AgentApi -Username admin -Password admin123
+# Domain (default — delena.buzz, not raw public IP):
+#   Connect-AgentApi -Username admin -Password '<password>'
+# Local host stack:
+#   Connect-AgentApi -Local -Username admin -Password '<password>'
 
-$script:BaseUrl = 'http://127.0.0.1:8080/api'
-$script:CssUrl = 'http://127.0.0.1:9000'
+$script:PublicApiBase = 'https://delena.buzz/api'
+$script:PublicCssBase = 'https://delena.buzz'
+$script:LocalApiBase = 'http://127.0.0.1:8080/api'
+$script:LocalCssBase = 'http://127.0.0.1:9000'
+
+$script:BaseUrl = $script:PublicApiBase
+$script:CssUrl = $script:PublicCssBase
 $script:Token = $null
 $script:ApiKey = $null
 $script:ClientId = 'agent-portal'
@@ -88,8 +95,22 @@ function Set-AgentApiConfig {
         [string]$CssUrl,
 
         [Parameter(Mandatory = $false)]
-        [string]$ClientId
+        [string]$ClientId,
+
+        [Parameter(Mandatory = $false)]
+        [switch]$Local,
+
+        [Parameter(Mandatory = $false)]
+        [switch]$Domain
     )
+
+    if ($Local) {
+        $script:BaseUrl = $script:LocalApiBase
+        $script:CssUrl = $script:LocalCssBase
+    } elseif ($Domain) {
+        $script:BaseUrl = $script:PublicApiBase
+        $script:CssUrl = $script:PublicCssBase
+    }
 
     if ($PSBoundParameters.ContainsKey('BaseUrl')) {
         $script:BaseUrl = $BaseUrl.TrimEnd('/')
@@ -142,8 +163,22 @@ function Connect-AgentApi {
         [string]$BaseUrl = $script:BaseUrl,
 
         [Parameter(Mandatory = $false)]
-        [string]$ClientId = $script:ClientId
+        [string]$ClientId = $script:ClientId,
+
+        [Parameter(Mandatory = $false)]
+        [switch]$Local,
+
+        [Parameter(Mandatory = $false)]
+        [switch]$Domain
     )
+
+    if ($Local) {
+        $BaseUrl = $script:LocalApiBase
+        $CssUrl = $script:LocalCssBase
+    } elseif ($Domain) {
+        $BaseUrl = $script:PublicApiBase
+        $CssUrl = $script:PublicCssBase
+    }
 
     $script:BaseUrl = $BaseUrl.TrimEnd('/')
     $script:CssUrl = $CssUrl.TrimEnd('/')
@@ -160,15 +195,20 @@ function Connect-AgentApi {
         }
     }
 
-    $body = @{
+    $body = [ordered]@{
         username = $Username
         password = $Password
         clientId = $ClientId
     }
 
     $loginUrl = Get-AgentCssLoginUrl -CssUrl $script:CssUrl
-    $json = $body | ConvertTo-Json -Depth 8
-    $response = Invoke-RestMethod -Method Post -Uri $loginUrl -ContentType 'application/json' -Body $json
+    # Avoid PowerShell/curl escaping pitfalls: write UTF-8 JSON bytes
+    $json = ($body | ConvertTo-Json -Compress -Depth 8)
+    $bytes = [System.Text.Encoding]::UTF8.GetBytes($json)
+    $headers = @{
+        Origin = if ($script:CssUrl -match '^https://') { $script:CssUrl } else { 'http://127.0.0.1:4200' }
+    }
+    $response = Invoke-RestMethod -Method Post -Uri $loginUrl -ContentType 'application/json; charset=utf-8' -Body $bytes -Headers $headers
 
     if (-not $response.accessToken) {
         throw "CSS login did not return an accessToken."
@@ -702,8 +742,11 @@ Agent Portal Agent API PowerShell client
 Dot-source this file before calling functions:
   . .\AgentApi.ps1
 
-CSS bearer-token login:
+CSS bearer-token login (defaults to https://delena.buzz — not public IP):
   Connect-AgentApi -Username "<username>" -Password "<password>"
+
+Local host stack:
+  Connect-AgentApi -Local -Username "<username>" -Password "<password>"
 
 API-key mode:
   Connect-AgentApi -ApiKey "<api-key>"

@@ -17,8 +17,10 @@ Workspace: [`workspaces/agent-api/`](../../workspaces/agent-api/).
 
 | Env | UI | API | CSS |
 |-----|----|-----|-----|
+| **Public (default for clients)** | `https://delena.buzz` | `https://delena.buzz/api` | `https://delena.buzz/auth` |
 | Local host | `http://127.0.0.1:4200` | `http://127.0.0.1:8080/api` | `http://127.0.0.1:9000` |
-| Public HTTPS | `https://delena.buzz` | `https://delena.buzz/api` | `https://delena.buzz/auth` |
+
+Use **`delena.buzz`**, not the public IP and not `delena.com` (unrelated domain).
 
 ## Security
 
