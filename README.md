@@ -14,13 +14,17 @@ The UI uses a **dark navy/teal responsive redesign** (design tokens in `frontend
 - Realtime streaming over WebSocket (STOMP/SockJS) with CSS-aware WS auth
 - Persistent history (H2 file DB by default; PostgreSQL profile available)
 - Markdown-rendered assistant replies (marked + DOMPurify)
-- Session detail tabs: **Transcript** | **Logs** | **Code** | **Preview** | **Activity**
+- Session detail tabs: **Transcript** | **Logs** | **Code** | **Preview** | **Changes** | **History** | **Activity**
 - **Sub-agent / task panel** with Abandon (Cursor: child-scoped mark + suppress further tool updates; other providers may cancel the session run)
-- Antigravity **soft interactive** + CLI capability probe (`agy --help`); follow-ups allowed while waiting for reply
+- Antigravity **soft interactive** + optional **ACP** when `agy --help` advertises it (`prefer-acp`)
+- **Change review** (git or snapshot) and **History** timeline of messages/tools/events
+- **Session presets** and optional starter prompt on create
+- **Collaborator sharing** when CSS is enabled
 - Workspace **file browser** with sandbox under `agent.workspace.root`
-- **CSS JWT auth** (resource server) + optional local API-key fallback; session ownership when CSS is on
-- Monaco Code tab (vendored assets) + sandboxed HTML Preview
-- Audit API + Activity tab; capability badges in the top bar
+- **CSS JWT auth** + optional API-key fallback; session ownership when CSS is on
+- Monaco Code tab (vendored) + sandboxed HTML Preview
+- Audit API + webhooks + optional per-user workspace quota
+- Capability badges in the top bar
 - Live task / terminal panel from agent tool events (Logs tab)
 - Permission and plan approval dialogs (**Cursor only**)
 - Cancel in-flight runs and archive sessions

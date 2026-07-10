@@ -68,3 +68,28 @@ Reusable starter (optional migration): `centralized-security-system/clients/spri
 
 `GET /api/audit?limit=50` — own events for normal users; all events for `ROLE_ADMIN`.  
 Optional `?sessionId=` filter. UI: session **Activity** tab.
+
+## Changes / history
+
+- `GET /api/sessions/{id}/changes` — git porcelain when `.git` exists, else snapshot vs last prompt baseline
+- `GET /api/sessions/{id}/changes/diff?path=` — unified diff for text files
+- `GET /api/sessions/{id}/events` — persisted agent events for History tab
+
+## Sharing
+
+When CSS is enabled, owners can `POST /api/sessions/{id}/collaborators` with `{ "username": "demo" }`. Collaborators can list/open/subscribe; only owners manage the share list.
+
+## Presets
+
+`GET /api/presets` (public) returns starter templates used by the create dialog.
+
+## Webhooks & quotas
+
+```properties
+app.webhooks.url=https://example.com/hooks/agent-portal
+agent.workspace.quota-bytes-per-user=2147483648
+agent.cursor.model=
+agent.antigravity.model=
+```
+
+Webhooks fire on `run_completed`, `run_failed`, `input_required`, `run_cancelled`.
