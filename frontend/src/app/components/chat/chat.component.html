@@ -10,11 +10,9 @@
       <article class="bubble" [class.user]="m.role === 'USER'" [class.assistant]="m.role === 'ASSISTANT'">
         <div class="meta">
           <div class="role">{{ m.role === 'USER' ? 'You' : 'Agent' }}</div>
-          @if (m.createdAt) {
-            <time class="ts" [attr.datetime]="m.createdAt" [title]="m.createdAt | date: 'medium'">
-              {{ m.createdAt | date: 'shortTime' }}
-            </time>
-          }
+          <time class="ts" [attr.datetime]="m.createdAt || null" [title]="(m.createdAt | date: 'medium') || ''">
+            {{ m.createdAt ? (m.createdAt | date: 'shortTime') : '—' }}
+          </time>
         </div>
         @if (m.role === 'ASSISTANT') {
           <div class="md" [innerHTML]="m.content | markdown"></div>

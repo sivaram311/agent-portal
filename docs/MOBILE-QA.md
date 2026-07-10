@@ -4,7 +4,9 @@ Phone-first UX for Agent Portal (~360×780). Automated coverage lives in `e2e/`;
 
 ## Checklist
 
-Product checklist (FAB-only create, path truncate + long-press copy, share-bar states, empty states, transcript timestamps, scrollable tabs): [e2e/mobile-audit/CHECKLIST.md](../e2e/mobile-audit/CHECKLIST.md).
+Product checklist (FAB-only create, path truncate + long-press/copy, share-bar states, empty states, transcript timestamps, scrollable tabs): [e2e/mobile-audit/CHECKLIST.md](../e2e/mobile-audit/CHECKLIST.md).
+
+Live-site prompt (delena.buzz): [LIVE-MOBILE-FIXES.md](LIVE-MOBILE-FIXES.md).
 
 ## Artifacts
 

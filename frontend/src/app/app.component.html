@@ -55,10 +55,10 @@
         }
         @if (signedInAs) {
           <span class="user-badge" data-testid="user-badge">{{ signedInAs }}</span>
-          <button type="button" class="ap-btn ap-btn-ghost" (click)="openGuidanceSettings()" data-testid="guidance-settings-btn">
+          <button type="button" class="ap-btn ap-btn-ghost rules-btn" (click)="openGuidanceSettings()" data-testid="guidance-settings-btn">
             Rules
           </button>
-          <button type="button" class="ap-btn ap-btn-ghost" (click)="logout()" data-testid="logout-btn">
+          <button type="button" class="ap-btn ap-btn-ghost signout-btn" (click)="logout()" data-testid="logout-btn">
             Sign out
           </button>
         }
@@ -114,7 +114,7 @@
           (archive)="archiveSession($event)"
         />
         @if (health?.cssEnabled) {
-          <div class="share-bar" data-testid="share-bar">
+          <div class="share-bar" data-testid="share-bar" [class.busy]="shareBusy">
             <form class="share-form" (ngSubmit)="shareSession()">
               <label class="share-field">
                 <span class="sr-only">Share with CSS username</span>
@@ -125,18 +125,25 @@
                   data-testid="share-username"
                   autocomplete="username"
                   [disabled]="shareBusy"
+                  [attr.aria-invalid]="shareError ? true : null"
+                  [class.invalid]="!!shareError"
+                  (input)="shareError = ''"
                   (keydown.enter)="$event.preventDefault(); shareSession()"
                 />
               </label>
               <button
                 type="submit"
-                class="ap-btn ap-btn-ghost"
+                class="ap-btn ap-btn-ghost share-submit"
                 [disabled]="shareBusy || !shareUsername.trim()"
+                [attr.aria-busy]="shareBusy"
                 data-testid="share-submit"
               >
                 {{ shareBusy ? 'Sharing…' : 'Share' }}
               </button>
             </form>
+            @if (shareError) {
+              <p class="share-error" role="alert">{{ shareError }}</p>
+            }
             @if (collaborators.length) {
               <div class="share-chips" aria-label="Collaborators">
                 @for (c of collaborators; track c.username) {

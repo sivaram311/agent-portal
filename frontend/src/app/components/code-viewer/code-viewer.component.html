@@ -1,14 +1,24 @@
 <div class="code-viewer" data-testid="code-viewer">
   @if (!sessionId) {
     <div class="ap-empty">
+      <h3>No session selected</h3>
       <p>Select a session to browse workspace files.</p>
     </div>
   } @else if (loading && entries.length === 0 && !fileContent) {
-    <div class="ap-empty"><p>Loading files…</p></div>
+    <div class="ap-empty">
+      <h3>Loading files…</h3>
+      <p>Reading the workspace tree.</p>
+    </div>
   } @else if (entries.length === 0 && !selectedPath && !loadError) {
     <div class="ap-empty">
-      <h3>No files yet</h3>
-      <p>This workspace is empty. Ask the agent to create or fetch files, then refresh.</p>
+      <h3>{{ previewMode ? 'Nothing to preview' : 'No files yet' }}</h3>
+      <p>
+        {{
+          previewMode
+            ? 'Ask the agent to create HTML or Markdown, then open it here.'
+            : 'This workspace is empty. Ask the agent to create or fetch files, then refresh.'
+        }}
+      </p>
     </div>
   } @else {
     <div class="layout">

@@ -8,25 +8,38 @@
       }
       <div class="titles">
         <div class="title-row">
-          <h2>{{ session.title }}</h2>
+          <h2 [title]="session.title">{{ session.title }}</h2>
           <div class="badges">
             <app-agent-type-badge [provider]="session.provider" />
             <app-status-pill [status]="session.status" />
           </div>
         </div>
-        <p
-          class="path"
-          [title]="session.workspacePath + ' — long-press to copy'"
-          (pointerdown)="onPathPointerDown($event)"
-          (pointerup)="onPathPointerUp()"
-          (pointerleave)="clearLongPress()"
-          (pointercancel)="clearLongPress()"
-          (contextmenu)="$event.preventDefault()"
-        >
-          {{ session.workspacePath }}
-        </p>
+        <div class="path-row">
+          <p
+            class="path"
+            [title]="session.workspacePath + ' — long-press or tap copy'"
+            (pointerdown)="onPathPointerDown($event)"
+            (pointerup)="onPathPointerUp()"
+            (pointerleave)="clearLongPress()"
+            (pointercancel)="clearLongPress()"
+            (contextmenu)="$event.preventDefault()"
+          >
+            {{ session.workspacePath }}
+          </p>
+          <button
+            type="button"
+            class="ap-btn ap-btn-ghost copy-btn"
+            (click)="copyPathClick()"
+            aria-label="Copy workspace path"
+            title="Copy path"
+          >
+            Copy
+          </button>
+        </div>
         @if (session.provider === 'antigravity') {
-          <p class="note">Streaming from Antigravity transcript / brain artifacts</p>
+          <p class="note" title="Streaming from Antigravity transcript / brain artifacts">
+            Agy stream
+          </p>
         }
       </div>
     </div>

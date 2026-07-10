@@ -23,9 +23,9 @@ export class SessionTabsComponent {
   @Output() activeChange = new EventEmitter<SessionTabId>();
 
   readonly tabs: { id: SessionTabId; label: string }[] = [
-    { id: 'code', label: 'Code' },
     { id: 'transcript', label: 'Transcript' },
     { id: 'logs', label: 'Logs' },
+    { id: 'code', label: 'Code' },
     { id: 'preview', label: 'Preview' },
     { id: 'changes', label: 'Changes' },
     { id: 'history', label: 'History' },

@@ -84,6 +84,7 @@ export class AppComponent implements OnInit, OnDestroy {
   selectedPresetId = '';
   shareUsername = '';
   shareBusy = false;
+  shareError = '';
   collaborators: { username: string; role: string }[] = [];
   error = '';
   sessionSearch = '';
@@ -278,16 +279,20 @@ export class AppComponent implements OnInit, OnDestroy {
       return;
     }
     this.shareBusy = true;
+    this.shareError = '';
     this.api.addCollaborator(this.active.id, username).subscribe({
       next: () => {
         this.toast.success(`Shared with ${username}`);
         this.shareUsername = '';
         this.shareBusy = false;
+        this.shareError = '';
         this.reloadCollaborators(this.active!.id);
       },
       error: (err) => {
         this.shareBusy = false;
-        this.toast.error(err?.error?.error || 'Share failed');
+        const msg = err?.error?.error || 'Share failed';
+        this.shareError = msg;
+        this.toast.error(msg);
       },
     });
   }

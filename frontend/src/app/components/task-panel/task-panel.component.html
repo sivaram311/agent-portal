@@ -27,6 +27,6 @@
       <span></span><span></span><span></span>
       <label>terminal</label>
     </div>
-    <pre class="terminal-body" #terminalBody>@for (line of terminalLines; track $index) {{{ line }}}@if (terminalLines.length === 0) {Waiting for agent tool output…}</pre>
+    <pre class="terminal-body" #terminalBody>@if (terminalLines.length === 0) {<span class="term-empty">Waiting for agent tool output…</span>}@for (line of terminalLines; track $index) {{{ line }}}</pre>
   </div>
 </div>

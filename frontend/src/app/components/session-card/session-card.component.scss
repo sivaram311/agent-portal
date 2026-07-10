@@ -37,14 +37,22 @@
 
 .title {
   font-size: 0.95rem;
-  font-weight: 600;
+  font-weight: 650;
   line-height: 1.3;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 
 .time {
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   color: var(--ap-text-muted);
   flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+  padding-top: 0.1rem;
 }
 
 .path {

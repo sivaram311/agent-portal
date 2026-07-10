@@ -42,6 +42,11 @@ export class SessionDetailHeaderComponent {
     }
   }
 
+  copyPathClick(): void {
+    this.clearLongPress();
+    void this.copyPath();
+  }
+
   private async copyPath(): Promise<void> {
     const path = this.session?.workspacePath;
     if (!path) {
