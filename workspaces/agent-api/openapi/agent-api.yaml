@@ -1,0 +1,1303 @@
+openapi: 3.0.3
+info:
+  title: Agent Portal Agent API
+  version: 0.1.0
+  description: |
+    REST contract for Agent Portal actions exposed to external agents and scripts.
+    All backend routes are under `/api`. Local calls use `http://127.0.0.1:8080/api/...`;
+    public calls use `https://delena.buzz/api/...` through nginx.
+servers:
+  - url: http://127.0.0.1:8080
+    description: Local Agent Portal backend. Paths include the `/api` prefix.
+  - url: https://delena.buzz
+    description: Public nginx endpoint. Paths under `/api` proxy to the Agent Portal backend.
+tags:
+  - name: Auth
+    description: Authentication configuration and readiness.
+  - name: Sessions
+    description: Session lifecycle and transcript actions.
+  - name: Runtime
+    description: Prompt execution, cancellation, tools, permissions, and events.
+  - name: Files
+    description: Workspace file browsing and reading.
+  - name: Changes
+    description: Change review, diffs, accept, and reject actions.
+  - name: Guidance
+    description: Rules and Skills guidance packs, defaults, templates, and session guidance.
+  - name: Sharing
+    description: Session collaborators.
+  - name: Audit
+    description: Audit activity records.
+security:
+  - bearerAuth: []
+  - apiKeyAuth: []
+paths:
+  /api/health:
+    get:
+      tags: [Auth]
+      operationId: health
+      summary: Read backend health and capability information.
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - {}
+      responses:
+        '200':
+          description: Health and capability details.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+  /api/auth/config:
+    get:
+      tags: [Auth]
+      operationId: authConfig
+      summary: Read CSS and API-key authentication configuration.
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - {}
+      responses:
+        '200':
+          description: Authentication configuration for the UI and external agents.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthConfig'
+  /api/presets:
+    get:
+      tags: [Sessions]
+      operationId: listPresets
+      summary: List session creation presets.
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - {}
+      responses:
+        '200':
+          description: Available starter presets.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SessionPreset'
+  /api/sessions:
+    get:
+      tags: [Sessions]
+      operationId: listSessions
+      summary: List sessions visible to the current principal.
+      responses:
+        '200':
+          description: Sessions, including archived sessions for UI filtering.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Session'
+    post:
+      tags: [Sessions]
+      operationId: createSession
+      summary: Create a new agent session.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSessionRequest'
+      responses:
+        '201':
+          description: Session created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+  /api/sessions/{id}:
+    get:
+      tags: [Sessions]
+      operationId: getSession
+      summary: Get a single session.
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      responses:
+        '200':
+          description: Session details.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/sessions/{id}/messages:
+    get:
+      tags: [Sessions]
+      operationId: listMessages
+      summary: List transcript messages for a session.
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      responses:
+        '200':
+          description: Transcript messages.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Message'
+  /api/sessions/{id}/tools:
+    get:
+      tags: [Runtime]
+      operationId: listTools
+      summary: List tool runs for a session.
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      responses:
+        '200':
+          description: Tool run records.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ToolRun'
+  /api/sessions/{id}/permissions:
+    get:
+      tags: [Runtime]
+      operationId: listPermissions
+      summary: List pending permission requests for a session.
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      responses:
+        '200':
+          description: Pending permission requests.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Permission'
+  /api/sessions/{id}/prompt:
+    post:
+      tags: [Runtime]
+      operationId: sendPrompt
+      summary: Send a user prompt to a session.
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PromptRequest'
+      responses:
+        '200':
+          description: Accepted user message.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+  /api/sessions/{id}/cancel:
+    post:
+      tags: [Runtime]
+      operationId: cancelRun
+      summary: Cancel the current in-flight run for a session.
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+      responses:
+        '200':
+          description: Cancellation status.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusResponse'
+  /api/sessions/{id}/permissions/{permissionId}:
+    post:
+      tags: [Runtime]
+      operationId: resolvePermission
+      summary: Approve or reject a pending tool or plan permission.
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+        - $ref: '#/components/parameters/PermissionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PermissionDecisionRequest'
+      responses:
+        '200':
+          description: Permission resolved.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusResponse'
+  /api/sessions/{id}/subagents/{subId}/abandon:
+    post:
+      tags: [Runtime]
+      operationId: abandonSubagent
+      summary: Abandon a child sub-agent or cancel the provider run when child abandon is unavailable.
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+        - name: subId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+      responses:
+        '200':
+          description: Sub-agent abandon result.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AbandonSubagentResponse'
+  /api/sessions/{id}/archive:
+    post:
+      tags: [Sessions]
+      operationId: archiveSession
+      summary: Archive a session.
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+      responses:
+        '200':
+          description: Archived session.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+  /api/sessions/{id}/unarchive:
+    post:
+      tags: [Sessions]
+      operationId: unarchiveSession
+      summary: Restore an archived session.
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+      responses:
+        '200':
+          description: Restored session.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+  /api/sessions/{id}/files:
+    get:
+      tags: [Files]
+      operationId: listFiles
+      summary: List files in a session workspace directory.
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+        - name: path
+          in: query
+          required: false
+          description: Workspace-relative directory path. Defaults to the workspace root.
+          schema:
+            type: string
+            default: ''
+      responses:
+        '200':
+          description: Directory entries.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FileEntry'
+  /api/sessions/{id}/files/content:
+    get:
+      tags: [Files]
+      operationId: readFile
+      summary: Read text content from a session workspace file.
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+        - name: path
+          in: query
+          required: true
+          description: Workspace-relative file path.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: File content.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FileContent'
+  /api/sessions/{id}/changes:
+    get:
+      tags: [Changes]
+      operationId: listChanges
+      summary: List changed files for a session workspace.
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      responses:
+        '200':
+          description: Changed files.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FileChange'
+  /api/sessions/{id}/changes/diff:
+    get:
+      tags: [Changes]
+      operationId: diffChange
+      summary: Get a unified diff for one changed file.
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+        - name: path
+          in: query
+          required: true
+          description: Workspace-relative changed file path.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: File change with diff content when available.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FileChange'
+  /api/sessions/{id}/changes/accept:
+    post:
+      tags: [Changes]
+      operationId: acceptChange
+      summary: Keep the current contents for a changed file.
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PathRequest'
+      responses:
+        '200':
+          description: Change accepted.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PathStatusResponse'
+  /api/sessions/{id}/changes/reject:
+    post:
+      tags: [Changes]
+      operationId: rejectChange
+      summary: Restore a changed file from baseline or git.
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PathRequest'
+      responses:
+        '200':
+          description: Change rejected and restored.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PathStatusResponse'
+  /api/sessions/{id}/events:
+    get:
+      tags: [Runtime]
+      operationId: listEvents
+      summary: List persisted session events for the History tab.
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      responses:
+        '200':
+          description: Session event records.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SessionEvent'
+  /api/sessions/{id}/collaborators:
+    get:
+      tags: [Sharing]
+      operationId: listCollaborators
+      summary: List collaborators for a session.
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      responses:
+        '200':
+          description: Collaborator records.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Collaborator'
+    post:
+      tags: [Sharing]
+      operationId: addCollaborator
+      summary: Add a collaborator by username.
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddCollaboratorRequest'
+      responses:
+        '200':
+          description: Collaborator added.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AddCollaboratorResponse'
+  /api/sessions/{id}/collaborators/{username}:
+    delete:
+      tags: [Sharing]
+      operationId: removeCollaborator
+      summary: Remove a collaborator from a session.
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+        - name: username
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Collaborator removed.
+  /api/sessions/{id}/guidance:
+    get:
+      tags: [Guidance]
+      operationId: getSessionGuidance
+      summary: Get session guidance selections and effective guidance.
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      responses:
+        '200':
+          description: Session guidance.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionGuidance'
+    put:
+      tags: [Guidance]
+      operationId: putSessionGuidance
+      summary: Replace session guidance selections.
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSessionGuidanceRequest'
+      responses:
+        '200':
+          description: Updated session guidance.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionGuidance'
+  /api/guidance/packs:
+    get:
+      tags: [Guidance]
+      operationId: listGuidancePacks
+      summary: List user guidance packs.
+      parameters:
+        - name: kind
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/GuidanceKind'
+      responses:
+        '200':
+          description: Guidance packs.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GuidancePack'
+    post:
+      tags: [Guidance]
+      operationId: createGuidancePack
+      summary: Create a guidance pack.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateGuidancePackRequest'
+      responses:
+        '201':
+          description: Guidance pack created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuidancePack'
+  /api/guidance/packs/{id}:
+    patch:
+      tags: [Guidance]
+      operationId: updateGuidancePack
+      summary: Update a guidance pack.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateGuidancePackRequest'
+      responses:
+        '200':
+          description: Guidance pack updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuidancePack'
+    delete:
+      tags: [Guidance]
+      operationId: deleteGuidancePack
+      summary: Delete a guidance pack.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Guidance pack deleted.
+  /api/guidance/defaults:
+    get:
+      tags: [Guidance]
+      operationId: getGuidanceDefaults
+      summary: Get guidance packs enabled by default.
+      responses:
+        '200':
+          description: Default guidance packs.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GuidancePack'
+    put:
+      tags: [Guidance]
+      operationId: putGuidanceDefaults
+      summary: Replace guidance packs enabled by default.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GuidanceDefaultsRequest'
+      responses:
+        '200':
+          description: Updated default guidance packs.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GuidancePack'
+  /api/guidance/templates:
+    get:
+      tags: [Guidance]
+      operationId: listGuidanceTemplates
+      summary: List starter guidance templates.
+      responses:
+        '200':
+          description: Starter guidance templates.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GuidanceTemplate'
+  /api/guidance/templates/install:
+    post:
+      tags: [Guidance]
+      operationId: installGuidanceTemplates
+      summary: Install starter guidance templates as user packs.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+      responses:
+        '201':
+          description: Installed guidance packs.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GuidancePack'
+  /api/audit:
+    get:
+      tags: [Audit]
+      operationId: listAudit
+      summary: List audit events visible to the current principal.
+      parameters:
+        - name: sessionId
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 200
+            default: 50
+      responses:
+        '200':
+          description: Audit events.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AuditEvent'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: CSS access token in `Authorization: Bearer <token>`.
+    apiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: Optional portal API key fallback when configured.
+  parameters:
+    SessionId:
+      name: id
+      in: path
+      required: true
+      description: Agent Portal session UUID.
+      schema:
+        type: string
+        format: uuid
+    PermissionId:
+      name: permissionId
+      in: path
+      required: true
+      description: Pending permission UUID.
+      schema:
+        type: string
+        format: uuid
+  responses:
+    NotFound:
+      description: Resource not found.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  schemas:
+    Error:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        status:
+          type: integer
+        error:
+          type: string
+        message:
+          type: string
+        path:
+          type: string
+      additionalProperties: true
+    Health:
+      type: object
+      properties:
+        status:
+          type: string
+          example: ok
+        workspaceRoot:
+          type: string
+        cursorCommand:
+          type: string
+        cursorCommandExists:
+          type: boolean
+        apiKeyConfigured:
+          type: boolean
+        antigravityCommand:
+          type: string
+        antigravityCommandExists:
+          type: boolean
+        antigravityBrainRoot:
+          type: string
+        antigravityBrainReadable:
+          type: boolean
+        antigravitySkipPermissions:
+          type: boolean
+        antigravityInteractiveMode:
+          type: boolean
+        antigravityInteractiveProtocol:
+          type: string
+        antigravityCapabilities:
+          type: object
+          additionalProperties: true
+        portalApiKeyRequired:
+          type: boolean
+        cssEnabled:
+          type: boolean
+        cssClientId:
+          type: string
+        capabilities:
+          type: object
+          additionalProperties:
+            type: boolean
+        cursorModel:
+          type: string
+        antigravityModel:
+          type: string
+      additionalProperties: true
+    AuthConfig:
+      type: object
+      properties:
+        cssEnabled:
+          type: boolean
+        authUrl:
+          type: string
+          format: uri
+        clientId:
+          type: string
+          example: agent-portal
+        loginPath:
+          type: string
+          example: /auth/login
+        refreshPath:
+          type: string
+          example: /auth/refresh
+        apiKeyFallbackEnabled:
+          type: boolean
+      additionalProperties: true
+    SessionPreset:
+      type: object
+      required: [id, title, provider, workspacePath, starterPrompt]
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        provider:
+          type: string
+          example: cursor
+        workspacePath:
+          type: string
+          example: agent-api
+        starterPrompt:
+          type: string
+    Session:
+      type: object
+      required: [id, title, workspacePath, status, provider, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        workspacePath:
+          type: string
+        cursorSessionId:
+          type: string
+          nullable: true
+        status:
+          $ref: '#/components/schemas/SessionStatus'
+        provider:
+          type: string
+          example: cursor
+        ownerUsername:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      additionalProperties: true
+    SessionStatus:
+      type: string
+      enum: [IDLE, STREAMING, WAITING_PERMISSION, WAITING_PLAN, COMPLETED, FAILED, CANCELLED, ARCHIVED]
+    CreateSessionRequest:
+      type: object
+      required: [title, workspacePath, provider]
+      properties:
+        title:
+          type: string
+        workspacePath:
+          type: string
+          description: Path relative to `AGENT_WORKSPACE_ROOT`.
+          example: agent-api
+        provider:
+          type: string
+          enum: [cursor, antigravity]
+        useGuidanceDefaults:
+          type: boolean
+          default: true
+      additionalProperties: true
+    Message:
+      type: object
+      required: [id, sessionId, role, content, sequenceNo, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        sessionId:
+          type: string
+          format: uuid
+        role:
+          type: string
+          enum: [USER, ASSISTANT, SYSTEM]
+        content:
+          type: string
+        sequenceNo:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+      additionalProperties: true
+    PromptRequest:
+      type: object
+      required: [prompt]
+      properties:
+        prompt:
+          type: string
+      additionalProperties: false
+    ToolRun:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        sessionId:
+          type: string
+          format: uuid
+        toolCallId:
+          type: string
+          nullable: true
+        toolName:
+          type: string
+        argsJson:
+          type: string
+          nullable: true
+        status:
+          type: string
+        output:
+          type: string
+          nullable: true
+        exitCode:
+          type: integer
+          nullable: true
+        startedAt:
+          type: string
+          format: date-time
+        finishedAt:
+          type: string
+          format: date-time
+          nullable: true
+        kind:
+          type: string
+          nullable: true
+        parentToolCallId:
+          type: string
+          nullable: true
+        subagentId:
+          type: string
+          nullable: true
+      additionalProperties: true
+    Permission:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        sessionId:
+          type: string
+          format: uuid
+        toolCallId:
+          type: string
+          nullable: true
+        detailsJson:
+          type: string
+          nullable: true
+        status:
+          type: string
+        kind:
+          type: string
+        planMarkdown:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+      additionalProperties: true
+    PermissionDecisionRequest:
+      type: object
+      required: [decision]
+      properties:
+        decision:
+          type: string
+          description: UI decision for the pending permission.
+          enum: [approve, reject, approved, rejected]
+        reason:
+          type: string
+          nullable: true
+      additionalProperties: false
+    StatusResponse:
+      type: object
+      properties:
+        status:
+          type: string
+      additionalProperties:
+        type: string
+    AbandonSubagentResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        subagentId:
+          type: string
+        toolRunId:
+          type: string
+        sessionCancelled:
+          type: boolean
+        message:
+          type: string
+      additionalProperties: true
+    FileEntry:
+      type: object
+      required: [name, path, directory, size]
+      properties:
+        name:
+          type: string
+        path:
+          type: string
+        directory:
+          type: boolean
+        size:
+          type: integer
+          format: int64
+    FileContent:
+      type: object
+      required: [path, content, mediaType, truncated]
+      properties:
+        path:
+          type: string
+        content:
+          type: string
+        mediaType:
+          type: string
+          example: text/plain
+        truncated:
+          type: boolean
+    FileChange:
+      type: object
+      required: [path, status, size]
+      properties:
+        path:
+          type: string
+        status:
+          type: string
+          example: modified
+        size:
+          type: integer
+          format: int64
+        unifiedDiff:
+          type: string
+          nullable: true
+        source:
+          type: string
+          nullable: true
+      additionalProperties: true
+    PathRequest:
+      type: object
+      required: [path]
+      properties:
+        path:
+          type: string
+      additionalProperties: false
+    PathStatusResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        path:
+          type: string
+      additionalProperties: true
+    SessionEvent:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        payload:
+          type: object
+          additionalProperties: true
+      additionalProperties: true
+    Collaborator:
+      type: object
+      properties:
+        username:
+          type: string
+        role:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      additionalProperties: true
+    AddCollaboratorRequest:
+      type: object
+      required: [username]
+      properties:
+        username:
+          type: string
+      additionalProperties: false
+    AddCollaboratorResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        username:
+          type: string
+      additionalProperties: true
+    GuidanceKind:
+      type: string
+      enum: [RULE, SKILL]
+    GuidancePack:
+      type: object
+      required: [id, kind, slug, title, bodyMarkdown, alwaysApply, enabledByDefault, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        kind:
+          $ref: '#/components/schemas/GuidanceKind'
+        slug:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        bodyMarkdown:
+          type: string
+        globs:
+          type: string
+          nullable: true
+        alwaysApply:
+          type: boolean
+        enabledByDefault:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      additionalProperties: true
+    CreateGuidancePackRequest:
+      type: object
+      required: [kind, title, bodyMarkdown]
+      properties:
+        kind:
+          $ref: '#/components/schemas/GuidanceKind'
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        bodyMarkdown:
+          type: string
+        globs:
+          type: string
+          nullable: true
+        alwaysApply:
+          type: boolean
+          default: false
+        enabledByDefault:
+          type: boolean
+          default: false
+        slug:
+          type: string
+          nullable: true
+      additionalProperties: false
+    UpdateGuidancePackRequest:
+      type: object
+      properties:
+        kind:
+          $ref: '#/components/schemas/GuidanceKind'
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        bodyMarkdown:
+          type: string
+        globs:
+          type: string
+          nullable: true
+        alwaysApply:
+          type: boolean
+        enabledByDefault:
+          type: boolean
+        slug:
+          type: string
+      additionalProperties: false
+    GuidanceDefaultsRequest:
+      type: object
+      required: [enabledPackIds]
+      properties:
+        enabledPackIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+      additionalProperties: false
+    GuidanceTemplate:
+      type: object
+      properties:
+        kind:
+          type: string
+        slug:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        bodyMarkdown:
+          type: string
+        alwaysApply:
+          type: boolean
+      additionalProperties: true
+    SessionGuidance:
+      type: object
+      required: [items, effective]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/SessionGuidanceItem'
+        effective:
+          type: array
+          items:
+            $ref: '#/components/schemas/SessionGuidanceItem'
+    SessionGuidanceItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        packId:
+          type: string
+          format: uuid
+          nullable: true
+        kind:
+          $ref: '#/components/schemas/GuidanceKind'
+        title:
+          type: string
+        bodyMarkdown:
+          type: string
+        enabled:
+          type: boolean
+        sortOrder:
+          type: integer
+        sessionOnly:
+          type: boolean
+      additionalProperties: true
+    UpdateSessionGuidanceRequest:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/SessionGuidanceEntryRequest'
+      additionalProperties: false
+    SessionGuidanceEntryRequest:
+      type: object
+      properties:
+        packId:
+          type: string
+          format: uuid
+          nullable: true
+        enabled:
+          type: boolean
+        sortOrder:
+          type: integer
+        title:
+          type: string
+          nullable: true
+        sessionBody:
+          type: string
+          nullable: true
+        kind:
+          $ref: '#/components/schemas/GuidanceKind'
+      additionalProperties: false
+    AuditEvent:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        username:
+          type: string
+        action:
+          type: string
+        sessionId:
+          type: string
+        details:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      additionalProperties: true

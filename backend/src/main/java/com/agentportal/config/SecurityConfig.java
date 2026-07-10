@@ -62,6 +62,7 @@ public class SecurityConfig {
                             "/api/health",
                             "/api/auth/config",
                             "/api/presets",
+                            "/api/agent/actions",
                             "/h2-console/**"
                     ).permitAll();
                     auth.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll();
@@ -94,12 +95,21 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOriginPatterns(appProperties.getCors().getAllowedOrigins());
+        List<String> origins = appProperties.getCors().getAllowedOrigins();
+        if (origins == null || origins.isEmpty()) {
+            origins = List.of("*");
+        }
+        config.setAllowedOriginPatterns(origins);
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
+        config.setExposedHeaders(List.of("Authorization", "X-API-Key"));
+        // Bearer/API-key auth does not require cookies; keep credentials for SockJS edge cases.
         config.setAllowCredentials(true);
+        config.setMaxAge(3600L);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", config);
+        source.registerCorsConfiguration("/api/**", config);
+        source.registerCorsConfiguration("/ws/**", config);
+        source.registerCorsConfiguration("/ws", config);
         return source;
     }
 
@@ -119,6 +129,7 @@ public class SecurityConfig {
                 String path = request.getRequestURI();
                 if (path.startsWith("/api/health") || path.startsWith("/api/auth/config")
                         || path.startsWith("/api/presets")
+                        || path.startsWith("/api/agent/actions")
                         || path.startsWith("/ws") || "OPTIONS".equalsIgnoreCase(request.getMethod())) {
                     filterChain.doFilter(request, response);
                     return;

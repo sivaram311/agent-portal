@@ -24,7 +24,7 @@ public class AppProperties {
     }
 
     public static class Cors {
-        private List<String> allowedOrigins = List.of("http://localhost:4200");
+        private List<String> allowedOrigins = List.of("*");
 
         public List<String> getAllowedOrigins() {
             return allowedOrigins;

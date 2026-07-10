@@ -1,21 +1,28 @@
 # agent-api workspace
 
-**Purpose:** Dedicated Agent Portal workspace where **external AI agents and scripts talk to our application** via the HTTP/WS Agent API — not by scraping the UI.
+**Purpose:** Bridge for external AIs and scripts to drive Agent Portal with the **same actions as the UI**.
 
-## Use this folder when
+## Artifacts
 
-- You are an AI integrating with Agent Portal + CSS
-- You need a safe `workspacePath` for API-created sessions
-- You are drafting OpenAPI samples, curl scripts, or inter-agent notes
+| Path | Role |
+|------|------|
+| [ACTIONS.md](ACTIONS.md) | UI action → HTTP map |
+| [openapi/agent-api.yaml](openapi/agent-api.yaml) | OpenAPI 3 contract |
+| [client/](client/) | PowerShell client (`AgentApi.ps1`) |
+| [PROTOCOL.md](PROTOCOL.md) | Short call sequence |
+| [AGENTS.md](AGENTS.md) | Standing orders for agents in this folder |
 
-## Protocol
+## Live discovery
 
-1. Read [docs/platform/AGENT-API.md](../../docs/platform/AGENT-API.md)
-2. Read [docs/platform/ACCESS-PROTOCOLS.md](../../docs/platform/ACCESS-PROTOCOLS.md)
-3. Read [docs/platform/PORT-REGISTRY.md](../../docs/platform/PORT-REGISTRY.md)
-4. Follow [AGENTS.md](AGENTS.md) in this folder
+```http
+GET /api/agent/actions
+```
 
-## Create a portal session bound here
+Public. All other `/api/**` session mutations need Bearer JWT or `X-API-Key`.
+
+CORS: any origin by default (`APP_CORS_ORIGINS=*`). Auth is unchanged.
+
+## Create a session bound here
 
 ```json
 {
@@ -25,19 +32,7 @@
 }
 ```
 
-`workspacePath` is relative to `AGENT_WORKSPACE_ROOT` (today: `agent-portal/workspaces`).
+## Docs
 
-## Layout
-
-| Path | Role |
-|------|------|
-| `README.md` | This file |
-| `AGENTS.md` | Standing orders for agents in this workspace |
-| `PROTOCOL.md` | Short call sequence |
-| `scratch/` | Optional notes/scripts (no secrets) |
-
-## Future
-
-- Checked-in OpenAPI snapshot
-- Example STOMP client
-- Machine-to-machine CSS client for automation
+- [docs/platform/AGENT-API.md](../../docs/platform/AGENT-API.md)
+- [docs/platform/ACCESS-PROTOCOLS.md](../../docs/platform/ACCESS-PROTOCOLS.md)

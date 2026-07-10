@@ -1,88 +1,71 @@
 # Agent API — how any AI talks to our application
 
-**Status:** Contract for Phase 0. Use with workspace [`workspaces/agent-api/`](../../workspaces/agent-api/).
+**Status:** Shipped contract + discovery + clients. Mutating calls require **CSS JWT** or **X-API-Key**. CORS defaults to **any origin** (`APP_CORS_ORIGINS=*`).
 
-External AIs (Cursor, ChatGPT tools, scripts, other agents) should treat Agent Portal + CSS as the **HTTP/WS control plane**. Do not SSH-scrape the UI.
+Workspace: [`workspaces/agent-api/`](../../workspaces/agent-api/).
+
+## Quick links
+
+| Artifact | Path |
+|----------|------|
+| Action map (UI → HTTP) | [`workspaces/agent-api/ACTIONS.md`](../../workspaces/agent-api/ACTIONS.md) |
+| OpenAPI 3 | [`workspaces/agent-api/openapi/agent-api.yaml`](../../workspaces/agent-api/openapi/agent-api.yaml) |
+| PowerShell client | [`workspaces/agent-api/client/`](../../workspaces/agent-api/client/) |
+| Live catalog | `GET /api/agent/actions` (public) |
 
 ## Base URLs
 
 | Env | UI | API | CSS |
 |-----|----|-----|-----|
-| Local host | `http://127.0.0.1:4200` | `http://127.0.0.1:8080` | `http://127.0.0.1:9000` |
+| Local host | `http://127.0.0.1:4200` | `http://127.0.0.1:8080/api` | `http://127.0.0.1:9000` |
 | Public HTTPS | `https://delena.buzz` | `https://delena.buzz/api` | `https://delena.buzz/auth` |
 
-On delena, API paths are under `/api` via NGINX; WebSocket under `/ws`.
+## Security
 
-## Auth sequence (CSS)
+| Layer | Behavior |
+|-------|----------|
+| CORS | `Access-Control-Allow-Origin` via pattern `*` (any browser/AI origin) |
+| Auth | Still required for `/api/**` except health, auth/config, presets, **agent/actions** |
+| CSS | `Authorization: Bearer <accessToken>` after `POST {CSS}/auth/login` with `clientId=agent-portal` |
+| API key | Optional `X-API-Key` when `AGENT_PORTAL_API_KEY` / `app.security.api-key` is set |
+| WS | SockJS `/ws/**` — pass `access_token` when CSS enabled |
 
-1. `POST {CSS}/auth/login`  
-   Body: `{ "username", "password", "clientId": "agent-portal" }`
-2. Receive `accessToken` (and refresh if provided).
-3. Call portal with `Authorization: Bearer <accessToken>`.
-4. SockJS/STOMP: pass `access_token` query param on `/ws/**` when CSS is enabled.
+Dev seeds: `admin` / `admin123` (change for real prod).
 
-Dev seeds (change for real prod): `admin` / `admin123`, `demo` / `demo123`.
+## Auth sequence
 
-Optional fallback: `X-API-Key` when portal API key mode is configured (see OPS).
+1. `POST {CSS}/auth/login` → `{ "username", "password", "clientId": "agent-portal" }`
+2. Call portal with `Authorization: Bearer <accessToken>`
+3. Prefer prompt + STOMP over scraping the UI
 
-## Core portal endpoints (summary)
+## UI-parity actions (summary)
 
-| Method | Path | Purpose |
-|--------|------|---------|
-| GET | `/api/health` | Capabilities / readiness |
-| GET | `/api/auth/config` | Whether CSS is required |
-| GET | `/api/sessions` | List sessions |
-| POST | `/api/sessions` | Create session (`title`, `workspacePath`, `provider`, …) |
-| POST | `/api/sessions/{id}/prompt` | Send user prompt |
-| GET | `/api/sessions/{id}/messages` | Transcript |
-| GET/POST | `/api/sessions/{id}/changes`… | Diff / Keep / Restore |
-| GET/PUT | `/api/sessions/{id}/guidance` | Rules & Skills for session |
-| WS | `/ws` | STOMP topics `/topic/sessions/{id}` |
+Same verbs as the Angular app: sessions, prompt, cancel, permissions, files, changes Keep/Restore, share, guidance, archive, audit. Full table in **ACTIONS.md**; machine-readable list at **`GET /api/agent/actions`**.
 
-Full behavior: root [README.md](../../README.md) and [OPS.md](../OPS.md).
+Default `workspacePath` for API sessions: **`agent-api`**.
 
-## Workspace path rule
-
-`workspacePath` must resolve under `AGENT_WORKSPACE_ROOT`.
-
-For API experiments, prefer:
-
-```text
-agent-api
-```
-
-(relative → `workspaces/agent-api`).
-
-## Minimal curl sketch
+## PowerShell example
 
 ```powershell
-# Login
-$login = curl.exe -sS -X POST http://127.0.0.1:9000/auth/login `
-  -H "Content-Type: application/json" `
-  -d '{"username":"admin","password":"admin123","clientId":"agent-portal"}' | ConvertFrom-Json
-$token = $login.accessToken
-
-# Health
-curl.exe -sS http://127.0.0.1:8080/api/health -H "Authorization: Bearer $token"
-
-# Create session (example)
-curl.exe -sS -X POST http://127.0.0.1:8080/api/sessions `
-  -H "Authorization: Bearer $token" -H "Content-Type: application/json" `
-  -d '{"title":"API Bridge","workspacePath":"agent-api","provider":"cursor"}'
+cd E:\MyWorkspace\agent-portal\workspaces\agent-api\client
+. .\AgentApi.ps1
+Connect-AgentApi -Username admin -Password '<password>'
+Get-AgentHealth
+New-AgentSession -Title 'API bridge' -WorkspacePath agent-api -Provider cursor
 ```
 
 ## Protocol for external AIs
 
 1. Read [ACCESS-PROTOCOLS.md](ACCESS-PROTOCOLS.md) and [PORT-REGISTRY.md](PORT-REGISTRY.md).
-2. Authenticate via CSS; never embed long-lived passwords in repos.
-3. Create or reuse a session bound to `agent-api` (or a sandbox project path).
-4. Prefer prompt + websocket events over scraping the Angular DOM.
-5. Use Changes APIs for review; do not assume disk writes outside workspace root.
-6. Log actions in chat/docs; Future: Postgres audit via State sub-agent.
+2. Discover actions: `GET /api/agent/actions` or OpenAPI.
+3. Authenticate; never commit tokens.
+4. Create/reuse session on `agent-api` (or sandbox path).
+5. Use Changes APIs before promote.
 
-## Future Implementation
+## Config
 
-- Machine-to-machine client credentials in CSS
-- Signed agent-to-agent messaging bus
-- Rate limits / quotas per external AI identity
-- OpenAPI export checked into `workspaces/agent-api/openapi/`
+```properties
+app.cors.allowed-origins=${APP_CORS_ORIGINS:*}
+```
+
+Override with a tight list only if you intentionally lock browsers down; Agent API consumers expect open CORS + strong auth.
