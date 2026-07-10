@@ -122,8 +122,42 @@ Important env (from `.env` or process):
 | `AGENT_DEFAULT_AUTO_APPROVE` | Wire into `agent.default-auto-approve` for Cursor permissions |
 | `CURSOR_API_KEY` | Cursor ACP auth |
 | `CSS_ENABLED` | Enable JWT resource-server mode |
+| `CLOUDFLARE_API_TOKEN` | Cloudflare API token (Zone Edit: DNS read/write + zone read) |
+| `CLOUDFLARE_ZONE_ID` | Zone ID for DNS / tunnel APIs |
+| `CLOUDFLARE_ZONE_NAME` | Zone hostname (e.g. `delena.buzz`) |
+| `CLOUDFLARE_ACCOUNT_ID` | Cloudflare account ID |
 
 When restarting only the API, stop the Java process listening on **8080** (or matching `backend-0.0.1-SNAPSHOT.jar`). Do **not** `Stop-Process` by broad name match on `cursor` / `node` / `agent` — those include the Cursor IDE agent and will kill your editing session.
+
+## Cloudflare DNS / zone
+
+Store credentials in gitignored `.env` (see `.env.docker.example` placeholders). Never commit the token.
+
+| Variable | Example / notes |
+|----------|-----------------|
+| `CLOUDFLARE_API_TOKEN` | Token with `#dns_records:edit`, `#dns_records:read`, `#zone:read` |
+| `CLOUDFLARE_ZONE_ID` | From `GET /zones` (e.g. `delena.buzz`) |
+| `CLOUDFLARE_ZONE_NAME` | Apex domain name |
+| `CLOUDFLARE_ACCOUNT_ID` | Account owning the zone |
+
+Verify the token and list zones:
+
+```powershell
+# Load from .env or set explicitly
+$token = $env:CLOUDFLARE_API_TOKEN
+curl.exe -sS -H "Authorization: Bearer $token" -H "Content-Type: application/json" `
+  "https://api.cloudflare.com/client/v4/zones" | ConvertFrom-Json | Select-Object -ExpandProperty result
+```
+
+List DNS records for the configured zone:
+
+```powershell
+$zoneId = $env:CLOUDFLARE_ZONE_ID
+curl.exe -sS -H "Authorization: Bearer $token" -H "Content-Type: application/json" `
+  "https://api.cloudflare.com/client/v4/zones/$zoneId/dns_records"
+```
+
+Use these for TLS / tunnel cutover (e.g. pointing `delena.buzz` at the host) — keep secrets out of git and rotate the token if it was ever pasted into chat or logs.
 
 ## Workspace sandbox
 
@@ -158,7 +192,8 @@ When CSS is enabled, owners can `POST /api/sessions/{id}/collaborators` with `{ 
 - [ ] `APP_CORS_ORIGINS` = concrete origins only (no `http://*:4200`)
 - [ ] `agent.antigravity.skip-permissions=false`
 - [ ] `spring.h2.console.enabled=false`
-- [ ] Secrets only via env (`CURSOR_API_KEY`, DB password, never commit)
+- [ ] Secrets only via env (`CURSOR_API_KEY`, `CLOUDFLARE_API_TOKEN`, DB password, never commit)
+- [ ] Cloudflare zone vars set when using DNS/tunnel (`CLOUDFLARE_ZONE_ID`, `CLOUDFLARE_ZONE_NAME`, `CLOUDFLARE_ACCOUNT_ID`)
 - [ ] Rate limit tuned (`app.rate-limit.per-minute`)
 - [ ] Confirm `/api/health` capabilities badges match expected matrix
 - [ ] Backup schedule for Postgres (or H2 file copy)

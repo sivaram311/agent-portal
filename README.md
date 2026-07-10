@@ -61,11 +61,11 @@ Runs CSS + portal backend + Angular on the host (recommended when Docker is Wind
 
 ```powershell
 cd E:\MyWorkspace\agent-portal
-# optional: copy .env.docker.example .env  and set PUBLIC_HOST / CURSOR_API_KEY
+# optional: copy .env.docker.example .env  and set PUBLIC_HOST / CURSOR_API_KEY / CLOUDFLARE_*
 .\scripts\run-host-stack.ps1
 ```
 
-Sets `AGENT_WORKSPACE_ROOT` to `.\workspaces` and honors `AGENT_DEFAULT_AUTO_APPROVE` from `.env`.
+Sets `AGENT_WORKSPACE_ROOT` to `.\workspaces` and honors `AGENT_DEFAULT_AUTO_APPROVE` from `.env`. Cloudflare zone credentials (`CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ZONE_ID`, …) live in `.env` for DNS/tunnel ops — see [docs/OPS.md](docs/OPS.md#cloudflare-dns--zone).
 
 ## Docker hybrid (Windows host)
 
