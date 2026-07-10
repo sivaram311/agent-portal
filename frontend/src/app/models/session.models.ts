@@ -17,6 +17,7 @@ export interface Session {
   cursorSessionId?: string;
   status: SessionStatus;
   provider: AgentProviderId | string;
+  ownerUsername?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -90,7 +91,19 @@ export interface HealthInfo {
   antigravityBrainReadable?: boolean;
   antigravitySkipPermissions?: boolean;
   antigravityInteractiveMode?: boolean;
+  antigravityInteractiveProtocol?: string;
+  antigravityCapabilities?: Record<string, unknown>;
   portalApiKeyRequired?: boolean;
   cssEnabled?: boolean;
   cssClientId?: string;
+  capabilities?: Record<string, boolean>;
+}
+
+export interface AuditEvent {
+  id: string;
+  username: string;
+  action: string;
+  sessionId: string;
+  details: string;
+  createdAt: string;
 }

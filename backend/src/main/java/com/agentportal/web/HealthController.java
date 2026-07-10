@@ -3,6 +3,7 @@ package com.agentportal.web;
 import com.agentportal.config.AgentProperties;
 import com.agentportal.config.AppProperties;
 import com.agentportal.config.CssProperties;
+import com.agentportal.service.AntigravityCapabilityService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -19,15 +20,18 @@ public class HealthController {
     private final AgentProperties agentProperties;
     private final AppProperties appProperties;
     private final CssProperties cssProperties;
+    private final AntigravityCapabilityService antigravityCapabilityService;
 
     public HealthController(
             AgentProperties agentProperties,
             AppProperties appProperties,
-            CssProperties cssProperties
+            CssProperties cssProperties,
+            AntigravityCapabilityService antigravityCapabilityService
     ) {
         this.agentProperties = agentProperties;
         this.appProperties = appProperties;
         this.cssProperties = cssProperties;
+        this.antigravityCapabilityService = antigravityCapabilityService;
     }
 
     @GetMapping("/health")
@@ -56,9 +60,22 @@ public class HealthController {
         body.put("antigravityBrainReadable", brainReadable);
         body.put("antigravitySkipPermissions", agentProperties.getAntigravity().isSkipPermissions());
         body.put("antigravityInteractiveMode", agentProperties.getAntigravity().isInteractiveMode());
+        body.put("antigravityInteractiveProtocol", agentProperties.getAntigravity().getInteractiveProtocol());
+        body.put("antigravityCapabilities", antigravityCapabilityService.probe());
         body.put("portalApiKeyRequired", appProperties.getSecurity().isEnabled());
         body.put("cssEnabled", cssProperties.isEnabled());
         body.put("cssClientId", cssProperties.getClientId());
+        body.put("capabilities", Map.of(
+                "cursorPermissions", true,
+                "cursorSubagentAbandonChildOnly", true,
+                "antigravitySoftInteractive", agentProperties.getAntigravity().isInteractiveMode(),
+                "antigravityMidTurnPermissions", false,
+                "sessionOwnership", cssProperties.isEnabled(),
+                "websocketAuth", cssProperties.isEnabled(),
+                "auditApi", true,
+                "codePreview", true,
+                "htmlPreview", true
+        ));
         return body;
     }
 

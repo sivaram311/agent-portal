@@ -15,11 +15,18 @@ npx playwright test --project=tablet-1024
 npx playwright test --project=desktop-1440
 ```
 
-## Prerequisites
+## Auth e2e
 
-- Node.js 22+
-- Agent Portal frontend running on port **4200** (`cd frontend && npm start`)
-- Backend on **8080** if tests create sessions or load existing data from the API
+`tests/auth.spec.ts` checks the CSS login overlay when `css.enabled=true`, or the main shell when auth is off.
+
+```powershell
+$env:CSS_AUTH_URL = "http://localhost:9000"
+$env:CSS_USER = "admin"
+$env:CSS_PASSWORD = "admin123"
+npx playwright test tests/auth.spec.ts --project=desktop-1440
+```
+
+Requires CSS running for a full login assertion.
 
 Install dependencies once:
 

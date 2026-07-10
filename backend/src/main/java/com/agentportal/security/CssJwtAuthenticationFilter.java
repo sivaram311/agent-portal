@@ -49,17 +49,13 @@ public class CssJwtAuthenticationFilter extends OncePerRequestFilter {
         if (StringUtils.hasText(headerAuth) && headerAuth.startsWith("Bearer ")) {
             return headerAuth.substring(7);
         }
-        if (isWebSocketUpgrade(request)) {
+        String path = request.getRequestURI();
+        if (path != null && (path.equals("/ws") || path.startsWith("/ws/"))) {
             String queryToken = request.getParameter("access_token");
             if (StringUtils.hasText(queryToken)) {
                 return queryToken;
             }
         }
         return null;
-    }
-
-    private boolean isWebSocketUpgrade(HttpServletRequest request) {
-        String upgrade = request.getHeader("Upgrade");
-        return StringUtils.hasText(upgrade) && "websocket".equalsIgnoreCase(upgrade);
     }
 }

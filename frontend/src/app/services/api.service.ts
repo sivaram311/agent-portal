@@ -8,6 +8,7 @@ import {
   PermissionRequest,
   Session,
   ToolRun,
+  AuditEvent,
 } from '../models/session.models';
 import { apiBaseUrl } from './backend-url';
 
@@ -85,5 +86,13 @@ export class ApiService {
     return this.http.get<FileContent>(`${this.base}/sessions/${sessionId}/files/content`, {
       params: { path },
     });
+  }
+
+  audit(sessionId?: string, limit = 50) {
+    const params: Record<string, string> = { limit: String(limit) };
+    if (sessionId) {
+      params['sessionId'] = sessionId;
+    }
+    return this.http.get<AuditEvent[]>(`${this.base}/audit`, { params });
   }
 }

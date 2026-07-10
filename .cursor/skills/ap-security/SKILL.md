@@ -11,11 +11,13 @@ description: >-
 Make the portal safer beyond local single-user use.
 
 ## Build plan
-1. Session/API auth (Spring Security): basic token or form login; protect `/api/**` and WS handshake.
-2. Config: default `agent.antigravity.skip-permissions=false` for non-local profiles; require explicit opt-in.
-3. CORS: allowlist concrete origins in prod (no `http://*:4200`).
-4. Disable H2 console in prod; document TLS reverse-proxy.
-5. Update README security section.
+1. CSS JWT resource server (`css.enabled`) + optional `X-API-Key` fallback.
+2. Protect `/api/**` and `/ws/**` when CSS is on; SockJS `access_token` query.
+3. Session ownership (`ap-isolation`) and STOMP ACLs (`ap-ws-auth`).
+4. Config: default `agent.antigravity.skip-permissions=false` on prod profile.
+5. CORS: allowlist concrete origins in prod (no `http://*:4200`).
+6. Disable H2 console in prod; document TLS reverse-proxy in OPS.md.
+7. Prefer migrating to `com.css:css-spring-boot-starter` when ready (`ap-css-starter`).
 
 ## Constraints
 - Keep a `local` profile that stays easy for developers

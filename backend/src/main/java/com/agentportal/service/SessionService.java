@@ -3,9 +3,11 @@ package com.agentportal.service;
 import com.agentportal.acp.AgentProcessManager;
 import com.agentportal.acp.SessionAgentRuntime;
 import com.agentportal.config.AgentProperties;
+import com.agentportal.config.CssProperties;
 import com.agentportal.domain.*;
 import com.agentportal.dto.*;
 import com.agentportal.repo.*;
+import com.agentportal.security.CurrentUser;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,6 +30,7 @@ public class SessionService {
     private final AgentProperties agentProperties;
     private final WorkspaceFileService workspaceFileService;
     private final AuditService auditService;
+    private final CssProperties cssProperties;
 
     public SessionService(
             AgentSessionRepository sessionRepository,
@@ -38,7 +41,8 @@ public class SessionService {
             AgentProcessManager processManager,
             AgentProperties agentProperties,
             WorkspaceFileService workspaceFileService,
-            AuditService auditService
+            AuditService auditService,
+            CssProperties cssProperties
     ) {
         this.sessionRepository = sessionRepository;
         this.messageRepository = messageRepository;
@@ -48,6 +52,7 @@ public class SessionService {
         this.agentProperties = agentProperties;
         this.workspaceFileService = workspaceFileService;
         this.auditService = auditService;
+        this.cssProperties = cssProperties;
     }
 
     @Transactional
@@ -70,12 +75,27 @@ public class SessionService {
         session.setWorkspacePath(workspace.toString());
         session.setStatus(SessionStatus.IDLE);
         session.setProvider(provider);
+        session.setOwnerUsername(CurrentUser.usernameOrAnonymous());
         session = sessionRepository.save(session);
         auditService.record("session.create", session.getId().toString(), provider + " @ " + workspace);
         return SessionDto.from(session);
     }
 
     public List<SessionDto> list() {
+        if (enforceOwnership()) {
+            String user = CurrentUser.usernameOrAnonymous();
+            if (CurrentUser.isAdmin()) {
+                return sessionRepository.findByStatusNotOrderByUpdatedAtDesc(SessionStatus.ARCHIVED)
+                        .stream()
+                        .map(SessionDto::from)
+                        .toList();
+            }
+            return sessionRepository
+                    .findByOwnerUsernameAndStatusNotOrderByUpdatedAtDesc(user, SessionStatus.ARCHIVED)
+                    .stream()
+                    .map(SessionDto::from)
+                    .toList();
+        }
         return sessionRepository.findByStatusNotOrderByUpdatedAtDesc(SessionStatus.ARCHIVED)
                 .stream()
                 .map(SessionDto::from)
@@ -110,9 +130,11 @@ public class SessionService {
         if (session.getStatus() == SessionStatus.ARCHIVED) {
             throw new IllegalStateException("Session is archived");
         }
-        if (session.getStatus() == SessionStatus.STREAMING
+        boolean softAgyFollowUp = "antigravity".equalsIgnoreCase(session.getProvider())
+                && session.getStatus() == SessionStatus.WAITING_PERMISSION;
+        if (!softAgyFollowUp && (session.getStatus() == SessionStatus.STREAMING
                 || session.getStatus() == SessionStatus.WAITING_PERMISSION
-                || session.getStatus() == SessionStatus.WAITING_PLAN) {
+                || session.getStatus() == SessionStatus.WAITING_PLAN)) {
             throw new IllegalStateException("Session already has an active run");
         }
 
@@ -120,16 +142,8 @@ public class SessionService {
         userMsg.setSessionId(id);
         userMsg.setRole(MessageRole.USER);
         userMsg.setContent(request.prompt());
-        userMsg.setSequenceNo(messageRepository.maxSequence(id) + 1);
-        userMsg = messageRepository.save(userMsg);
-
-        if (session.getTitle().startsWith("Session ") && !request.prompt().isEmpty()) {
-            String shortTitle = request.prompt().length() > 48
-                    ? request.prompt().substring(0, 48) + "…"
-                    : request.prompt();
-            session.setTitle(shortTitle);
-            sessionRepository.save(session);
-        }
+        userMsg.setSequenceNo(nextSequence(id));
+        messageRepository.save(userMsg);
 
         SessionAgentRuntime runtime = processManager.getOrStart(session);
         runtime.prompt(request.prompt());
@@ -137,6 +151,7 @@ public class SessionService {
         return MessageDto.from(userMsg);
     }
 
+    @Transactional
     public void cancel(UUID id) {
         AgentSession session = require(id);
         SessionAgentRuntime runtime = processManager.get(session.getId());
@@ -149,10 +164,6 @@ public class SessionService {
         auditService.record("session.cancel", id.toString(), null);
     }
 
-    /**
-     * Abandon a nested tool/sub-agent. Marks DB row abandoned; if provider cannot
-     * cancel the child alone, falls back to cancelling the whole session run.
-     */
     @Transactional
     public Map<String, Object> abandonSubagent(UUID sessionId, String subagentId) {
         AgentSession session = require(sessionId);
@@ -219,17 +230,75 @@ public class SessionService {
         return SessionDto.from(sessionRepository.save(session));
     }
 
-    private AgentSession require(UUID id) {
-        return sessionRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("Session not found: " + id));
+    /** Used by STOMP interceptor — returns true if caller may watch this session. */
+    public boolean canAccess(UUID id) {
+        try {
+            require(id);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
+    private AgentSession require(UUID id) {
+        AgentSession session = sessionRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Session not found: " + id));
+        assertOwner(session);
+        return session;
+    }
+
+    private void assertOwner(AgentSession session) {
+        if (!enforceOwnership()) {
+            return;
+        }
+        if (CurrentUser.isAdmin()) {
+            return;
+        }
+        String user = CurrentUser.usernameOrAnonymous();
+        String owner = session.getOwnerUsername();
+        if (owner == null || owner.isBlank()) {
+            // Legacy rows: only visible when auth is off, or to admin (handled above).
+            throw new NoSuchElementException("Session not found: " + session.getId());
+        }
+        if (!owner.equals(user)) {
+            throw new NoSuchElementException("Session not found: " + session.getId());
+        }
+    }
+
+    private boolean enforceOwnership() {
+        return cssProperties.isEnabled();
+    }
+
+    private int nextSequence(UUID sessionId) {
+        return (int) (messageRepository.maxSequence(sessionId) + 1);
+    }
+
+    /**
+     * Relative paths resolve under agent.workspace.root.
+     * Absolute paths are allowed only when they stay under that root.
+     */
     private Path resolveWorkspace(String requested) {
         Path root = Path.of(agentProperties.getWorkspace().getRoot()).toAbsolutePath().normalize();
-        Path path = Path.of(requested).toAbsolutePath().normalize();
-        if (!path.startsWith(root) && !requested.contains(":") && !requested.startsWith("/") && !requested.startsWith("\\")) {
-            path = root.resolve(requested).normalize();
+        if (requested == null || requested.isBlank()) {
+            throw new IllegalArgumentException("workspacePath is required");
         }
-        return path;
+        String trimmed = requested.trim();
+        Path candidate;
+        if (trimmed.contains("..")) {
+            throw new SecurityException("workspacePath must not contain '..'");
+        }
+        boolean absolute = Path.of(trimmed).isAbsolute()
+                || trimmed.contains(":")
+                || trimmed.startsWith("/")
+                || trimmed.startsWith("\\");
+        if (absolute) {
+            candidate = Path.of(trimmed).toAbsolutePath().normalize();
+        } else {
+            candidate = root.resolve(trimmed).toAbsolutePath().normalize();
+        }
+        if (!candidate.startsWith(root)) {
+            throw new SecurityException("workspacePath must stay under " + root);
+        }
+        return candidate;
     }
 }

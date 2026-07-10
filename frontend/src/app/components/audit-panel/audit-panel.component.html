@@ -1,0 +1,28 @@
+<div class="audit" data-testid="audit-panel">
+  <header>
+    <h3>Activity</h3>
+    <button type="button" class="ap-btn ap-btn-ghost" (click)="reload()">Refresh</button>
+  </header>
+  @if (loading) {
+    <p class="muted">Loading…</p>
+  } @else if (error) {
+    <p class="error">{{ error }}</p>
+  } @else if (events.length === 0) {
+    <p class="muted">No audit events yet.</p>
+  } @else {
+    <ul>
+      @for (e of events; track e.id) {
+        <li>
+          <div class="row">
+            <strong>{{ e.action }}</strong>
+            <time>{{ e.createdAt | date: 'short' }}</time>
+          </div>
+          <div class="meta">{{ e.username }} @if (e.sessionId) { · {{ e.sessionId | slice: 0:8 }} }</div>
+          @if (e.details) {
+            <p class="details">{{ e.details }}</p>
+          }
+        </li>
+      }
+    </ul>
+  }
+</div>

@@ -28,6 +28,10 @@ public class AgentSession {
     @Column(length = 64)
     private String provider = "cursor";
 
+    /** JWT subject / API principal that owns this session. */
+    @Column(length = 128)
+    private String ownerUsername;
+
     @Column(nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
 
@@ -85,6 +89,14 @@ public class AgentSession {
 
     public void setProvider(String provider) {
         this.provider = provider;
+    }
+
+    public String getOwnerUsername() {
+        return ownerUsername;
+    }
+
+    public void setOwnerUsername(String ownerUsername) {
+        this.ownerUsername = ownerUsername;
     }
 
     public Instant getCreatedAt() {

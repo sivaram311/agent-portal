@@ -18,7 +18,7 @@ public class WorkspaceFileService {
     private static final long MAX_BYTES = 512 * 1024;
 
     public List<FileEntryDto> list(Path workspaceRoot, String relativePath) throws IOException {
-        Path root = workspaceRoot.toAbsolutePath().normalize();
+        Path root = realRoot(workspaceRoot);
         Path dir = resolveSafe(root, relativePath);
         if (!Files.isDirectory(dir)) {
             throw new IllegalArgumentException("Not a directory: " + relativePath);
@@ -30,7 +30,10 @@ public class WorkspaceFileService {
                 if (name.startsWith(".agent-portal")) {
                     continue;
                 }
-                boolean isDir = Files.isDirectory(p);
+                boolean isDir = Files.isDirectory(p, LinkOption.NOFOLLOW_LINKS);
+                if (Files.isSymbolicLink(p)) {
+                    continue;
+                }
                 long size = isDir ? 0 : Files.size(p);
                 String rel = root.relativize(p.toAbsolutePath().normalize()).toString().replace('\\', '/');
                 out.add(new FileEntryDto(name, rel, isDir, size));
@@ -43,9 +46,9 @@ public class WorkspaceFileService {
     }
 
     public FileContentDto read(Path workspaceRoot, String relativePath) throws IOException {
-        Path root = workspaceRoot.toAbsolutePath().normalize();
+        Path root = realRoot(workspaceRoot);
         Path file = resolveSafe(root, relativePath);
-        if (!Files.isRegularFile(file)) {
+        if (!Files.isRegularFile(file, LinkOption.NOFOLLOW_LINKS) || Files.isSymbolicLink(file)) {
             throw new IllegalArgumentException("Not a file: " + relativePath);
         }
         long size = Files.size(file);
@@ -70,11 +73,33 @@ public class WorkspaceFileService {
         return new FileContentDto(rel, content, media, truncated);
     }
 
-    private Path resolveSafe(Path root, String relativePath) {
+    private Path realRoot(Path workspaceRoot) throws IOException {
+        Path root = workspaceRoot.toAbsolutePath().normalize();
+        if (Files.exists(root)) {
+            try {
+                return root.toRealPath();
+            } catch (IOException ignored) {
+                return root;
+            }
+        }
+        return root;
+    }
+
+    private Path resolveSafe(Path root, String relativePath) throws IOException {
         String rel = relativePath == null || relativePath.isBlank() ? "." : relativePath;
+        if (rel.contains("..")) {
+            throw new SecurityException("Path escapes workspace");
+        }
         Path resolved = root.resolve(rel).toAbsolutePath().normalize();
         if (!resolved.startsWith(root)) {
             throw new SecurityException("Path escapes workspace");
+        }
+        if (Files.exists(resolved)) {
+            Path real = resolved.toRealPath();
+            if (!real.startsWith(root)) {
+                throw new SecurityException("Path escapes workspace via link");
+            }
+            return real;
         }
         return resolved;
     }

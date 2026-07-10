@@ -60,13 +60,17 @@ public class SecurityConfig {
                     auth.requestMatchers(
                             "/api/health",
                             "/api/auth/config",
-                            "/h2-console/**",
-                            "/ws/**",
-                            "/ws"
+                            "/h2-console/**"
                     ).permitAll();
                     auth.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll();
                     if (requireAuth) {
+                        if (cssProperties.isEnabled()) {
+                            auth.requestMatchers("/ws", "/ws/**").authenticated();
+                        } else {
+                            auth.requestMatchers("/ws", "/ws/**").permitAll();
+                        }
                         auth.requestMatchers("/api/**").authenticated();
+                        auth.anyRequest().permitAll();
                     } else {
                         auth.anyRequest().permitAll();
                     }

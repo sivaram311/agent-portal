@@ -9,4 +9,6 @@ import java.util.UUID;
 
 public interface AgentSessionRepository extends JpaRepository<AgentSession, UUID> {
     List<AgentSession> findByStatusNotOrderByUpdatedAtDesc(SessionStatus status);
+
+    List<AgentSession> findByOwnerUsernameAndStatusNotOrderByUpdatedAtDesc(String ownerUsername, SessionStatus status);
 }

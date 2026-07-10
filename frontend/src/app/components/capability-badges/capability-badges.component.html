@@ -1,0 +1,11 @@
+@if (health?.capabilities; as caps) {
+  <div class="caps" data-testid="capability-badges" title="Provider capability matrix">
+    <span class="cap" [class.on]="caps['cursorPermissions']">Cursor permissions</span>
+    <span class="cap" [class.on]="caps['cursorSubagentAbandonChildOnly']">Child abandon</span>
+    <span class="cap" [class.on]="caps['antigravitySoftInteractive']">Agy soft Q&amp;A</span>
+    <span class="cap" [class.on]="caps['antigravityMidTurnPermissions']">Agy mid-turn</span>
+    <span class="cap" [class.on]="caps['sessionOwnership']">Session ownership</span>
+    <span class="cap" [class.on]="caps['websocketAuth']">WS auth</span>
+    <span class="cap" [class.on]="caps['auditApi']">Audit</span>
+  </div>
+}

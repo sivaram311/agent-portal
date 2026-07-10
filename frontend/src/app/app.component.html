@@ -34,6 +34,7 @@
       </div>
       <div class="topbar-right">
         @if (health) {
+          <app-capability-badges [health]="health" />
           <span
             class="health"
             [class.warn]="
@@ -48,9 +49,6 @@
             · Agy {{ health.antigravityCommandExists ? '✓' : '✗' }}
             @if (health.cssEnabled) {
               · CSS ✓
-            }
-            @if (health.antigravityInteractiveMode) {
-              · soft-Q&A
             }
           </span>
         }
@@ -131,6 +129,9 @@
             }
             @case ('preview') {
               <app-code-viewer [sessionId]="active.id" [previewMode]="true" />
+            }
+            @case ('activity') {
+              <app-audit-panel [sessionId]="active.id" />
             }
           }
         </div>

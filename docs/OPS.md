@@ -35,16 +35,36 @@ Agent Portal is a CSS **resource server** (`clientId: agent-portal`).
 1. Run CSS on `:9000`
 2. Enable portal auth: `CSS_ENABLED=true` (or `css.enabled=true` / `application-prod.properties`)
 3. Open the portal — login overlay posts to `POST {css.auth-url}/auth/login` with `clientId=agent-portal`
-4. API calls send `Authorization: Bearer <accessToken>`; SockJS may pass `access_token` query param
+4. API calls send `Authorization: Bearer <accessToken>`; SockJS passes `access_token` on `/ws/**`
+5. Sessions are owned by the JWT subject (`ownerUsername`); admins can list all
+6. STOMP subscriptions to `/topic/sessions/{id}` are ACL-checked when CSS is on
 
 Dev users (seeded in CSS): `admin` / `admin123`, `demo` / `demo123`.
 
 JWKS: `http://localhost:9000/.well-known/jwks.json`
 
-## Production notes
+Reusable starter (optional migration): `centralized-security-system/clients/spring-boot-starter` (`com.css:css-spring-boot-starter`).
 
-- Put TLS termination (Caddy/nginx) in front of `:4200` / `:8080`
-- Replace `http://*:4200` CORS with concrete origins
-- Prefer `agent.antigravity.skip-permissions=false` when interactive permissions exist
-- Disable H2 console (`spring.h2.console.enabled=false`) — already off on postgres profile
-- Keep `css.enabled=true` and do not ship with open `/api/**`
+## Workspace sandbox
+
+- Relative `workspacePath` values resolve under `agent.workspace.root`
+- Absolute paths are rejected unless they stay under that root
+- `..` segments are rejected; file browser skips symlinks and uses `toRealPath` checks
+
+## Production checklist
+
+- [ ] TLS termination (Caddy/nginx) in front of `:4200` / `:8080` / `:9000`
+- [ ] `spring.profiles.active=prod` (or postgres + prod)
+- [ ] `CSS_ENABLED=true` and CSS reachable with stable RSA keys
+- [ ] `APP_CORS_ORIGINS` = concrete origins only (no `http://*:4200`)
+- [ ] `agent.antigravity.skip-permissions=false`
+- [ ] `spring.h2.console.enabled=false`
+- [ ] Secrets only via env (`CURSOR_API_KEY`, DB password, never commit)
+- [ ] Rate limit tuned (`app.rate-limit.per-minute`)
+- [ ] Confirm `/api/health` capabilities badges match expected matrix
+- [ ] Backup schedule for Postgres (or H2 file copy)
+
+## Audit
+
+`GET /api/audit?limit=50` — own events for normal users; all events for `ROLE_ADMIN`.  
+Optional `?sessionId=` filter. UI: session **Activity** tab.

@@ -13,6 +13,7 @@ public record SessionDto(
         String cursorSessionId,
         SessionStatus status,
         String provider,
+        String ownerUsername,
         Instant createdAt,
         Instant updatedAt
 ) {
@@ -24,6 +25,7 @@ public record SessionDto(
                 s.getCursorSessionId(),
                 s.getStatus(),
                 s.getProvider(),
+                s.getOwnerUsername(),
                 s.getCreatedAt(),
                 s.getUpdatedAt()
         );

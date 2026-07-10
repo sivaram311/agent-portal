@@ -57,6 +57,11 @@ public class AgentProperties {
         private boolean skipPermissions = true;
         /** Soft interactive: detect question-like replies and emit input_required. */
         private boolean interactiveMode = true;
+        /**
+         * soft = question detection + follow-up -p;
+         * auto = probe CLI for --acp / interactive flags and prefer them when present.
+         */
+        private String interactiveProtocol = "auto";
         private String printTimeout = "5m";
         private long pollIntervalMs = 500;
 
@@ -90,6 +95,14 @@ public class AgentProperties {
 
         public void setInteractiveMode(boolean interactiveMode) {
             this.interactiveMode = interactiveMode;
+        }
+
+        public String getInteractiveProtocol() {
+            return interactiveProtocol;
+        }
+
+        public void setInteractiveProtocol(String interactiveProtocol) {
+            this.interactiveProtocol = interactiveProtocol;
         }
 
         public String getPrintTimeout() {

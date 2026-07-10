@@ -12,6 +12,8 @@ import { AgentInputBarComponent } from './components/agent-input-bar/agent-input
 import { CodeViewerComponent } from './components/code-viewer/code-viewer.component';
 import { ToastComponent } from './components/toast/toast.component';
 import { LoginOverlayComponent } from './components/login-overlay/login-overlay.component';
+import { CapabilityBadgesComponent } from './components/capability-badges/capability-badges.component';
+import { AuditPanelComponent } from './components/audit-panel/audit-panel.component';
 import { ApiService } from './services/api.service';
 import { AuthService } from './services/auth.service';
 import { RealtimeService } from './services/realtime.service';
@@ -41,6 +43,8 @@ import {
     CodeViewerComponent,
     ToastComponent,
     LoginOverlayComponent,
+    CapabilityBadgesComponent,
+    AuditPanelComponent,
   ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',

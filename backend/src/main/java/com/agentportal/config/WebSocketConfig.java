@@ -1,6 +1,9 @@
 package com.agentportal.config;
 
+import com.agentportal.security.JwtHandshakeHandler;
+import com.agentportal.security.StompAuthChannelInterceptor;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
@@ -11,9 +14,11 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     private final AppProperties appProperties;
+    private final StompAuthChannelInterceptor stompAuthChannelInterceptor;
 
-    public WebSocketConfig(AppProperties appProperties) {
+    public WebSocketConfig(AppProperties appProperties, StompAuthChannelInterceptor stompAuthChannelInterceptor) {
         this.appProperties = appProperties;
+        this.stompAuthChannelInterceptor = stompAuthChannelInterceptor;
     }
 
     @Override
@@ -25,7 +30,13 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws")
+                .setHandshakeHandler(new JwtHandshakeHandler())
                 .setAllowedOriginPatterns(appProperties.getCors().getAllowedOrigins().toArray(String[]::new))
                 .withSockJS();
+    }
+
+    @Override
+    public void configureClientInboundChannel(ChannelRegistration registration) {
+        registration.interceptors(stompAuthChannelInterceptor);
     }
 }

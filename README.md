@@ -11,22 +11,21 @@ The UI uses a **dark navy/teal responsive redesign** (design tokens in `frontend
 
 - Multi-session chat workspace with search and status filters (all / active / failed / archived)
 - Provider choice at session create (Cursor or Antigravity; cannot switch later)
-- Realtime streaming over WebSocket (STOMP/SockJS)
+- Realtime streaming over WebSocket (STOMP/SockJS) with CSS-aware WS auth
 - Persistent history (H2 file DB by default; PostgreSQL profile available)
 - Markdown-rendered assistant replies (marked + DOMPurify)
-- Session detail tabs: **Transcript** | **Logs** | **Code** | **Preview**
+- Session detail tabs: **Transcript** | **Logs** | **Code** | **Preview** | **Activity**
 - **Sub-agent / task panel** with Abandon (Cursor: child-scoped mark + suppress further tool updates; other providers may cancel the session run)
-- Antigravity **soft interactive**: when the reply looks like a question, UI shows “waiting for your reply”
-- Workspace **file browser** in Code/Preview (path-safe under the session workspace)
-- Optional portal **API key** (`app.security.api-key` / `AGENT_PORTAL_API_KEY`)
-- **CSS JWT auth** (resource server): login via Centralized Security (`clientId: agent-portal`), optional local API-key fallback
-- Monaco Code tab + sandboxed HTML Preview for `.html`
-- Audit events for create / prompt / cancel / abandon / archive
+- Antigravity **soft interactive** + CLI capability probe (`agy --help`); follow-ups allowed while waiting for reply
+- Workspace **file browser** with sandbox under `agent.workspace.root`
+- **CSS JWT auth** (resource server) + optional local API-key fallback; session ownership when CSS is on
+- Monaco Code tab (vendored assets) + sandboxed HTML Preview
+- Audit API + Activity tab; capability badges in the top bar
 - Live task / terminal panel from agent tool events (Logs tab)
 - Permission and plan approval dialogs (**Cursor only**)
 - Cancel in-flight runs and archive sessions
 - Responsive layout: desktop sidebar, mobile session list + drawer navigation + bottom FAB
-- Playwright e2e: Realme P2 Pro, tablet 1024, desktop 1440
+- Playwright e2e: Realme P2 Pro, tablet 1024, desktop 1440, auth shell
 
 ## Prerequisites
 

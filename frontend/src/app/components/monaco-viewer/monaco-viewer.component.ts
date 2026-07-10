@@ -24,7 +24,6 @@ interface MonacoApi {
     create: (el: HTMLElement, options: Record<string, unknown>) => MonacoEditor;
     setModelLanguage: (model: { uri: unknown }, language: string) => void;
   };
-  Uri?: { parse: (v: string) => unknown };
 }
 
 interface MonacoEditor {
@@ -32,34 +31,35 @@ interface MonacoEditor {
   setValue: (v: string) => void;
   layout: () => void;
   dispose: () => void;
-  updateOptions: (o: Record<string, unknown>) => void;
 }
 
 let monacoLoadPromise: Promise<MonacoApi> | null = null;
+
+function monacoBaseUrl(): string {
+  return `${document.baseURI.replace(/\/$/, '')}/assets/monaco/vs`;
+}
 
 function loadMonaco(): Promise<MonacoApi> {
   if (monacoLoadPromise) {
     return monacoLoadPromise;
   }
   monacoLoadPromise = new Promise((resolve, reject) => {
-    const existing = document.querySelector('script[data-monaco-loader]');
     const boot = () => {
-      window.require!.config({
-        paths: { vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.52.2/min/vs' },
-      });
+      window.require!.config({ paths: { vs: monacoBaseUrl() } });
       window.require!(['vs/editor/editor.main'], (monaco: MonacoApi) => resolve(monaco));
     };
     if (window.require) {
       boot();
       return;
     }
+    const existing = document.querySelector('script[data-monaco-loader]');
     if (existing) {
       existing.addEventListener('load', boot);
       existing.addEventListener('error', () => reject(new Error('Monaco loader failed')));
       return;
     }
     const script = document.createElement('script');
-    script.src = 'https://cdn.jsdelivr.net/npm/monaco-editor@0.52.2/min/vs/loader.js';
+    script.src = `${monacoBaseUrl()}/loader.js`;
     script.dataset['monacoLoader'] = '1';
     script.onload = boot;
     script.onerror = () => reject(new Error('Monaco loader failed'));
@@ -157,7 +157,7 @@ export class MonacoViewerComponent implements AfterViewInit, OnChanges, OnDestro
         this.editor.layout();
       }
     } catch {
-      // Fallback handled by parent if needed
+      // Parent still shows content via empty host; ignore
     }
   }
 }
