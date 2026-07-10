@@ -83,6 +83,11 @@ pre {
   color: #fca5a5;
 }
 
+.ap-empty.inline {
+  min-height: 8rem;
+  padding: 1.25rem 0.75rem;
+}
+
 @media (max-width: 640px) {
   .layout {
     grid-template-columns: 1fr;

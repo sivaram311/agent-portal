@@ -7,16 +7,30 @@
         </button>
       }
       <div class="titles">
-        <h2>{{ session.title }}</h2>
-        <p class="path">{{ session.workspacePath }}</p>
+        <div class="title-row">
+          <h2>{{ session.title }}</h2>
+          <div class="badges">
+            <app-agent-type-badge [provider]="session.provider" />
+            <app-status-pill [status]="session.status" />
+          </div>
+        </div>
+        <p
+          class="path"
+          [title]="session.workspacePath + ' — long-press to copy'"
+          (pointerdown)="onPathPointerDown($event)"
+          (pointerup)="onPathPointerUp()"
+          (pointerleave)="clearLongPress()"
+          (pointercancel)="clearLongPress()"
+          (contextmenu)="$event.preventDefault()"
+        >
+          {{ session.workspacePath }}
+        </p>
         @if (session.provider === 'antigravity') {
           <p class="note">Streaming from Antigravity transcript / brain artifacts</p>
         }
       </div>
     </div>
     <div class="actions">
-      <app-agent-type-badge [provider]="session.provider" />
-      <app-status-pill [status]="session.status" />
       @if (busy) {
         <button type="button" class="ap-btn ap-btn-ghost" (click)="cancel.emit()">Cancel</button>
       }

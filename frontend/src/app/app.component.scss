@@ -51,6 +51,11 @@
   min-width: 0;
 }
 
+.topbar-right {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 .brand-inline {
   display: flex;
   align-items: center;
@@ -97,23 +102,56 @@
 
 .share-bar {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 0.45rem;
-  align-items: center;
-  padding: 0.45rem 1rem;
+  padding: 0.55rem 1rem;
   border-bottom: 1px solid var(--ap-border);
   background: rgba(15, 23, 42, 0.35);
 }
 
-.share-bar input {
-  min-width: 10rem;
+.share-form {
+  display: flex;
+  gap: 0.45rem;
+  align-items: center;
+  min-width: 0;
+}
+
+.share-field {
   flex: 1;
-  max-width: 16rem;
-  padding: 0.45rem 0.6rem;
-  border-radius: 0.45rem;
+  min-width: 0;
+  margin: 0;
+}
+
+.share-bar input {
+  width: 100%;
+  min-width: 0;
+  min-height: 2.35rem;
+  padding: 0.45rem 0.7rem;
+  border-radius: 0.5rem;
   border: 1px solid var(--ap-border);
   background: rgba(15, 23, 42, 0.75);
   color: var(--ap-text);
+  outline: none;
+}
+
+.share-bar input:focus {
+  border-color: rgba(20, 184, 166, 0.55);
+  box-shadow: 0 0 0 3px var(--ap-accent-soft);
+}
+
+.share-bar input:disabled {
+  opacity: 0.65;
+}
+
+.share-bar .ap-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.share-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
 }
 
 .chip {
@@ -121,9 +159,26 @@
   background: transparent;
   color: var(--ap-text-muted);
   border-radius: 999px;
-  padding: 0.2rem 0.55rem;
+  padding: 0.25rem 0.6rem;
+  min-height: 1.75rem;
   font-size: 0.72rem;
   cursor: pointer;
+}
+
+.chip:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
 }
 
 .health.warn {
@@ -152,6 +207,7 @@
   display: flex;
   flex-direction: column;
   gap: 0;
+  flex-shrink: 0;
   border-top: 1px solid var(--ap-border);
   background: rgba(30, 41, 59, 0.35);
 }
@@ -185,12 +241,13 @@
 .detail {
   min-height: 0;
   height: 100%;
-  display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
 }
 
 .tab-body {
+  flex: 1 1 auto;
   min-height: 0;
   overflow: hidden;
 }
@@ -262,6 +319,9 @@
 
 .dialog {
   width: min(440px, 100%);
+  max-height: min(92dvh, 40rem);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   background: var(--ap-surface);
   border: 1px solid var(--ap-border);
   border-radius: var(--ap-radius-lg);
@@ -389,12 +449,55 @@
     display: none;
   }
 
-  .health {
-    display: none;
+  .topbar {
+    gap: 0.5rem;
+    padding: 0.55rem 0.75rem;
+    padding-top: calc(0.55rem + var(--ap-safe-top));
   }
 
+  .topbar-right {
+    flex-wrap: nowrap;
+    gap: 0.4rem;
+    flex-shrink: 1;
+  }
+
+  .brand-inline strong {
+    font-size: 0.95rem;
+  }
+
+  /* Capability matrix is desktop/tablet chrome — hides the wrap/overlap mess on phones */
+  app-capability-badges,
+  .health,
   .desktop-new {
-    display: none;
+    display: none !important;
+  }
+
+  .user-badge {
+    max-width: 5.5rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .topbar-right .ap-btn {
+    min-height: 2.25rem;
+    padding: 0.35rem 0.65rem;
+    font-size: 0.8rem;
+    flex-shrink: 0;
+  }
+
+  .share-bar {
+    padding: 0.45rem 0.75rem;
+  }
+
+  .share-form {
+    flex-wrap: nowrap;
+  }
+
+  .share-bar .ap-btn {
+    flex-shrink: 0;
+    min-height: 2.35rem;
+    padding-inline: 0.75rem;
   }
 }
 

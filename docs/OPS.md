@@ -1,15 +1,70 @@
 # Operations
 
+## Docker hybrid deploy (recommended on this Windows host)
+
+**Requires [Docker Desktop](https://www.docker.com/products/docker-desktop/) for Windows** (`docker` on PATH).
+
+Docker runs **Postgres + CSS + static frontend**. The portal **backend stays on the host** so Windows `agent` / `agy` CLIs keep working (Linux containers cannot run those `.exe` binaries).
+
+> **Windows Server + Docker CE note:** If `docker info` shows `OSType=windows`, Linux compose images will not run. Use the host stack instead:
+>
+> ```powershell
+> cd E:\MyWorkspace\agent-portal
+> .\scripts\run-host-stack.ps1
+> ```
+>
+> See also root `docker-startup-guide.md` (CE service auto-start) and `SESSION-RESTORE.md`.
+
+```powershell
+cd E:\MyWorkspace\agent-portal
+copy .env.docker.example .env   # once — set PUBLIC_HOST to your LAN/public IP
+.\scripts\run-backend-docker-deps.ps1
+```
+
+Or step by step:
+
+```powershell
+cd E:\MyWorkspace\agent-portal
+copy .env.docker.example .env
+docker compose up -d --build postgres css frontend
+# then host backend:
+cd backend
+$env:CSS_ENABLED="true"
+$env:CSS_AUTH_URL="http://<PUBLIC_HOST>:9000"
+$env:CSS_JWKS_URI="http://localhost:9000/.well-known/jwks.json"
+$env:CSS_ISSUER="http://localhost:9000"
+$env:APP_CORS_ORIGINS="http://<PUBLIC_HOST>:4200,http://localhost:4200"
+$env:SPRING_PROFILES_ACTIVE="postgres"
+.\mvnw.cmd -DskipTests package
+java -jar target\backend-0.0.1-SNAPSHOT.jar
+```
+
+| Service | URL |
+|---------|-----|
+| UI | `http://<PUBLIC_HOST>:4200` |
+| API | `http://<PUBLIC_HOST>:8080` |
+| CSS | `http://<PUBLIC_HOST>:9000` |
+
+**Optional API-only container** (no Cursor/Agy on Windows):
+
+```powershell
+docker compose --profile container-api up -d --build
+```
+
+Stop Docker pieces: `docker compose down` (add `-v` only if you intend to wipe Postgres/CSS H2 volumes).
+
+This is still **not** full production: no TLS, seeded CSS users (`admin`/`admin123`), ports published on the host.
+
 ## Postgres profile
 
 ```powershell
 cd E:\MyWorkspace\agent-portal
-docker compose up -d
+docker compose up -d postgres
 cd backend
 .\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=postgres"
 ```
 
-Defaults in `application-postgres.properties`: DB `agentportal`, user/password `agent` (change for real deploys).
+Defaults in `application-postgres.properties`: DB `agentportal`, user/password `agent` (change for real deploys). Override with `POSTGRES_PASSWORD` / `SPRING_DATASOURCE_PASSWORD`.
 
 ### Backup / restore
 
@@ -22,6 +77,8 @@ docker compose exec postgres pg_dump -U agent agentportal > backup.sql
 docker compose exec -T postgres psql -U agent agentportal < backup.sql
 ```
 
+**CSS (Docker file H2 volume `css-data`):** survives `docker compose restart`; wiped by `docker compose down -v`.
+
 ## API key (optional)
 
 Set `AGENT_PORTAL_API_KEY` or `app.security.api-key`. Clients must send `X-API-Key`. `/api/health` and `/api/auth/config` stay open.
@@ -32,7 +89,7 @@ Frontend: store key in `localStorage.agentPortalApiKey` (interceptor reads it wh
 
 Agent Portal is a CSS **resource server** (`clientId: agent-portal`).
 
-1. Run CSS on `:9000`
+1. Run CSS on `:9000` (Docker service `css`, or `mvn spring-boot:run` in the CSS repo)
 2. Enable portal auth: `CSS_ENABLED=true` (or `css.enabled=true` / `application-prod.properties`)
 3. Open the portal — login overlay posts to `POST {css.auth-url}/auth/login` with `clientId=agent-portal`
 4. API calls send `Authorization: Bearer <accessToken>`; SockJS passes `access_token` on `/ws/**`
@@ -41,7 +98,7 @@ Agent Portal is a CSS **resource server** (`clientId: agent-portal`).
 
 Dev users (seeded in CSS): `admin` / `admin123`, `demo` / `demo123`.
 
-JWKS: `http://localhost:9000/.well-known/jwks.json`
+JWKS: `http://localhost:9000/.well-known/jwks.json` (from the host backend). Browser login uses `CSS_AUTH_URL` (public host).
 
 Reusable starter: portal depends on `com.css:css-spring-boot-starter` (`css.resource-server.*` mirrors `css.*`). Keep `css.auth-url` for the login overlay.
 
@@ -52,11 +109,46 @@ cd E:\MyWorkspace\centralized-security-system\clients\spring-boot-starter
 mvn -q install
 ```
 
+## Host stack script
+
+`scripts/run-host-stack.ps1` starts CSS (if needed), packages/runs the portal JAR, and starts `ng serve` on `:4200`.
+
+Important env (from `.env` or process):
+
+| Variable | Purpose |
+|----------|---------|
+| `PUBLIC_HOST` | LAN/public IP used in CORS / CSS auth URL hints |
+| `AGENT_WORKSPACE_ROOT` | Absolute workspace sandbox (script sets `…\agent-portal\workspaces`) |
+| `AGENT_DEFAULT_AUTO_APPROVE` | Wire into `agent.default-auto-approve` for Cursor permissions |
+| `CURSOR_API_KEY` | Cursor ACP auth |
+| `CSS_ENABLED` | Enable JWT resource-server mode |
+
+When restarting only the API, stop the Java process listening on **8080** (or matching `backend-0.0.1-SNAPSHOT.jar`). Do **not** `Stop-Process` by broad name match on `cursor` / `node` / `agent` — those include the Cursor IDE agent and will kill your editing session.
+
 ## Workspace sandbox
 
-- Relative `workspacePath` values resolve under `agent.workspace.root`
+- Relative `workspacePath` values resolve under `agent.workspace.root` / `AGENT_WORKSPACE_ROOT`
 - Absolute paths are rejected unless they stay under that root
 - `..` segments are rejected; file browser skips symlinks and uses `toRealPath` checks
+- If the backend is started with cwd `backend/` and no `AGENT_WORKSPACE_ROOT`, `./workspaces` resolves to `backend\workspaces` and existing sessions under `agent-portal\workspaces\…` will fail create/prompt validation
+
+## Cursor ACP troubleshooting
+
+| Symptom | Likely cause | Fix |
+|---------|--------------|-----|
+| Prompt 500 / hang after resume | Stale `cursorSessionId`; `session/load` wedges stdio | Fixed in `AgentBridge` (15s timeout → close → `session/new`). Rebuild/restart backend. |
+| `workspacePath must stay under …\backend\workspaces` | Missing `AGENT_WORKSPACE_ROOT` | Set to `E:\MyWorkspace\agent-portal\workspaces` (or use `run-host-stack.ps1`) |
+| Permissions stuck | Auto-approve off + pending dialog | Set `AGENT_DEFAULT_AUTO_APPROVE=true` or decide in UI |
+| Orphan `cursor-agent` after backend kill | ACP child left behind | Kill only the child whose parent was the dead portal Java PID — never mass-kill by process name |
+
+## Sessions API extras
+
+- `POST /api/sessions/{id}/unarchive` — restore an `ARCHIVED` session to `IDLE`
+- List includes archived sessions so the UI filter can show them
+
+## Sharing
+
+When CSS is enabled, owners can `POST /api/sessions/{id}/collaborators` with `{ "username": "demo" }`. Collaborators can list/open/subscribe; only owners manage the share list. UI share bar disables Share while empty/busy.
 
 ## Production checklist
 
@@ -83,10 +175,6 @@ Optional `?sessionId=` filter. UI: session **Activity** tab.
 - `POST /api/sessions/{id}/changes/accept` `{ "path" }` — keep current file
 - `POST /api/sessions/{id}/changes/reject` `{ "path" }` — restore from `.agent-portal/baseline/...` or `git checkout`
 - `GET /api/sessions/{id}/events` — persisted agent events for History tab
-
-## Sharing
-
-When CSS is enabled, owners can `POST /api/sessions/{id}/collaborators` with `{ "username": "demo" }`. Collaborators can list/open/subscribe; only owners manage the share list.
 
 ## Presets
 

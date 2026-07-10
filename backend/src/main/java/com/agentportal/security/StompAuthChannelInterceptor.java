@@ -12,6 +12,7 @@ import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;
@@ -40,25 +41,42 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
         if (accessor == null) {
             return message;
         }
-        if (StompCommand.CONNECT.equals(accessor.getCommand())) {
-            Authentication auth = (Authentication) accessor.getUser();
-            if (auth == null || !auth.isAuthenticated()) {
-                throw new AccessDeniedException("WebSocket authentication required");
-            }
+
+        // STOMP runs on a broker thread — SecurityContextHolder is empty unless we bind the WS principal.
+        Authentication stompUser = accessor.getUser() instanceof Authentication a ? a : null;
+        boolean bound = false;
+        if (stompUser != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            SecurityContextHolder.getContext().setAuthentication(stompUser);
+            bound = true;
         }
-        if (StompCommand.SUBSCRIBE.equals(accessor.getCommand())) {
-            String dest = accessor.getDestination();
-            if (dest == null) {
-                return message;
-            }
-            Matcher m = SESSION_TOPIC.matcher(dest);
-            if (m.matches()) {
-                UUID sessionId = UUID.fromString(m.group(1));
-                if (!sessionService.canAccess(sessionId)) {
-                    throw new AccessDeniedException("Not allowed to subscribe to session " + sessionId);
+
+        try {
+            if (StompCommand.CONNECT.equals(accessor.getCommand())) {
+                Authentication auth = stompUser != null
+                        ? stompUser
+                        : SecurityContextHolder.getContext().getAuthentication();
+                if (auth == null || !auth.isAuthenticated()) {
+                    throw new AccessDeniedException("WebSocket authentication required");
                 }
             }
+            if (StompCommand.SUBSCRIBE.equals(accessor.getCommand())) {
+                String dest = accessor.getDestination();
+                if (dest == null) {
+                    return message;
+                }
+                Matcher m = SESSION_TOPIC.matcher(dest);
+                if (m.matches()) {
+                    UUID sessionId = UUID.fromString(m.group(1));
+                    if (!sessionService.canAccess(sessionId)) {
+                        throw new AccessDeniedException("Not allowed to subscribe to session " + sessionId);
+                    }
+                }
+            }
+            return message;
+        } finally {
+            if (bound) {
+                SecurityContextHolder.clearContext();
+            }
         }
-        return message;
     }
 }

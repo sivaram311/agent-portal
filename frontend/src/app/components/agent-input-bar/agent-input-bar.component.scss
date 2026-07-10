@@ -37,3 +37,20 @@ textarea:disabled {
   align-self: end;
   min-width: 6.5rem;
 }
+
+@media (max-width: 639px) {
+  .bar {
+    grid-template-columns: 1fr;
+    gap: 0.55rem;
+    padding: 0.65rem 0.75rem calc(0.65rem + var(--ap-safe-bottom));
+  }
+
+  .send {
+    width: 100%;
+    min-width: 0;
+  }
+
+  textarea {
+    min-height: 2.75rem;
+  }
+}

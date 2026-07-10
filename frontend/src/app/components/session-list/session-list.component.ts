@@ -28,8 +28,13 @@ export class SessionListComponent {
   get filtered(): Session[] {
     const q = this.search.trim().toLowerCase();
     return this.sessions.filter((s) => {
-      if (this.filter === 'archived' && s.status !== 'ARCHIVED') return false;
-      if (this.filter === 'failed' && s.status !== 'FAILED' && s.status !== 'CANCELLED') return false;
+      if (this.filter === 'archived') {
+        return s.status === 'ARCHIVED' && this.matchesSearch(s, q);
+      }
+      if (this.filter === 'failed') {
+        if (s.status !== 'FAILED' && s.status !== 'CANCELLED') return false;
+        return this.matchesSearch(s, q);
+      }
       if (this.filter === 'active') {
         const active =
           s.status === 'IDLE' ||
@@ -38,15 +43,20 @@ export class SessionListComponent {
           s.status === 'WAITING_PLAN' ||
           s.status === 'COMPLETED';
         if (!active || s.status === 'ARCHIVED') return false;
+        return this.matchesSearch(s, q);
       }
-      if (this.filter !== 'archived' && s.status === 'ARCHIVED') return false;
-      if (!q) return true;
-      return (
-        s.title.toLowerCase().includes(q) ||
-        s.workspacePath.toLowerCase().includes(q) ||
-        String(s.provider).toLowerCase().includes(q)
-      );
+      // "all" includes archived so restores are discoverable without hunting the chip
+      return this.matchesSearch(s, q);
     });
+  }
+
+  private matchesSearch(s: Session, q: string): boolean {
+    if (!q) return true;
+    return (
+      s.title.toLowerCase().includes(q) ||
+      s.workspacePath.toLowerCase().includes(q) ||
+      String(s.provider).toLowerCase().includes(q)
+    );
   }
 
   setFilter(f: SessionFilter): void {

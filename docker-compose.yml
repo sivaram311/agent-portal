@@ -1,14 +1,84 @@
+# Hybrid “as-is” stack:
+#   default: postgres + css + frontend
+#   host:    portal backend (java -jar) so Windows agent/agy CLIs work
+#   optional: docker compose --profile container-api up  (API-only; no host CLIs)
+#
+# Copy .env.docker.example → .env and set PUBLIC_HOST.
+
 services:
   postgres:
     image: postgres:16-alpine
     environment:
       POSTGRES_DB: agentportal
       POSTGRES_USER: agent
-      POSTGRES_PASSWORD: agent
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-agent}
     ports:
+      # Published for host-run backend (hybrid default)
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U agent -d agentportal"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  css:
+    build:
+      context: ../centralized-security-system
+      dockerfile: Dockerfile
+    ports:
+      - "9000:9000"
+    volumes:
+      - css-data:/data
+    environment:
+      SPRING_DATASOURCE_URL: "jdbc:h2:file:/data/css;DB_CLOSE_DELAY=-1;MODE=PostgreSQL"
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.h2.Driver
+      SPRING_H2_CONSOLE_ENABLED: "false"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:9000/actuator/health | grep -q UP"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 40s
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "4200:4200"
+    depends_on:
+      - css
+
+  # API-only demo — does NOT run Windows Cursor/Agy CLIs.
+  backend:
+    profiles: ["container-api"]
+    build:
+      context: ..
+      dockerfile: agent-portal/backend/Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: postgres
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/agentportal
+      SPRING_DATASOURCE_USERNAME: agent
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-agent}
+      CSS_ENABLED: "true"
+      CSS_AUTH_URL: http://${PUBLIC_HOST:-localhost}:9000
+      CSS_JWKS_URI: http://css:9000/.well-known/jwks.json
+      CSS_ISSUER: http://localhost:9000
+      APP_CORS_ORIGINS: http://${PUBLIC_HOST:-localhost}:4200,http://localhost:4200,http://127.0.0.1:4200
+      AGENT_WORKSPACE_ROOT: /workspaces
+      AGENT_ANTIGRAVITY_SKIP_PERMISSIONS: "false"
+    volumes:
+      - ./workspaces:/workspaces
+    depends_on:
+      postgres:
+        condition: service_healthy
+      css:
+        condition: service_healthy
 
 volumes:
   pgdata:
+  css-data:

@@ -1,15 +1,30 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
+
+async function ensureSignedIn(page: Page): Promise<void> {
+  await page.goto('/');
+  await page.waitForLoadState('domcontentloaded');
+
+  const login = page.getByTestId('login-overlay');
+  if (!(await login.isVisible().catch(() => false))) {
+    return;
+  }
+
+  const user = process.env['CSS_USER'] || 'admin';
+  const pass = process.env['CSS_PASSWORD'] || 'admin123';
+  await page.getByTestId('login-username').fill(user);
+  await page.getByTestId('login-password').fill(pass);
+  await page.getByTestId('login-submit').click();
+  await expect(page.getByTestId('user-badge')).toBeVisible({ timeout: 20_000 });
+}
 
 test.describe('Responsive shell', () => {
   test('shows Agent Portal brand', async ({ page }) => {
-    await page.goto('/');
-    await page.waitForLoadState('domcontentloaded');
+    await ensureSignedIn(page);
     await expect(page.locator('.brand-inline strong')).toBeVisible();
   });
 
-  test('create dialog opens from New session control', async ({ page }, testInfo) => {
-    await page.goto('/');
-    await page.waitForLoadState('domcontentloaded');
+  test('create dialog opens from New session control', async ({ page }) => {
+    await ensureSignedIn(page);
 
     const isNarrow = (page.viewportSize()?.width ?? 1440) < 640;
     if (isNarrow) {
@@ -28,8 +43,7 @@ test.describe('Responsive shell', () => {
   });
 
   test('sidebar or mobile list is present', async ({ page }) => {
-    await page.goto('/');
-    await page.waitForLoadState('domcontentloaded');
+    await ensureSignedIn(page);
     const width = page.viewportSize()?.width ?? 1440;
     if (width < 640) {
       await expect(page.getByTestId('mobile-session-list')).toBeVisible();

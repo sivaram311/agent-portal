@@ -72,6 +72,12 @@
   font-size: 0.85rem;
 }
 
+.ap-empty.compact {
+  min-height: 6.5rem;
+  padding: 1rem 0.75rem;
+  place-content: start center;
+}
+
 .terminal {
   min-height: 0;
   display: flex;

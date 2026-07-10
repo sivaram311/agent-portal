@@ -71,6 +71,10 @@ export class ApiService {
     return this.http.post<Session>(`${this.base}/sessions/${id}/archive`, {});
   }
 
+  unarchive(id: string) {
+    return this.http.post<Session>(`${this.base}/sessions/${id}/unarchive`, {});
+  }
+
   abandonSubagent(sessionId: string, subId: string) {
     return this.http.post<{
       status: string;

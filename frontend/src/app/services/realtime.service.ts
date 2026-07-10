@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy, inject } from '@angular/core';
+import { Injectable, NgZone, OnDestroy, inject } from '@angular/core';
 import { Client, IMessage } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import { Observable, Subject } from 'rxjs';
@@ -9,6 +9,7 @@ import { AuthService } from './auth.service';
 @Injectable({ providedIn: 'root' })
 export class RealtimeService implements OnDestroy {
   private readonly auth = inject(AuthService);
+  private readonly zone = inject(NgZone);
   private client?: Client;
   private readonly events$ = new Subject<AgentEvent>();
   private activeSessionId?: string;
@@ -27,9 +28,11 @@ export class RealtimeService implements OnDestroy {
       },
       reconnectDelay: 3000,
       onConnect: () => {
-        if (this.activeSessionId) {
-          this.subscribeSession(this.activeSessionId);
-        }
+        this.zone.run(() => {
+          if (this.activeSessionId) {
+            this.subscribeSession(this.activeSessionId);
+          }
+        });
       },
     });
     this.client.activate();
@@ -55,7 +58,8 @@ export class RealtimeService implements OnDestroy {
     this.subscription = this.client?.subscribe(`/topic/sessions/${sessionId}`, (msg: IMessage) => {
       try {
         const event = JSON.parse(msg.body) as AgentEvent;
-        this.events$.next(event);
+        // SockJS/STOMP callbacks are outside Angular; run so streamingText updates paint live.
+        this.zone.run(() => this.events$.next(event));
       } catch {
         // ignore malformed
       }

@@ -14,15 +14,17 @@
     </div>
   }
 
-  <label class="search">
-    <span class="sr-only">Search sessions</span>
-    <input
-      type="search"
-      [ngModel]="search"
-      (ngModelChange)="onSearch($event)"
-      placeholder="Search sessions…"
-    />
-  </label>
+  @if (!compact) {
+    <label class="search">
+      <span class="sr-only">Search sessions</span>
+      <input
+        type="search"
+        [ngModel]="search"
+        (ngModelChange)="onSearch($event)"
+        placeholder="Search sessions…"
+      />
+    </label>
+  }
 
   <div class="filters" role="tablist" aria-label="Session filters">
     @for (f of ['all', 'active', 'failed', 'archived']; track f) {

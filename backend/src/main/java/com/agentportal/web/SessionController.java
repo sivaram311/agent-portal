@@ -150,4 +150,9 @@ public class SessionController {
     public SessionDto archive(@PathVariable UUID id) {
         return sessionService.archive(id);
     }
+
+    @PostMapping("/{id}/unarchive")
+    public SessionDto unarchive(@PathVariable UUID id) {
+        return sessionService.unarchive(id);
+    }
 }

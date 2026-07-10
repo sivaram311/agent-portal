@@ -78,6 +78,7 @@ export class AppComponent implements OnInit, OnDestroy {
   presets: SessionPreset[] = [];
   selectedPresetId = '';
   shareUsername = '';
+  shareBusy = false;
   collaborators: { username: string; role: string }[] = [];
   error = '';
   sessionSearch = '';
@@ -260,29 +261,40 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   shareSession(): void {
-    if (!this.active || !this.shareUsername.trim()) {
+    const username = this.shareUsername.trim();
+    if (!this.active || !username || this.shareBusy) {
       return;
     }
-    this.api.addCollaborator(this.active.id, this.shareUsername.trim()).subscribe({
+    this.shareBusy = true;
+    this.api.addCollaborator(this.active.id, username).subscribe({
       next: () => {
-        this.toast.success('Collaborator added');
+        this.toast.success(`Shared with ${username}`);
         this.shareUsername = '';
+        this.shareBusy = false;
         this.reloadCollaborators(this.active!.id);
       },
-      error: (err) => this.toast.error(err?.error?.error || 'Share failed'),
+      error: (err) => {
+        this.shareBusy = false;
+        this.toast.error(err?.error?.error || 'Share failed');
+      },
     });
   }
 
   unshare(username: string): void {
-    if (!this.active) {
+    if (!this.active || this.shareBusy) {
       return;
     }
+    this.shareBusy = true;
     this.api.removeCollaborator(this.active.id, username).subscribe({
       next: () => {
-        this.toast.success('Removed');
+        this.toast.success(`Removed ${username}`);
+        this.shareBusy = false;
         this.reloadCollaborators(this.active!.id);
       },
-      error: (err) => this.toast.error(err?.error?.error || 'Remove failed'),
+      error: (err) => {
+        this.shareBusy = false;
+        this.toast.error(err?.error?.error || 'Remove failed');
+      },
     });
   }
 
@@ -344,6 +356,18 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   archiveSession(id: string): void {
+    const current = this.sessions.find((s) => s.id === id);
+    if (current?.status === 'ARCHIVED') {
+      this.api.unarchive(id).subscribe({
+        next: (s) => {
+          this.refreshSessions();
+          this.selectSession(s.id);
+          this.toast.success('Session restored');
+        },
+        error: (err) => this.toast.error(err?.error?.error || 'Restore failed'),
+      });
+      return;
+    }
     this.api.archive(id).subscribe({
       next: () => {
         if (this.active?.id === id) {

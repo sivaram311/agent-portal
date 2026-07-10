@@ -12,7 +12,7 @@ test.describe('Auth shell', () => {
     const login = page.getByTestId('login-overlay');
     const brand = page.locator('.brand-inline strong');
 
-    await expect(brand.or(login)).toBeVisible({ timeout: 15_000 });
+    await expect(login.or(brand).first()).toBeVisible({ timeout: 15_000 });
 
     if (await login.isVisible()) {
       await expect(page.getByTestId('login-username')).toBeVisible();
@@ -33,7 +33,12 @@ test.describe('Auth shell', () => {
         await page.getByTestId('login-password').fill(pass);
         await page.getByTestId('login-submit').click();
         await expect(page.getByTestId('user-badge')).toBeVisible({ timeout: 20_000 });
-        await expect(page.getByTestId('capability-badges')).toBeVisible();
+        // Badges stay in the DOM; on phones they are hidden from the topbar chrome.
+        await expect(page.getByTestId('capability-badges')).toBeAttached();
+        const width = page.viewportSize()?.width ?? 1440;
+        if (width >= 640) {
+          await expect(page.getByTestId('capability-badges')).toBeVisible();
+        }
       }
     } else {
       await expect(brand).toBeVisible();

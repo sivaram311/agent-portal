@@ -109,6 +109,39 @@ public class AgentBridge implements AutoCloseable {
         Path cwd = Path.of(workspacePath).toAbsolutePath().normalize();
         Files.createDirectories(cwd);
 
+        spawnAcpProcess(cwd);
+
+        if (cursorSessionId != null && !cursorSessionId.isBlank()) {
+            try {
+                // Stale ids often hang until timeout — keep this short and fall back.
+                cursorSessionId = client.sessionLoad(cursorSessionId, cwd.toString()).get(15, TimeUnit.SECONDS);
+            } catch (Exception e) {
+                log.warn("session/load failed ({}), restarting ACP for a fresh session/new", rootMessage(e));
+                cursorSessionId = null;
+                // A timed-out session/load can leave the stdio JSON-RPC client wedged.
+                close();
+                spawnAcpProcess(cwd);
+            }
+        }
+        if (cursorSessionId == null || cursorSessionId.isBlank()) {
+            cursorSessionId = client.sessionNew(cwd.toString()).get(60, TimeUnit.SECONDS);
+        }
+        if (cursorSessionId == null || cursorSessionId.isBlank()) {
+            throw new IllegalStateException("Cursor ACP session/new returned empty sessionId");
+        }
+
+        AgentSession session = sessionRepository.findById(portalSessionId).orElseThrow();
+        session.setCursorSessionId(cursorSessionId);
+        session.setStatus(SessionStatus.IDLE);
+        sessionRepository.save(session);
+
+        emit("bridge_ready", Map.of(
+                "cursorSessionId", cursorSessionId,
+                "workspacePath", cwd.toString()
+        ));
+    }
+
+    private void spawnAcpProcess(Path cwd) throws Exception {
         List<String> command = buildCommand();
         ProcessBuilder pb = new ProcessBuilder(command);
         pb.directory(cwd.toFile());
@@ -143,27 +176,6 @@ public class AgentBridge implements AutoCloseable {
         } catch (Exception e) {
             log.warn("ACP authenticate returned error (may already be logged in): {}", e.getMessage());
         }
-
-        if (cursorSessionId != null && !cursorSessionId.isBlank()) {
-            try {
-                cursorSessionId = client.sessionLoad(cursorSessionId, cwd.toString()).get(60, TimeUnit.SECONDS);
-            } catch (Exception e) {
-                log.warn("session/load failed, creating new session: {}", e.getMessage());
-                cursorSessionId = client.sessionNew(cwd.toString()).get(60, TimeUnit.SECONDS);
-            }
-        } else {
-            cursorSessionId = client.sessionNew(cwd.toString()).get(60, TimeUnit.SECONDS);
-        }
-
-        AgentSession session = sessionRepository.findById(portalSessionId).orElseThrow();
-        session.setCursorSessionId(cursorSessionId);
-        session.setStatus(SessionStatus.IDLE);
-        sessionRepository.save(session);
-
-        emit("bridge_ready", Map.of(
-                "cursorSessionId", cursorSessionId,
-                "workspacePath", cwd.toString()
-        ));
     }
 
     private List<String> buildCommand() {
@@ -651,6 +663,15 @@ public class AgentBridge implements AutoCloseable {
             }
         }
         return null;
+    }
+
+    private static String rootMessage(Throwable ex) {
+        Throwable cur = ex;
+        while (cur.getCause() != null && cur.getCause() != cur) {
+            cur = cur.getCause();
+        }
+        String msg = cur.getMessage();
+        return (msg == null || msg.isBlank()) ? cur.getClass().getSimpleName() : msg;
     }
 
     public String getCursorSessionId() {

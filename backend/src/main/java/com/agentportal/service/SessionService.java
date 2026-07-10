@@ -13,7 +13,10 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
@@ -37,6 +40,7 @@ public class SessionService {
     private final AuditService auditService;
     private final CssProperties cssProperties;
     private final ObjectMapper objectMapper;
+    private final TransactionTemplate transactionTemplate;
 
     public SessionService(
             AgentSessionRepository sessionRepository,
@@ -52,7 +56,8 @@ public class SessionService {
             WorkspaceQuotaService workspaceQuotaService,
             AuditService auditService,
             CssProperties cssProperties,
-            ObjectMapper objectMapper
+            ObjectMapper objectMapper,
+            TransactionTemplate transactionTemplate
     ) {
         this.sessionRepository = sessionRepository;
         this.messageRepository = messageRepository;
@@ -68,6 +73,7 @@ public class SessionService {
         this.auditService = auditService;
         this.cssProperties = cssProperties;
         this.objectMapper = objectMapper;
+        this.transactionTemplate = transactionTemplate;
     }
 
     @Transactional
@@ -102,7 +108,7 @@ public class SessionService {
         if (enforceOwnership()) {
             String user = CurrentUser.usernameOrAnonymous();
             if (CurrentUser.isAdmin()) {
-                return sessionRepository.findByStatusNotOrderByUpdatedAtDesc(SessionStatus.ARCHIVED)
+                return sessionRepository.findAllByOrderByUpdatedAtDesc()
                         .stream()
                         .map(SessionDto::from)
                         .toList();
@@ -110,12 +116,12 @@ public class SessionService {
             Set<UUID> collabIds = collaboratorRepository.findByUsername(user).stream()
                     .map(SessionCollaborator::getSessionId)
                     .collect(Collectors.toSet());
-            return sessionRepository.findByStatusNotOrderByUpdatedAtDesc(SessionStatus.ARCHIVED).stream()
+            return sessionRepository.findAllByOrderByUpdatedAtDesc().stream()
                     .filter(s -> user.equals(s.getOwnerUsername()) || collabIds.contains(s.getId()))
                     .map(SessionDto::from)
                     .toList();
         }
-        return sessionRepository.findByStatusNotOrderByUpdatedAtDesc(SessionStatus.ARCHIVED)
+        return sessionRepository.findAllByOrderByUpdatedAtDesc()
                 .stream()
                 .map(SessionDto::from)
                 .toList();
@@ -161,8 +167,31 @@ public class SessionService {
                 .toList();
     }
 
-    @Transactional
+    /**
+     * Persist the user message, then start/prompt the agent outside any long DB transaction.
+     * ACP handshake can take tens of seconds; holding a transaction open causes pool stalls and opaque 500s.
+     */
     public MessageDto prompt(UUID id, PromptRequest request) throws Exception {
+        ChatMessage userMsg;
+        try {
+            userMsg = transactionTemplate.execute(status -> {
+                try {
+                    return recordUserPrompt(id, request);
+                } catch (IOException e) {
+                    throw new UncheckedIOException(e);
+                }
+            });
+        } catch (UncheckedIOException e) {
+            throw e.getCause();
+        }
+        AgentSession session = sessionRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Session not found: " + id));
+        SessionAgentRuntime runtime = processManager.getOrStart(session);
+        runtime.prompt(request.prompt());
+        return MessageDto.from(userMsg);
+    }
+
+    private ChatMessage recordUserPrompt(UUID id, PromptRequest request) throws IOException {
         AgentSession session = require(id);
         if (session.getStatus() == SessionStatus.ARCHIVED) {
             throw new IllegalStateException("Session is archived");
@@ -185,11 +214,8 @@ public class SessionService {
         userMsg.setContent(request.prompt());
         userMsg.setSequenceNo(nextSequence(id));
         messageRepository.save(userMsg);
-
-        SessionAgentRuntime runtime = processManager.getOrStart(session);
-        runtime.prompt(request.prompt());
         auditService.record("session.prompt", id.toString(), "len=" + request.prompt().length());
-        return MessageDto.from(userMsg);
+        return userMsg;
     }
 
     @Transactional
@@ -332,6 +358,26 @@ public class SessionService {
         processManager.stop(id);
         session.setStatus(SessionStatus.ARCHIVED);
         auditService.record("session.archive", id.toString(), null);
+        return SessionDto.from(sessionRepository.save(session));
+    }
+
+    @Transactional
+    public SessionDto unarchive(UUID id) {
+        AgentSession session = require(id);
+        if (session.getStatus() != SessionStatus.ARCHIVED) {
+            return SessionDto.from(session);
+        }
+        // Stale mid-turn permissions cannot be answered after archive stopped ACP.
+        for (var pending : permissionRepository.findBySessionIdAndStatusOrderByCreatedAtDesc(
+                id, PermissionStatus.PENDING)) {
+            pending.setStatus(PermissionStatus.REJECT_ONCE);
+            pending.setResolvedAt(java.time.Instant.now());
+            permissionRepository.save(pending);
+        }
+        // Drop dead Cursor conversation id so the next prompt opens a fresh ACP session.
+        session.setCursorSessionId(null);
+        session.setStatus(SessionStatus.IDLE);
+        auditService.record("session.unarchive", id.toString(), null);
         return SessionDto.from(sessionRepository.save(session));
     }
 

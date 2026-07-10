@@ -9,26 +9,27 @@ The UI uses a **dark navy/teal responsive redesign** (design tokens in `frontend
 
 ## Features
 
-- Multi-session chat workspace with search and status filters (all / active / failed / archived)
+- Multi-session chat workspace with search and status filters (all / active / failed / archived), including archived sessions + **unarchive**
 - Provider choice at session create (Cursor or Antigravity; cannot switch later)
 - Realtime streaming over WebSocket (STOMP/SockJS) with CSS-aware WS auth
 - Persistent history (H2 file DB by default; PostgreSQL profile available)
-- Markdown-rendered assistant replies (marked + DOMPurify)
-- Session detail tabs: **Transcript** | **Logs** | **Code** | **Preview** | **Changes** | **History** | **Activity**
+- Markdown-rendered assistant replies (marked + DOMPurify) with **message timestamps**
+- Session detail tabs: **Transcript** | **Logs** | **Code** | **Preview** | **Changes** | **History** | **Activity** (horizontally scrollable on phones)
 - **Sub-agent / task panel** with Abandon (Cursor: child-scoped mark + suppress further tool updates; other providers may cancel the session run)
 - Antigravity **soft interactive** + optional **ACP** (`agy acp` / `agy --acp`, then print-mode fallback)
+- Cursor ACP **stale `session/load` recovery** — timed-out loads restart the ACP process and fall back to `session/new`
 - **Change review** with **Keep** / **Restore** (git or `.agent-portal/baseline` snapshot) and **History** timeline
 - **Session presets** and optional starter prompt on create
-- **Collaborator sharing** when CSS is enabled
+- **Collaborator sharing** when CSS is enabled (share bar with busy/disabled states)
 - Workspace **file browser** with sandbox under `agent.workspace.root`
 - **CSS JWT auth** via `com.css:css-spring-boot-starter` (`css.resource-server.*`) + optional API-key fallback
 - Monaco Code tab (vendored) + sandboxed HTML Preview
 - Audit API + webhooks + optional per-user workspace quota
-- Capability badges in the top bar
+- Capability badges in the top bar (desktop/tablet)
 - Live task / terminal panel from agent tool events (Logs tab)
 - Permission and plan approval dialogs (**Cursor**; also Antigravity when ACP mode works)
-- Cancel in-flight runs and archive sessions
-- Responsive layout: desktop sidebar, mobile session list + drawer navigation + bottom FAB
+- Cancel in-flight runs and archive / restore sessions
+- Mobile-first polish (~360×780): FAB-only create, truncated paths with long-press copy, clearer empty states, FAB-safe list padding
 - Playwright e2e: Realme P2 Pro, tablet 1024, desktop 1440, auth shell
 
 ## Prerequisites
@@ -47,11 +48,35 @@ agent-portal/
   backend/                        Spring Boot 3.5 API + Cursor ACP + Antigravity bridges
   frontend/                       Angular 19 UI
   e2e/                            Playwright mobile QA (Realme P2 Pro)
+  scripts/                        Host stack + Docker-deps helpers
   workspaces/                     Default workspace root for relative session paths
   .cursor/skills/agent-portal/    Cursor skill for agents working on this repo
-  docker-compose.yml              Optional PostgreSQL
+  docker-compose.yml              Postgres + optional CSS/frontend containers
   README.md
 ```
+
+## Quick start (Windows host stack)
+
+Runs CSS + portal backend + Angular on the host (recommended when Docker is Windows containers / CE):
+
+```powershell
+cd E:\MyWorkspace\agent-portal
+# optional: copy .env.docker.example .env  and set PUBLIC_HOST / CURSOR_API_KEY
+.\scripts\run-host-stack.ps1
+```
+
+Sets `AGENT_WORKSPACE_ROOT` to `.\workspaces` and honors `AGENT_DEFAULT_AUTO_APPROVE` from `.env`.
+
+## Docker hybrid (Windows host)
+
+Postgres + CSS + static UI in Docker; portal backend on the host (so `agent` / `agy` work):
+
+```powershell
+copy .env.docker.example .env
+.\scripts\run-backend-docker-deps.ps1
+```
+
+Details: [docs/OPS.md](docs/OPS.md).
 
 ## Run backend
 
@@ -98,9 +123,9 @@ Login overlay uses `clientId=agent-portal` against CSS (`admin`/`admin123`). JWT
 ### PostgreSQL (optional)
 
 ```powershell
-cd ..
-docker compose up -d
-.\mvnw.cmd -f backend\pom.xml spring-boot:run -Dspring-boot.run.profiles=postgres
+cd E:\MyWorkspace\agent-portal
+docker compose up -d postgres
+.\mvnw.cmd -f backend\pom.xml spring-boot:run "-Dspring-boot.run.profiles=postgres"
 ```
 
 ## Run frontend
@@ -130,14 +155,15 @@ For access from other machines, allow inbound TCP **4200** (Angular dev server) 
 
 ## Typical flow
 
-1. Open the UI and create a session (desktop sidebar or mobile FAB).
+1. Open the UI and create a session (desktop **New session**, or mobile **FAB** only).
 2. Choose **Cursor** or **Antigravity** before creating.
-3. Point the session at workspace `demo` or an absolute path under `workspaces/`.
-4. Send a prompt; assistant text streams into **Transcript** (markdown); tool output appears under **Logs**.
-5. For Cursor: approve/reject permissions when prompted.
+3. Point the session at workspace `demo` or a path under `AGENT_WORKSPACE_ROOT` / `workspaces/`.
+4. Send a prompt; assistant text streams into **Transcript** (markdown + timestamps); tool output appears under **Logs**.
+5. For Cursor: approve/reject permissions when prompted (or set `AGENT_DEFAULT_AUTO_APPROVE=true`).
 6. For Antigravity: tools auto-run when `agent.antigravity.skip-permissions=true`.
-7. Use **Cancel** to stop an in-flight run; **Archive** to hide a session from the active list.
-8. Refresh the page — history reloads from the database.
+7. Use **Cancel** to stop an in-flight run; **Archive** / **Restore** from the session list filters.
+8. Long-press a truncated workspace path on mobile to copy it.
+9. Refresh the page — history reloads from the database.
 
 ## Provider comparison
 
@@ -147,9 +173,15 @@ For access from other machines, allow inbound TCP **4200** (Angular dev server) 
 | Tool / task events | ACP tool_call updates | Brain `messages/` (finished tasks) + `tasks/*.log` |
 | Mid-turn permission UI | Yes | No (uses `--dangerously-skip-permissions`) |
 | Cancel mid-run | `session/cancel` | Kill `agy` process |
-| Resume conversation | ACP session id | `--conversation <id>` stored on session |
+| Resume conversation | ACP session id (stale ids → short `session/load` timeout, then fresh `session/new`) | `--conversation <id>` stored on session |
 
 Antigravity streaming is **near-realtime** (sub-second polling of growing brain artifacts, reply file, CLI log, and captured stdout), not token-perfect ACP.
+
+### Cursor ACP resume notes
+
+- Portal stores `cursorSessionId` and tries `session/load` on the next prompt/resume.
+- Stale ids often hang; `AgentBridge` uses a **15s** load timeout, closes the wedged stdio client, respawns ACP, then calls `session/new`.
+- Prefer restarting only the **portal backend Java process** when debugging — do not broad-kill `cursor` / `node` / `agent` processes (that can take down the IDE agent session).
 
 ### Antigravity on Windows (launcher)
 
@@ -181,8 +213,8 @@ SockJS expects Node-style `global` in the browser. The portal polyfills it in tw
 | `agent.antigravity.skip-permissions` | Auto-approve tools for portal runs (default `true`) |
 | `agent.antigravity.print-timeout` | `agy --print-timeout` (default `5m`) |
 | `agent.antigravity.poll-interval-ms` | Brain artifact poll interval |
-| `agent.workspace.root` | Root for relative workspace paths |
-| `agent.default-auto-approve` | Cursor auto-allow tool permissions (default `false`) |
+| `agent.workspace.root` | Root for relative workspace paths (`AGENT_WORKSPACE_ROOT`) |
+| `agent.default-auto-approve` | Cursor auto-allow tool permissions (`AGENT_DEFAULT_AUTO_APPROVE`, default `false`) |
 | `app.cors.allowed-origins` | Allowed Angular origins |
 
 ## Antigravity auth

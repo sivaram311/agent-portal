@@ -69,9 +69,18 @@ public class AgentProcessManager {
                 return existing;
             }
             SessionAgentRuntime runtime = createRuntime(session);
-            runtime.ensureStarted();
-            runtimes.put(session.getId(), runtime);
-            return runtime;
+            try {
+                runtime.ensureStarted();
+                runtimes.put(session.getId(), runtime);
+                return runtime;
+            } catch (Exception e) {
+                try {
+                    runtime.close();
+                } catch (Exception closeEx) {
+                    log.debug("Failed closing runtime after start error: {}", closeEx.getMessage());
+                }
+                throw e;
+            }
         }
     }
 
@@ -149,7 +158,12 @@ public class AgentProcessManager {
                 permissionRepository,
                 properties.isDefaultAutoApprove()
         );
-        bridge.start();
+        try {
+            bridge.start();
+        } catch (Exception e) {
+            bridge.close();
+            throw e;
+        }
         return CursorSessionRuntime.fromBridge(bridge);
     }
 

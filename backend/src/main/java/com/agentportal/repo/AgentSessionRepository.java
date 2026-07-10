@@ -11,4 +11,8 @@ public interface AgentSessionRepository extends JpaRepository<AgentSession, UUID
     List<AgentSession> findByStatusNotOrderByUpdatedAtDesc(SessionStatus status);
 
     List<AgentSession> findByOwnerUsernameAndStatusNotOrderByUpdatedAtDesc(String ownerUsername, SessionStatus status);
+
+    List<AgentSession> findAllByOrderByUpdatedAtDesc();
+
+    List<AgentSession> findByOwnerUsernameOrderByUpdatedAtDesc(String ownerUsername);
 }

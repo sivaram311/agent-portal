@@ -109,8 +109,20 @@
 }
 
 .sidebar.compact {
-  grid-template-rows: auto auto minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
   padding-top: 0.5rem;
+  border-right: 0;
+}
+
+.sidebar.compact .session-list {
+  /* Clear fixed FAB so last cards stay tappable */
+  padding-bottom: calc(6.25rem + var(--ap-safe-bottom));
+}
+
+@media (max-width: 639px) {
+  .new-btn {
+    display: none !important;
+  }
 }
 
 .sr-only {

@@ -8,7 +8,11 @@
   padding: 0.55rem 1rem 0;
   border-bottom: 1px solid var(--ap-border);
   overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
+  touch-action: pan-x;
 }
 
 .tabs::-webkit-scrollbar {
@@ -26,6 +30,7 @@
   font-size: 0.88rem;
   position: relative;
   white-space: nowrap;
+  flex: 0 0 auto;
 }
 
 .tab:hover {
@@ -46,4 +51,17 @@
   height: 2px;
   border-radius: 2px;
   background: var(--ap-accent);
+}
+
+@media (max-width: 639px) {
+  .tabs {
+    padding: 0.35rem 0.5rem 0;
+    gap: 0.15rem;
+  }
+
+  .tab {
+    padding: 0.45rem 0.7rem;
+    font-size: 0.8rem;
+    min-height: 2.5rem;
+  }
 }

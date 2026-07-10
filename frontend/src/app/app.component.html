@@ -12,8 +12,9 @@
       [sessions]="sessions"
       [activeId]="active?.id"
       [search]="sessionSearch"
+      [compact]="isMobile"
       (searchChange)="sessionSearch = $event"
-      (select)="selectSession($event)"
+      (select)="selectSession($event); drawerOpen = false"
       (create)="openCreate()"
       (archive)="archiveSession($event)"
     />
@@ -111,17 +112,42 @@
         />
         @if (health?.cssEnabled) {
           <div class="share-bar" data-testid="share-bar">
-            <input
-              [(ngModel)]="shareUsername"
-              name="shareUser"
-              placeholder="Share with CSS username"
-              data-testid="share-username"
-            />
-            <button type="button" class="ap-btn ap-btn-ghost" (click)="shareSession()">Share</button>
-            @for (c of collaborators; track c.username) {
-              <button type="button" class="chip" (click)="unshare(c.username)" [title]="'Remove ' + c.username">
-                {{ c.username }} ×
+            <form class="share-form" (ngSubmit)="shareSession()">
+              <label class="share-field">
+                <span class="sr-only">Share with CSS username</span>
+                <input
+                  [(ngModel)]="shareUsername"
+                  name="shareUser"
+                  placeholder="Share with CSS username"
+                  data-testid="share-username"
+                  autocomplete="username"
+                  [disabled]="shareBusy"
+                  (keydown.enter)="$event.preventDefault(); shareSession()"
+                />
+              </label>
+              <button
+                type="submit"
+                class="ap-btn ap-btn-ghost"
+                [disabled]="shareBusy || !shareUsername.trim()"
+                data-testid="share-submit"
+              >
+                {{ shareBusy ? 'Sharing…' : 'Share' }}
               </button>
+            </form>
+            @if (collaborators.length) {
+              <div class="share-chips" aria-label="Collaborators">
+                @for (c of collaborators; track c.username) {
+                  <button
+                    type="button"
+                    class="chip"
+                    (click)="unshare(c.username)"
+                    [title]="'Remove ' + c.username"
+                    [disabled]="shareBusy"
+                  >
+                    {{ c.username }} ×
+                  </button>
+                }
+              </div>
             }
           </div>
         }
