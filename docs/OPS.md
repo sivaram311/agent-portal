@@ -96,7 +96,10 @@ docker compose exec -T postgres psql -U agent agentportal < backup.sql
 
 **CSS (Docker file H2 volume `css-data`):** survives `docker compose restart`; wiped by `docker compose down -v`.
 
-## API key (optional)
+## CORS (Agent API)
+
+Default `APP_CORS_ORIGINS=*` — any browser/AI origin may call `/api/**`. **Authentication is unchanged** (CSS JWT or `X-API-Key`). Discovery: `GET /api/agent/actions` (public). Contract: [platform/AGENT-API.md](platform/AGENT-API.md) and `workspaces/agent-api/`.
+
 
 Set `AGENT_PORTAL_API_KEY` or `app.security.api-key`. Clients must send `X-API-Key`. `/api/health` and `/api/auth/config` stay open.
 
