@@ -1,0 +1,13 @@
+---
+description: Never leave Cursor attribution or AI trailers in git commits or PRs
+alwaysApply: true
+---
+
+# No Cursor trace
+
+When creating commits or pull requests:
+
+- Do **not** add `Co-authored-by`, `Made-with`, `Generated-by`, or any Cursor/AI attribution trailers
+- Do **not** mention Cursor, Copilot, or AI assistants in commit messages or PR bodies
+- Write commit messages and PR text as a normal human contributor would
+- Keep authorship as the local git user only; never rewrite author/committer to an AI identity

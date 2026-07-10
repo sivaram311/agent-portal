@@ -68,7 +68,7 @@ Other scripts:
 
 ## Output
 
-- **Screenshots:** `e2e/screenshots/realme-p2-pro/` (`01-home.png` … `07-code-tab.png`)
+- **Screenshots:** `e2e/screenshots/realme-p2-pro/` (unit shots `01-home.png` … `07-code-tab.png`, plus full-flow shots below)
 - **HTML report:** `e2e/playwright-report/` (open with `npm run report`)
 - **Artifacts on failure:** `e2e/test-results/` (trace, video when enabled)
 
@@ -83,6 +83,38 @@ File: `tests/realme-p2-pro.spec.ts`
 5. Session detail: tabs **Transcript**, **Logs**, **Code**, **Preview**; prompt input near bottom; Logs and Code empty states
 
 If no sessions exist, the detail test creates one via the FAB (Antigravity + workspace `demo`).
+
+## Realme P2 Pro full-screen flow
+
+File: `tests/realme-p2-pro-full-test.spec.ts`
+
+End-to-end mobile walkthrough that logs in (when CSS overlay is present), exercises the FAB create dialog, opens a session (creates one if the list is empty), captures every session tab, and screenshots drawer navigation.
+
+```powershell
+cd e2e
+npx playwright test realme-p2-pro-full-test.spec.ts --project=realme-p2-pro
+# headed:
+npx playwright test realme-p2-pro-full-test.spec.ts --project=realme-p2-pro --headed
+```
+
+Optional env overrides: `APP_URL`, `CSS_USER`, `CSS_PASSWORD`.
+
+Full-flow screenshots written under `screenshots/realme-p2-pro/`:
+
+| File | Step |
+|------|------|
+| `01-login-screen.png` | Login / CSS overlay |
+| `02-after-login.png` | Post-login shell |
+| `03-session-list.png` | Mobile session list |
+| `04-create-session-fab.png` | New session dialog via FAB |
+| `05-session-detail.png` | Opened session |
+| `06-*-tab.png` | Transcript, Logs, Code, Preview, Changes, History |
+| `08-drawer-menu.png` | Mobile drawer / menu (when present) |
+| `09-final-overview.png` | Final frame |
+
+```powershell
+explorer screenshots\realme-p2-pro
+```
 
 ## `data-testid` hooks
 
