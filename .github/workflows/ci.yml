@@ -19,6 +19,11 @@ jobs:
           distribution: temurin
           java-version: '21'
           cache: maven
+      - name: Install css-spring-boot-starter
+        working-directory: ${{ github.workspace }}
+        run: |
+          git clone --depth 1 https://github.com/sivaram311/centralized-security-system.git /tmp/css
+          mvn -B -DskipTests -f /tmp/css/clients/spring-boot-starter/pom.xml install
       - name: Build backend
         run: ./mvnw -B -DskipTests package
       - name: Unit tests

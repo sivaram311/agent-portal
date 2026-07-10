@@ -45,6 +45,13 @@ JWKS: `http://localhost:9000/.well-known/jwks.json`
 
 Reusable starter: portal depends on `com.css:css-spring-boot-starter` (`css.resource-server.*` mirrors `css.*`). Keep `css.auth-url` for the login overlay.
 
+Install the starter once locally (or CI will clone it):
+
+```powershell
+cd E:\MyWorkspace\centralized-security-system\clients\spring-boot-starter
+mvn -q install
+```
+
 ## Workspace sandbox
 
 - Relative `workspacePath` values resolve under `agent.workspace.root`
