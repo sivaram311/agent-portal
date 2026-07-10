@@ -183,6 +183,19 @@ Use these for TLS / tunnel cutover (e.g. pointing `delena.buzz` at the host) —
 - `..` segments are rejected; file browser skips symlinks and uses `toRealPath` checks
 - If the backend is started with cwd `backend/` and no `AGENT_WORKSPACE_ROOT`, `./workspaces` resolves to `backend\workspaces` and existing sessions under `agent-portal\workspaces\…` will fail create/prompt validation
 
+Tracked samples under `workspaces/` (see [workspaces/README.md](../workspaces/README.md)):
+
+| Folder | Use |
+|--------|-----|
+| `demo` | Small sample + committed `.cursor` / `AGENTS.md` guidance materialization |
+| `FileBridge` | Demo Spring Boot file manager for longer agent runs |
+
+Runtime baselines (`.agent-portal/`), `data/`, and `logs/` stay gitignored.
+
+## Mobile QA
+
+Realme P2 Pro checklist, audit screenshots, and Playwright commands: [MOBILE-QA.md](MOBILE-QA.md).
+
 ## Cursor ACP troubleshooting
 
 | Symptom | Likely cause | Fix |

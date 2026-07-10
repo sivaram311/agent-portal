@@ -69,6 +69,7 @@ Other scripts:
 ## Output
 
 - **Screenshots:** `e2e/screenshots/realme-p2-pro/` (unit shots `01-home.png` … `07-code-tab.png`, plus full-flow shots below)
+- **Mobile audit fixtures:** `e2e/mobile-audit/` — committed before/after PNGs + overlap JSON + [CHECKLIST.md](mobile-audit/CHECKLIST.md) (see [mobile-audit/README.md](mobile-audit/README.md))
 - **HTML report:** `e2e/playwright-report/` (open with `npm run report`)
 - **Artifacts on failure:** `e2e/test-results/` (trace, video when enabled)
 

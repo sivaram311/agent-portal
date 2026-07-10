@@ -49,12 +49,16 @@ agent-portal/
   backend/                        Spring Boot 3.5 API + Cursor ACP + Antigravity bridges
   frontend/                       Angular 19 UI
   e2e/                            Playwright mobile QA (Realme P2 Pro)
+  e2e/mobile-audit/               Phone screenshot fixtures + checklist
+  docs/                           OPS, delena proxy, mobile QA, roadmap
   scripts/                        Host stack + Docker-deps helpers
-  workspaces/                     Default workspace root for relative session paths
+  workspaces/                     Default workspace root (demo + FileBridge samples)
   .cursor/skills/agent-portal/    Cursor skill for agents working on this repo
   docker-compose.yml              Postgres + optional CSS/frontend containers
   README.md
 ```
+
+Mobile checklist and audit frames: [docs/MOBILE-QA.md](docs/MOBILE-QA.md). Sample workspaces: [workspaces/README.md](workspaces/README.md).
 
 ## Quick start (Windows host stack)
 

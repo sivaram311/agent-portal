@@ -1,0 +1,348 @@
+{
+  "overflow": [
+    {
+      "sel": "header.topbar#0",
+      "tag": "HEADER",
+      "text": "A Agent Portal Cursor permissions Child abandon Agy soft Q&A",
+      "left": 0,
+      "top": 0,
+      "right": 388.703125,
+      "bottom": 258.90625,
+      "width": 388.703125,
+      "height": 258.90625,
+      "z": "auto",
+      "position": "static"
+    },
+    {
+      "sel": "aside.sidebar.compact#2",
+      "tag": "ASIDE",
+      "text": "Search sessions All Active Failed Archived TestApp 4h ago E",
+      "left": 0,
+      "top": 314.90625,
+      "right": 388.703125,
+      "bottom": 800,
+      "width": 388.703125,
+      "height": 485.09375,
+      "z": "auto",
+      "position": "static"
+    },
+    {
+      "sel": "button.ap-btn.ap-btn-ghost#17",
+      "tag": "BUTTON",
+      "text": "Sign out",
+      "left": 312.703125,
+      "top": 99.15625,
+      "right": 381.09375,
+      "bottom": 158.75,
+      "width": 68.390625,
+      "height": 59.59375,
+      "z": "auto",
+      "position": "static"
+    },
+    {
+      "sel": "button.card#23",
+      "tag": "BUTTON",
+      "text": "TestApp 4h ago E:\\MyWorkspace\\agent-portal\\workspaces\\demo ",
+      "left": 16,
+      "top": 422.90625,
+      "right": 371.703125,
+      "bottom": 529.21875,
+      "width": 355.703125,
+      "height": 106.3125,
+      "z": "auto",
+      "position": "static"
+    },
+    {
+      "sel": "button.card#25",
+      "tag": "BUTTON",
+      "text": "Prompt Fix2 8h ago E:\\MyWorkspace\\agent-portal\\workspaces\\d",
+      "left": 16,
+      "top": 538.015625,
+      "right": 371.703125,
+      "bottom": 644.328125,
+      "width": 355.703125,
+      "height": 106.3125,
+      "z": "auto",
+      "position": "static"
+    },
+    {
+      "sel": "button.card#27",
+      "tag": "BUTTON",
+      "text": "Prompt Fix 8h ago E:\\MyWorkspace\\agent-portal\\workspaces\\de",
+      "left": 16,
+      "top": 653.125,
+      "right": 371.703125,
+      "bottom": 759.4375,
+      "width": 355.703125,
+      "height": 106.3125,
+      "z": "auto",
+      "position": "static"
+    },
+    {
+      "sel": "button.card#29",
+      "tag": "BUTTON",
+      "text": "Cursor Check 9h ago E:\\MyWorkspace\\agent-portal\\workspaces\\",
+      "left": 16,
+      "top": 768.234375,
+      "right": 371.703125,
+      "bottom": 874.546875,
+      "width": 355.703125,
+      "height": 106.3125,
+      "z": "auto",
+      "position": "static"
+    },
+    {
+      "sel": "button.archive#30",
+      "tag": "BUTTON",
+      "text": "Archive",
+      "left": 301.484375,
+      "top": 831.953125,
+      "right": 355.515625,
+      "bottom": 859.953125,
+      "width": 54.03125,
+      "height": 28,
+      "z": "auto",
+      "position": "static"
+    },
+    {
+      "sel": "button.card#31",
+      "tag": "BUTTON",
+      "text": "Agy Out 9h ago E:\\MyWorkspace\\agent-portal\\workspaces\\demo ",
+      "left": 16,
+      "top": 883.34375,
+      "right": 371.703125,
+      "bottom": 989.65625,
+      "width": 355.703125,
+      "height": 106.3125,
+      "z": "auto",
+      "position": "static"
+    },
+    {
+      "sel": "button.archive#32",
+      "tag": "BUTTON",
+      "text": "Archive",
+      "left": 301.484375,
+      "top": 947.0625,
+      "right": 355.515625,
+      "bottom": 975.0625,
+      "width": 54.03125,
+      "height": 28,
+      "z": "auto",
+      "position": "static"
+    },
+    {
+      "sel": "button.card#33",
+      "tag": "BUTTON",
+      "text": "Demo 16h ago E:\\MyWorkspace\\agent-portal\\workspaces\\demo C",
+      "left": 16,
+      "top": 998.453125,
+      "right": 371.703125,
+      "bottom": 1104.765625,
+      "width": 355.703125,
+      "height": 106.3125,
+      "z": "auto",
+      "position": "static"
+    },
+    {
+      "sel": "button.archive#34",
+      "tag": "BUTTON",
+      "text": "Archive",
+      "left": 301.484375,
+      "top": 1062.171875,
+      "right": 355.515625,
+      "bottom": 1090.171875,
+      "width": 54.03125,
+      "height": 28,
+      "z": "auto",
+      "position": "static"
+    },
+    {
+      "sel": "input.ng-untouched.ng-pristine#1",
+      "tag": "INPUT",
+      "text": "",
+      "left": 16,
+      "top": 270.90625,
+      "right": 372.703125,
+      "bottom": 314.90625,
+      "width": 356.703125,
+      "height": 44,
+      "z": "auto",
+      "position": "static"
+    },
+    {
+      "sel": "input.ng-untouched.ng-pristine#2",
+      "tag": "INPUT",
+      "text": "",
+      "left": 16,
+      "top": 322.90625,
+      "right": 371.703125,
+      "bottom": 366.90625,
+      "width": 355.703125,
+      "height": 44,
+      "z": "auto",
+      "position": "static"
+    },
+    {
+      "sel": ".topbar.topbar#0",
+      "tag": "HEADER",
+      "text": "A Agent Portal Cursor permissions Child abandon Agy soft Q&A",
+      "left": 0,
+      "top": 0,
+      "right": 388.703125,
+      "bottom": 258.90625,
+      "width": 388.703125,
+      "height": 258.90625,
+      "z": "auto",
+      "position": "static"
+    },
+    {
+      "sel": ".mobile-list.mobile-list#0",
+      "tag": "DIV",
+      "text": "Search sessions All Active Failed Archived TestApp 4h ago E",
+      "left": 0,
+      "top": 258.90625,
+      "right": 388.703125,
+      "bottom": 800,
+      "width": 388.703125,
+      "height": 541.09375,
+      "z": "auto",
+      "position": "static"
+    },
+    {
+      "sel": ".card.card#6",
+      "tag": "BUTTON",
+      "text": "TestApp 4h ago E:\\MyWorkspace\\agent-portal\\workspaces\\demo ",
+      "left": 16,
+      "top": 422.90625,
+      "right": 371.703125,
+      "bottom": 529.21875,
+      "width": 355.703125,
+      "height": 106.3125,
+      "z": "auto",
+      "position": "static"
+    },
+    {
+      "sel": ".card.card#7",
+      "tag": "BUTTON",
+      "text": "Prompt Fix2 8h ago E:\\MyWorkspace\\agent-portal\\workspaces\\d",
+      "left": 16,
+      "top": 538.015625,
+      "right": 371.703125,
+      "bottom": 644.328125,
+      "width": 355.703125,
+      "height": 106.3125,
+      "z": "auto",
+      "position": "static"
+    },
+    {
+      "sel": ".card.card#8",
+      "tag": "BUTTON",
+      "text": "Prompt Fix 8h ago E:\\MyWorkspace\\agent-portal\\workspaces\\de",
+      "left": 16,
+      "top": 653.125,
+      "right": 371.703125,
+      "bottom": 759.4375,
+      "width": 355.703125,
+      "height": 106.3125,
+      "z": "auto",
+      "position": "static"
+    },
+    {
+      "sel": ".card.card#9",
+      "tag": "BUTTON",
+      "text": "Cursor Check 9h ago E:\\MyWorkspace\\agent-portal\\workspaces\\",
+      "left": 16,
+      "top": 768.234375,
+      "right": 371.703125,
+      "bottom": 874.546875,
+      "width": 355.703125,
+      "height": 106.3125,
+      "z": "auto",
+      "position": "static"
+    },
+    {
+      "sel": ".card.card#10",
+      "tag": "BUTTON",
+      "text": "Agy Out 9h ago E:\\MyWorkspace\\agent-portal\\workspaces\\demo ",
+      "left": 16,
+      "top": 883.34375,
+      "right": 371.703125,
+      "bottom": 989.65625,
+      "width": 355.703125,
+      "height": 106.3125,
+      "z": "auto",
+      "position": "static"
+    },
+    {
+      "sel": ".card.card#11",
+      "tag": "BUTTON",
+      "text": "Demo 16h ago E:\\MyWorkspace\\agent-portal\\workspaces\\demo C",
+      "left": 16,
+      "top": 998.453125,
+      "right": 371.703125,
+      "bottom": 1104.765625,
+      "width": 355.703125,
+      "height": 106.3125,
+      "z": "auto",
+      "position": "static"
+    }
+  ],
+  "pairs": [
+    {
+      "a": "button.card#27|Prompt Fix 8h ago E:\\MyWorkspace\\agent-portal\\workspaces\\de",
+      "b": "button.fab#35|+",
+      "area": 1850
+    },
+    {
+      "a": "button.card#27|Prompt Fix 8h ago E:\\MyWorkspace\\agent-portal\\workspaces\\de",
+      "b": ".fab.fab#0|+",
+      "area": 1850
+    },
+    {
+      "a": "button.fab#35|+",
+      "b": ".card.card#8|Prompt Fix 8h ago E:\\MyWorkspace\\agent-portal\\workspaces\\de",
+      "area": 1850
+    },
+    {
+      "a": ".fab.fab#0|+",
+      "b": ".card.card#8|Prompt Fix 8h ago E:\\MyWorkspace\\agent-portal\\workspaces\\de",
+      "area": 1850
+    },
+    {
+      "a": "button.card#29|Cursor Check 9h ago E:\\MyWorkspace\\agent-portal\\workspaces\\",
+      "b": "button.fab#35|+",
+      "area": 794
+    },
+    {
+      "a": "button.card#29|Cursor Check 9h ago E:\\MyWorkspace\\agent-portal\\workspaces\\",
+      "b": ".fab.fab#0|+",
+      "area": 794
+    },
+    {
+      "a": "button.fab#35|+",
+      "b": ".card.card#9|Cursor Check 9h ago E:\\MyWorkspace\\agent-portal\\workspaces\\",
+      "area": 794
+    },
+    {
+      "a": ".fab.fab#0|+",
+      "b": ".card.card#9|Cursor Check 9h ago E:\\MyWorkspace\\agent-portal\\workspaces\\",
+      "area": 794
+    },
+    {
+      "a": "button.archive#28|Archive",
+      "b": "button.fab#35|+",
+      "area": 754
+    },
+    {
+      "a": "button.archive#28|Archive",
+      "b": ".fab.fab#0|+",
+      "area": 754
+    }
+  ],
+  "meta": {
+    "vw": 360,
+    "vh": 800,
+    "scrollW": 360,
+    "bodyOverflowX": 360
+  }
+}

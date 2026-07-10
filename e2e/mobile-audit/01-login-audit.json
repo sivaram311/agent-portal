@@ -1,0 +1,56 @@
+{
+  "overflow": [],
+  "pairs": [
+    {
+      "a": "aside.sidebar.compact#2|Search sessions All Active Failed Archived No sessions matc",
+      "b": "input.ng-untouched.ng-pristine#0|",
+      "area": 8577
+    },
+    {
+      "a": "input.ng-untouched.ng-pristine#0|",
+      "b": "input.ng-untouched.ng-pristine#4|",
+      "area": 6417
+    },
+    {
+      "a": ".brand-inline.brand-inline#0|A Agent Portal",
+      "b": ".card.card.ng-untouched#0|A Agent Portal Sign in with Centralized Security Username ",
+      "area": 3642
+    },
+    {
+      "a": "button.chip#10|Archived",
+      "b": "input.ng-untouched.ng-pristine#1|",
+      "area": 2238
+    },
+    {
+      "a": "input.ng-untouched.ng-pristine#0|",
+      "b": "input.ng-untouched.ng-pristine#3|",
+      "area": 2055
+    },
+    {
+      "a": "button.chip#8|Active",
+      "b": "input.ng-untouched.ng-pristine#1|",
+      "area": 1791
+    },
+    {
+      "a": "button.chip#9|Failed",
+      "b": "input.ng-untouched.ng-pristine#1|",
+      "area": 1725
+    },
+    {
+      "a": "button.chip.on#7|All",
+      "b": ".card.card.ng-untouched#0|A Agent Portal Sign in with Centralized Security Username ",
+      "area": 1133
+    },
+    {
+      "a": "button.chip.on#7|All",
+      "b": "input.ng-untouched.ng-pristine#1|",
+      "area": 304
+    }
+  ],
+  "meta": {
+    "vw": 360,
+    "vh": 800,
+    "scrollW": 360,
+    "bodyOverflowX": 360
+  }
+}

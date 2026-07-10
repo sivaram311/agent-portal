@@ -15,6 +15,8 @@ e2e/test-results/
 e2e/playwright-report/
 e2e/blob-report/
 e2e/.cache/
+# Session runtime under workspaces (baselines, logs, scratch)
+workspaces/**/.agent-portal/
 workspaces/**/.agent-portal-*
 workspaces/**/.agent-portal-reply.txt
 workspaces/**/*.out.txt
@@ -24,4 +26,8 @@ workspaces/**/*.class
 workspaces/**/agy-*.txt
 workspaces/**/.test-*
 workspaces/**/last-*-session.txt
+workspaces/**/logs/
+workspaces/**/mobile-audit/
 !workspaces/**/.gitkeep
+
+workspaces/FileBridge/backend/.mvn/.mvn/
