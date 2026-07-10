@@ -189,6 +189,9 @@ Tracked samples under `workspaces/` (see [workspaces/README.md](../workspaces/RE
 |--------|-----|
 | `demo` | Small sample + committed `.cursor` / `AGENTS.md` guidance materialization |
 | `FileBridge` | Demo Spring Boot file manager for longer agent runs |
+| `agent-api` | Workspace for external AIs calling the portal/CSS HTTP API |
+
+Machine-wide **Future Implementation** handbook (workflow, ports, VirtualDev Co, sub-agents): [platform/README.md](platform/README.md).
 
 Runtime baselines (`.agent-portal/`), `data/`, and `logs/` stay gitignored.
 

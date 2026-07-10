@@ -60,6 +60,8 @@ agent-portal/
 
 Mobile checklist and audit frames: [docs/MOBILE-QA.md](docs/MOBILE-QA.md). Sample workspaces: [workspaces/README.md](workspaces/README.md).
 
+**Platform Future Implementation** (machine workflow, ports, sandbox, VirtualDev Co, Agent API): [docs/platform/README.md](docs/platform/README.md).
+
 ## Quick start (Windows host stack)
 
 Runs CSS + portal backend + Angular on the host (recommended when Docker is Windows containers / CE):

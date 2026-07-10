@@ -28,3 +28,9 @@ Prioritized improvements and the Cursor skills (subagents) that own each track.
 In Cursor, ask an agent to follow the matching skill under `.cursor/skills/` for follow-up work.
 
 Keep root `README.md` and this roadmap updated when a track changes.
+
+## Platform Future Implementation
+
+Machine workflow, port registry, sandbox, CSS App Home, VirtualDev Co, and sub-agent roadmaps live under **[docs/platform/](platform/README.md)** (documentation-first; runtime not built yet).
+
+New workspace for AIs that call our APIs: [`workspaces/agent-api/`](../workspaces/agent-api/).

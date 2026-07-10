@@ -8,6 +8,7 @@ Default sandbox root for session `workspacePath` values (`AGENT_WORKSPACE_ROOT` 
 |------|---------|
 | `demo/` | Small Java sample + **materialized Rules & Skills** (`.cursor/rules`, `.cursor/skills`, `AGENTS.md`) for guidance QA |
 | `FileBridge/` | Full demo app (Spring Boot file manager) used for longer agent sessions |
+| `agent-api/` | Bridge workspace for **external AIs** talking to Agent Portal + CSS via HTTP/WS ([PROTOCOL.md](agent-api/PROTOCOL.md)) |
 
 ## Not committed (runtime)
 
