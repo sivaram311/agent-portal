@@ -59,6 +59,18 @@ h2 {
   flex-shrink: 0;
 }
 
+.role-chip {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  border: 1px solid rgba(20, 184, 166, 0.4);
+  color: #5eead4;
+  background: rgba(20, 184, 166, 0.12);
+}
+
 .path-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;

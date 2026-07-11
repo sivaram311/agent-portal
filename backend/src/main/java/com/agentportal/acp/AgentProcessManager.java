@@ -4,6 +4,7 @@ import com.agentportal.config.AgentProperties;
 import com.agentportal.domain.AgentSession;
 import com.agentportal.repo.*;
 import com.agentportal.service.AntigravityCapabilityService;
+import com.agentportal.service.RoleAclService;
 import com.agentportal.service.SessionEventBus;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PreDestroy;
@@ -35,6 +36,7 @@ public class AgentProcessManager {
     private final ToolRunRepository toolRunRepository;
     private final PermissionRequestRepository permissionRepository;
     private final AntigravityCapabilityService antigravityCapabilityService;
+    private final RoleAclService roleAclService;
 
     public AgentProcessManager(
             AgentProperties properties,
@@ -45,7 +47,8 @@ public class AgentProcessManager {
             AgentEventRepository eventRepository,
             ToolRunRepository toolRunRepository,
             PermissionRequestRepository permissionRepository,
-            AntigravityCapabilityService antigravityCapabilityService
+            AntigravityCapabilityService antigravityCapabilityService,
+            RoleAclService roleAclService
     ) {
         this.properties = properties;
         this.mapper = mapper;
@@ -56,6 +59,7 @@ public class AgentProcessManager {
         this.toolRunRepository = toolRunRepository;
         this.permissionRepository = permissionRepository;
         this.antigravityCapabilityService = antigravityCapabilityService;
+        this.roleAclService = roleAclService;
     }
 
     public SessionAgentRuntime getOrStart(AgentSession session) throws Exception {
@@ -114,6 +118,7 @@ public class AgentProcessManager {
                                 eventRepository,
                                 toolRunRepository,
                                 permissionRepository,
+                                roleAclService,
                                 properties.isDefaultAutoApprove(),
                                 properties.getAntigravity().getCommand(),
                                 sub
@@ -156,6 +161,7 @@ public class AgentProcessManager {
                 eventRepository,
                 toolRunRepository,
                 permissionRepository,
+                roleAclService,
                 properties.isDefaultAutoApprove()
         );
         try {

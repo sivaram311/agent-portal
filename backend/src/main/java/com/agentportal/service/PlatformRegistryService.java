@@ -1,6 +1,7 @@
 package com.agentportal.service;
 
 import com.agentportal.config.AgentProperties;
+import com.agentportal.domain.AgentSession;
 import com.agentportal.domain.PlatformAgentMessage;
 import com.agentportal.domain.PlatformApp;
 import com.agentportal.domain.PlatformMemoryEntry;
@@ -302,6 +303,10 @@ public class PlatformRegistryService {
         if ("OPEN".equals(task.getStatus())) {
             task.setStatus("ASSIGNED");
         }
+        AgentSession session = agentSessionRepository.findById(req.sessionId()).orElseThrow();
+        session.setPlatformRole(task.getRole());
+        session.setPlatformTaskId(task.getId());
+        agentSessionRepository.save(session);
         return PlatformTaskDto.from(platformTaskRepository.save(task));
     }
 

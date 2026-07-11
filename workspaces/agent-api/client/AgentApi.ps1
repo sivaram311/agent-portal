@@ -343,7 +343,13 @@ function New-AgentSession {
         [string]$Provider = 'cursor',
 
         [Parameter(Mandatory = $false)]
-        [bool]$UseGuidanceDefaults = $true
+        [bool]$UseGuidanceDefaults = $true,
+
+        [Parameter(Mandatory = $false)]
+        [string]$PlatformRole,
+
+        [Parameter(Mandatory = $false)]
+        [string]$PlatformTaskId
     )
 
     $body = @{
@@ -352,7 +358,27 @@ function New-AgentSession {
         provider = $Provider
         useGuidanceDefaults = $UseGuidanceDefaults
     }
+    if ($PlatformRole) { $body['platformRole'] = $PlatformRole }
+    if ($PlatformTaskId) { $body['platformTaskId'] = $PlatformTaskId }
     Invoke-AgentApi -Method POST -Path '/sessions' -Body $body
+}
+
+function Set-AgentSessionRole {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$SessionId,
+
+        [Parameter(Mandatory = $false)]
+        [string]$PlatformRole,
+
+        [Parameter(Mandatory = $false)]
+        [string]$PlatformTaskId
+    )
+    $body = @{}
+    if ($PSBoundParameters.ContainsKey('PlatformRole')) { $body['platformRole'] = $PlatformRole }
+    if ($PlatformTaskId) { $body['platformTaskId'] = $PlatformTaskId }
+    Invoke-AgentApi -Method PATCH -Path "/sessions/$SessionId/platform-role" -Body $body
 }
 
 function Send-AgentPrompt {

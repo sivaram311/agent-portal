@@ -1,6 +1,6 @@
 # Future Implementation — Master Plan
 
-> Incremental delivery. Phases 0–7 have runnable pieces.
+> Incremental delivery. Phases 0–8 have runnable pieces.
 
 ## Status
 
@@ -14,7 +14,7 @@
 | **5** | Workflow sub-agents | **Done** — skills + `/api/platform/tasks` + roles |
 | **6** | Shared memory + swarm + pipelines | **Done** — memory, messages, pipeline presets, session link |
 | **7** | Org dashboard + role ACLs + auto-swarm | **Done** — `/org`, role tools/actions, `/swarm/tick` |
-| **8** | Full VirtualDev Co runtime | Planned (richer org UI, enforced tool ACLs at runtime) |
+| **8** | Runtime ACL enforcement | **Done** — session `platformRole`, permission deny, action gates, prompt hints |
 
 ## Skills
 
@@ -26,19 +26,37 @@
 |------|---------|
 | `/api/platform/ports` | Port leases |
 | `/api/platform/apps` · `/home` | App launcher data |
-| `/api/platform/org` | Org dashboard (counts, projects, blocked) |
+| `/api/platform/org` | Org dashboard |
 | `/api/platform/roles` · `/roles/{id}` | Role catalog + ACL/prompt hints |
 | `/api/platform/tasks` | EM task graph (CRUD) |
-| `/api/platform/tasks/{id}/session` | Link task → portal session |
+| `/api/platform/tasks/{id}/session` | Link task → session (copies role onto session) |
 | `/api/platform/memory` | Shared project knowledge |
 | `/api/platform/messages` | Inter-agent message bus |
 | `/api/platform/pipelines` · `.../{id}/run` | Workflow presets → task graph |
 | `/api/platform/swarm/tick` | Advance pipeline handoffs |
+| `/api/sessions` (+ `platformRole`) | Create session with role ACL |
+| `/api/sessions/{id}/platform-role` | Bind/change VirtualDev role |
 | `/api/agent/actions` | Discovery |
+
+## Runtime ACL
+
+When a session has `platformRole`:
+
+1. Prompt prefix includes role tools/actions/hint.
+2. ACP permission requests for disallowed tool categories are auto-rejected (`permission_acl_denied`).
+3. Roles with `humanApprovalRequired` skip global auto-approve.
+4. Portal actions (`listFiles`, `acceptChange`, …) return **403** if not in `allowedActions`.
+5. Linking a platform task to a session copies the task role onto the session.
+
+```powershell
+New-AgentSession -Title "Backend work" -WorkspacePath "agent-api" -PlatformRole BACKEND
+Set-AgentSessionRole -SessionId <id> -PlatformRole ARCHITECTURE
+```
 
 ## UI
 
 Top bar **Apps** → App Home (**Org** / apps / roles / tasks / memory / messages / pipelines).
+Session cards/headers show a role chip when bound.
 
 ## Swarm
 
@@ -52,13 +70,6 @@ Update-PlatformTask -TaskId <id> -Status DONE
 ## Pipelines
 
 `FEATURE` · `BUGFIX` · `REFACTOR` · `SECURITY_AUDIT`
-
-```powershell
-Start-PlatformPipeline -PipelineId FEATURE -Title "Profile page" -ProjectSlug profile-v1
-Set-PlatformMemory -ProjectSlug profile-v1 -Key "api/contract" -Kind CONTRACT -Value "..."
-Send-PlatformMessage -ProjectSlug profile-v1 -FromRole BACKEND -ToRole FRONTEND -Subject "DTO ready" -Body "..."
-Get-PlatformOrg
-```
 
 ## DNS
 

@@ -23,6 +23,9 @@
   <div class="meta">
     <app-agent-type-badge [provider]="session.provider" />
     <app-status-pill [status]="session.status" />
+    @if (session.platformRole) {
+      <span class="role-chip">{{ session.platformRole }}</span>
+    }
     <button
       type="button"
       class="archive"

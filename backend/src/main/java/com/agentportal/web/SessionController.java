@@ -36,6 +36,14 @@ public class SessionController {
         return sessionService.get(id);
     }
 
+    @PatchMapping("/{id}/platform-role")
+    public SessionDto updatePlatformRole(
+            @PathVariable UUID id,
+            @RequestBody UpdateSessionRoleRequest request
+    ) {
+        return sessionService.updatePlatformRole(id, request);
+    }
+
     @GetMapping("/{id}/messages")
     public List<MessageDto> messages(@PathVariable UUID id) {
         return sessionService.messages(id);

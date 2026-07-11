@@ -45,13 +45,26 @@ export class ApiService {
     return this.http.get<Session[]>(`${this.base}/sessions`);
   }
 
-  createSession(title: string, workspacePath: string, provider: string, useGuidanceDefaults = true) {
+  createSession(
+    title: string,
+    workspacePath: string,
+    provider: string,
+    useGuidanceDefaults = true,
+    platformRole?: string,
+    platformTaskId?: string
+  ) {
     return this.http.post<Session>(`${this.base}/sessions`, {
       title,
       workspacePath,
       provider,
       useGuidanceDefaults,
+      platformRole: platformRole || undefined,
+      platformTaskId: platformTaskId || undefined,
     });
+  }
+
+  updateSessionRole(id: string, body: { platformRole?: string | null; platformTaskId?: string }) {
+    return this.http.patch<Session>(`${this.base}/sessions/${id}/platform-role`, body);
   }
 
   getSession(id: string) {

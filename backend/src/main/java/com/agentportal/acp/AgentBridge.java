@@ -3,7 +3,9 @@ package com.agentportal.acp;
 import com.agentportal.config.AgentProperties;
 import com.agentportal.domain.*;
 import com.agentportal.dto.AgentEventDto;
+import com.agentportal.dto.PlatformRoleDto;
 import com.agentportal.repo.*;
+import com.agentportal.service.RoleAclService;
 import com.agentportal.service.SessionEventBus;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -39,6 +41,7 @@ public class AgentBridge implements AutoCloseable {
     private final AgentEventRepository eventRepository;
     private final ToolRunRepository toolRunRepository;
     private final PermissionRequestRepository permissionRepository;
+    private final RoleAclService roleAclService;
     private final boolean autoApprove;
     private final String acpCliCommand;
     private final String acpSubcommand;
@@ -63,11 +66,12 @@ public class AgentBridge implements AutoCloseable {
             AgentEventRepository eventRepository,
             ToolRunRepository toolRunRepository,
             PermissionRequestRepository permissionRepository,
+            RoleAclService roleAclService,
             boolean autoApprove
     ) {
         this(portalSessionId, workspacePath, existingCursorSessionId, properties, mapper, eventBus,
                 sessionRepository, messageRepository, eventRepository, toolRunRepository, permissionRepository,
-                autoApprove, null, null);
+                roleAclService, autoApprove, null, null);
     }
 
     public AgentBridge(
@@ -82,6 +86,7 @@ public class AgentBridge implements AutoCloseable {
             AgentEventRepository eventRepository,
             ToolRunRepository toolRunRepository,
             PermissionRequestRepository permissionRepository,
+            RoleAclService roleAclService,
             boolean autoApprove,
             String acpCliCommand,
             String acpSubcommand
@@ -97,6 +102,7 @@ public class AgentBridge implements AutoCloseable {
         this.eventRepository = eventRepository;
         this.toolRunRepository = toolRunRepository;
         this.permissionRepository = permissionRepository;
+        this.roleAclService = roleAclService;
         this.autoApprove = autoApprove;
         this.acpCliCommand = acpCliCommand;
         this.acpSubcommand = acpSubcommand;
@@ -493,13 +499,40 @@ public class AgentBridge implements AutoCloseable {
 
     private void handlePermissionRequest(long acpId, JsonNode params) {
         try {
-            if (autoApprove) {
+            AgentSession session = sessionRepository.findById(portalSessionId).orElse(null);
+            String platformRole = session == null ? null : session.getPlatformRole();
+            PlatformRoleDto role = roleAclService == null
+                    ? null
+                    : roleAclService.findRole(platformRole).orElse(null);
+            String category = roleAclService == null ? "read" : roleAclService.classifyTool(params);
+
+            if (role != null && !roleAclService.isToolAllowed(role, category)) {
+                ObjectNode result = mapper.createObjectNode();
+                ObjectNode outcome = result.putObject("outcome");
+                outcome.put("outcome", "selected");
+                outcome.put("optionId", "reject-once");
+                client.respond(acpId, result);
+                emit("permission_acl_denied", Map.of(
+                        "acpRequestId", acpId,
+                        "role", role.id(),
+                        "category", category,
+                        "reason", "Tool category not allowed for role"
+                ));
+                return;
+            }
+
+            boolean requireHuman = role != null && role.humanApprovalRequired();
+            if (autoApprove && !requireHuman) {
                 ObjectNode result = mapper.createObjectNode();
                 ObjectNode outcome = result.putObject("outcome");
                 outcome.put("outcome", "selected");
                 outcome.put("optionId", "allow-once");
                 client.respond(acpId, result);
-                emit("permission_auto_approved", Map.of("acpRequestId", acpId));
+                emit("permission_auto_approved", Map.of(
+                        "acpRequestId", acpId,
+                        "category", category,
+                        "role", role == null ? "" : role.id()
+                ));
                 return;
             }
 
@@ -517,7 +550,10 @@ public class AgentBridge implements AutoCloseable {
                     "permissionId", req.getId().toString(),
                     "toolCallId", Objects.toString(req.getToolCallId(), ""),
                     "details", params.toString(),
-                    "kind", "permission"
+                    "kind", "permission",
+                    "category", category,
+                    "role", role == null ? "" : role.id(),
+                    "humanApprovalRequired", requireHuman
             ));
         } catch (Exception e) {
             log.error("Failed to handle permission request", e);

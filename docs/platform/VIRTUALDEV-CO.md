@@ -62,8 +62,8 @@ Fixed pipelines: Feature, Bugfix, Refactor, Security audit.
 | Inter-agent communication | Medium |
 | Human-in-the-loop approvals | High |
 | Agent memory per project | Medium |
-| Tool access control per role | High |
-| Org dashboard (active agents/tasks) | Medium |
+| Tool access control per role | High | **Done** — runtime ACL on sessions |
+| Org dashboard (active agents/tasks) | Medium | **Done** — `/api/platform/org` |
 
 ## Locked answers
 

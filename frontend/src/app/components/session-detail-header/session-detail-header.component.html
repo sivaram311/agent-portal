@@ -12,6 +12,11 @@
           <div class="badges">
             <app-agent-type-badge [provider]="session.provider" />
             <app-status-pill [status]="session.status" />
+            @if (session.platformRole) {
+              <span class="role-chip" [title]="session.rolePromptHint || session.platformRole">
+                {{ session.platformRole }}
+              </span>
+            }
           </div>
         </div>
         <div class="path-row">

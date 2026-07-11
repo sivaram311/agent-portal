@@ -18,6 +18,12 @@ export interface Session {
   status: SessionStatus;
   provider: AgentProviderId | string;
   ownerUsername?: string;
+  platformRole?: string;
+  platformTaskId?: string;
+  allowedTools?: string[];
+  allowedActions?: string[];
+  rolePromptHint?: string;
+  humanApprovalRequired?: boolean;
   createdAt: string;
   updatedAt: string;
 }

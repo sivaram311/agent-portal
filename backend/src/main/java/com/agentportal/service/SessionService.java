@@ -11,9 +11,11 @@ import com.agentportal.repo.*;
 import com.agentportal.security.CurrentUser;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -42,6 +44,7 @@ public class SessionService {
     private final ObjectMapper objectMapper;
     private final TransactionTemplate transactionTemplate;
     private final GuidanceService guidanceService;
+    private final RoleAclService roleAclService;
 
     public SessionService(
             AgentSessionRepository sessionRepository,
@@ -59,7 +62,8 @@ public class SessionService {
             CssProperties cssProperties,
             ObjectMapper objectMapper,
             TransactionTemplate transactionTemplate,
-            GuidanceService guidanceService
+            GuidanceService guidanceService,
+            RoleAclService roleAclService
     ) {
         this.sessionRepository = sessionRepository;
         this.messageRepository = messageRepository;
@@ -77,6 +81,7 @@ public class SessionService {
         this.objectMapper = objectMapper;
         this.transactionTemplate = transactionTemplate;
         this.guidanceService = guidanceService;
+        this.roleAclService = roleAclService;
     }
 
     @Transactional
@@ -101,6 +106,12 @@ public class SessionService {
         session.setStatus(SessionStatus.IDLE);
         session.setProvider(provider);
         session.setOwnerUsername(CurrentUser.usernameOrAnonymous());
+        if (request.platformRole() != null && !request.platformRole().isBlank()) {
+            session.setPlatformRole(roleAclService.normalizeRole(request.platformRole()));
+        }
+        if (request.platformTaskId() != null) {
+            session.setPlatformTaskId(request.platformTaskId());
+        }
         session = sessionRepository.save(session);
         boolean useDefaults = request.useGuidanceDefaults() == null || request.useGuidanceDefaults();
         guidanceService.seedDefaultsForNewSession(session.getId(), useDefaults);
@@ -111,7 +122,7 @@ public class SessionService {
         }
         workspaceChangeService.captureBaseline(session.getId(), workspace);
         auditService.record("session.create", session.getId().toString(), provider + " @ " + workspace);
-        return SessionDto.from(session);
+        return toDto(session);
     }
 
     public List<SessionDto> list() {
@@ -120,7 +131,7 @@ public class SessionService {
             if (CurrentUser.isAdmin()) {
                 return sessionRepository.findAllByOrderByUpdatedAtDesc()
                         .stream()
-                        .map(SessionDto::from)
+                        .map(this::toDto)
                         .toList();
             }
             Set<UUID> collabIds = collaboratorRepository.findByUsername(user).stream()
@@ -128,17 +139,35 @@ public class SessionService {
                     .collect(Collectors.toSet());
             return sessionRepository.findAllByOrderByUpdatedAtDesc().stream()
                     .filter(s -> user.equals(s.getOwnerUsername()) || collabIds.contains(s.getId()))
-                    .map(SessionDto::from)
+                    .map(this::toDto)
                     .toList();
         }
         return sessionRepository.findAllByOrderByUpdatedAtDesc()
                 .stream()
-                .map(SessionDto::from)
+                .map(this::toDto)
                 .toList();
     }
 
     public SessionDto get(UUID id) {
-        return SessionDto.from(require(id));
+        return toDto(require(id));
+    }
+
+    @Transactional
+    public SessionDto updatePlatformRole(UUID id, UpdateSessionRoleRequest request) {
+        AgentSession session = require(id);
+        if (request.platformRole() != null) {
+            if (request.platformRole().isBlank()) {
+                session.setPlatformRole(null);
+            } else {
+                session.setPlatformRole(roleAclService.normalizeRole(request.platformRole()));
+            }
+        }
+        if (request.platformTaskId() != null) {
+            session.setPlatformTaskId(request.platformTaskId());
+        }
+        auditService.record("session.platform_role", id.toString(),
+                String.valueOf(session.getPlatformRole()));
+        return toDto(sessionRepository.save(session));
     }
 
     public List<MessageDto> messages(UUID id) {
@@ -198,7 +227,12 @@ public class SessionService {
                 .orElseThrow(() -> new NoSuchElementException("Session not found: " + id));
         guidanceService.materializeForSession(session.getWorkspacePath(), session.getId());
         String prefix = guidanceService.buildPromptPrefix(session.getId());
-        String agentPrompt = prefix.isBlank() ? request.prompt() : prefix + request.prompt();
+        String rolePrefix = roleAclService.findRole(session.getPlatformRole())
+                .map(roleAclService::buildRolePromptPrefix)
+                .orElse("");
+        String agentPrompt = (rolePrefix + prefix).isBlank()
+                ? request.prompt()
+                : rolePrefix + prefix + request.prompt();
         SessionAgentRuntime runtime = processManager.getOrStart(session);
         runtime.prompt(agentPrompt);
         return MessageDto.from(userMsg);
@@ -283,26 +317,31 @@ public class SessionService {
 
     public List<FileEntryDto> listFiles(UUID sessionId, String path) throws Exception {
         AgentSession session = require(sessionId);
+        roleAclService.assertSessionAction(session.getPlatformRole(), "listFiles");
         return workspaceFileService.list(Path.of(session.getWorkspacePath()), path);
     }
 
     public FileContentDto readFile(UUID sessionId, String path) throws Exception {
         AgentSession session = require(sessionId);
+        roleAclService.assertSessionAction(session.getPlatformRole(), "readFile");
         return workspaceFileService.read(Path.of(session.getWorkspacePath()), path);
     }
 
     public List<FileChangeDto> listChanges(UUID sessionId) throws Exception {
         AgentSession session = require(sessionId);
+        roleAclService.assertSessionAction(session.getPlatformRole(), "listChanges");
         return workspaceChangeService.listChanges(sessionId, Path.of(session.getWorkspacePath()));
     }
 
     public FileChangeDto diffFile(UUID sessionId, String path) throws Exception {
         AgentSession session = require(sessionId);
+        roleAclService.assertSessionAction(session.getPlatformRole(), "diffChange");
         return workspaceChangeService.diffFile(sessionId, Path.of(session.getWorkspacePath()), path);
     }
 
     public Map<String, Object> acceptChange(UUID sessionId, String path) throws Exception {
         AgentSession session = require(sessionId);
+        roleAclService.assertSessionAction(session.getPlatformRole(), "acceptChange");
         Map<String, Object> result = workspaceChangeService.accept(sessionId, Path.of(session.getWorkspacePath()), path);
         auditService.record("change.accept", sessionId.toString(), path);
         return result;
@@ -310,6 +349,7 @@ public class SessionService {
 
     public Map<String, Object> rejectChange(UUID sessionId, String path) throws Exception {
         AgentSession session = require(sessionId);
+        roleAclService.assertSessionAction(session.getPlatformRole(), "rejectChange");
         Map<String, Object> result = workspaceChangeService.reject(sessionId, Path.of(session.getWorkspacePath()), path);
         auditService.record("change.reject", sessionId.toString(), path);
         return result;
@@ -357,6 +397,18 @@ public class SessionService {
 
     public void resolvePermission(UUID sessionId, UUID permissionId, PermissionDecisionRequest request) throws Exception {
         AgentSession session = require(sessionId);
+        String decision = request.decision() == null ? "" : request.decision().toLowerCase(Locale.ROOT);
+        boolean allowing = !(decision.contains("reject") || decision.contains("deny"));
+        if (allowing && session.getPlatformRole() != null && !session.getPlatformRole().isBlank()) {
+            var pending = permissionRepository.findByIdAndSessionId(permissionId, sessionId)
+                    .orElseThrow(() -> new NoSuchElementException("Permission not found"));
+            String category = roleAclService.classifyToolFromDetailsJson(pending.getDetailsJson());
+            var role = roleAclService.requireRole(session.getPlatformRole());
+            if (!roleAclService.isToolAllowed(role, category)) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                        "Role " + role.id() + " cannot allow tool category '" + category + "'");
+            }
+        }
         SessionAgentRuntime runtime = processManager.getOrStart(session);
         if ("antigravity".equalsIgnoreCase(session.getProvider()) && !(runtime instanceof CursorSessionRuntime)) {
             throw new IllegalStateException(
@@ -371,14 +423,14 @@ public class SessionService {
         processManager.stop(id);
         session.setStatus(SessionStatus.ARCHIVED);
         auditService.record("session.archive", id.toString(), null);
-        return SessionDto.from(sessionRepository.save(session));
+        return toDto(sessionRepository.save(session));
     }
 
     @Transactional
     public SessionDto unarchive(UUID id) {
         AgentSession session = require(id);
         if (session.getStatus() != SessionStatus.ARCHIVED) {
-            return SessionDto.from(session);
+            return toDto(session);
         }
         // Stale mid-turn permissions cannot be answered after archive stopped ACP.
         for (var pending : permissionRepository.findBySessionIdAndStatusOrderByCreatedAtDesc(
@@ -391,7 +443,7 @@ public class SessionService {
         session.setCursorSessionId(null);
         session.setStatus(SessionStatus.IDLE);
         auditService.record("session.unarchive", id.toString(), null);
-        return SessionDto.from(sessionRepository.save(session));
+        return toDto(sessionRepository.save(session));
     }
 
     public SessionGuidanceDto getGuidance(UUID id) {
@@ -418,6 +470,10 @@ public class SessionService {
         } catch (Exception e) {
             return false;
         }
+    }
+
+    private SessionDto toDto(AgentSession session) {
+        return SessionDto.from(session, roleAclService.findRole(session.getPlatformRole()).orElse(null));
     }
 
     private AgentSession require(UUID id) {

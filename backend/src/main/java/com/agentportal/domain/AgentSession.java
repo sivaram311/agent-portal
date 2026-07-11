@@ -32,6 +32,12 @@ public class AgentSession {
     @Column(length = 128)
     private String ownerUsername;
 
+    /** VirtualDev Co role bound to this session for ACL + prompt hints. */
+    @Column(length = 32)
+    private String platformRole;
+
+    private UUID platformTaskId;
+
     @Column(nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
 
@@ -97,6 +103,22 @@ public class AgentSession {
 
     public void setOwnerUsername(String ownerUsername) {
         this.ownerUsername = ownerUsername;
+    }
+
+    public String getPlatformRole() {
+        return platformRole;
+    }
+
+    public void setPlatformRole(String platformRole) {
+        this.platformRole = platformRole;
+    }
+
+    public UUID getPlatformTaskId() {
+        return platformTaskId;
+    }
+
+    public void setPlatformTaskId(UUID platformTaskId) {
+        this.platformTaskId = platformTaskId;
     }
 
     public Instant getCreatedAt() {

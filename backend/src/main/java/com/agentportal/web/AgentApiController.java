@@ -36,6 +36,7 @@ public class AgentApiController {
                         action("listSessions", "GET", "/api/sessions", "List sessions"),
                         action("createSession", "POST", "/api/sessions", "New session (UI create dialog)"),
                         action("getSession", "GET", "/api/sessions/{id}", "Open session"),
+                        action("updateSessionRole", "PATCH", "/api/sessions/{id}/platform-role", "Bind VirtualDev role ACL"),
                         action("listMessages", "GET", "/api/sessions/{id}/messages", "Transcript"),
                         action("listTools", "GET", "/api/sessions/{id}/tools", "Tool runs / Logs"),
                         action("listPermissions", "GET", "/api/sessions/{id}/permissions", "Pending permissions"),
