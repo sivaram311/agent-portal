@@ -24,6 +24,7 @@ cd E:\MyWorkspace\agent-portal
 |----------|---------|----------|
 | `delena.buzz` | Portal DEV / home | `:4200` + `:8080` + CSS `:9000` |
 | `css.delena.buzz` | CSS prod IdP | `:5900` |
+| `control.delena.buzz` | Stack Pilot **PROD** | nginx → `:5091` (`G:\apps\stack-pilot`); DNS via `cloudflare-dns.ps1` (wrapper reserves name `control`). Static CSS/JS edge TTL **4h** (`max-age=14400`) — hard-refresh or purge after UI promotes. |
 | `agent-portal.delena.buzz` | Agent Portal **PROD** | UI static `G:\…\ui` + API `:5080`; `/auth` → `:5900` |
 | `agent-portal-staging.delena.buzz` | Agent Portal **PREPROD** | UI static `F:\…\ui` + API `:4080`; `/auth` → `:5900` |
 | `auth.delena.buzz` | CSS (optional split) | `:9000` / `:5900` |

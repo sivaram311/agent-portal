@@ -65,6 +65,7 @@ function Resolve-RecordName([string]$RecordName, [string]$ZoneName) {
 }
 
 function Invoke-Cloudflare([string]$Method, [string]$Url, [string]$Token, [string]$Body = "") {
+  # Write JSON to a temp file — PowerShell + curl.exe --data mangles braces/quotes (CF error 9207).
   $args = @(
     "-sS",
     "-X", $Method,
@@ -72,20 +73,27 @@ function Invoke-Cloudflare([string]$Method, [string]$Url, [string]$Token, [strin
     "-H", "Content-Type: application/json"
   )
 
-  if ($Body) {
-    $args += @("--data", $Body)
-  }
-
-  $args += $Url
-  $response = & curl.exe @args
-  if ($LASTEXITCODE -ne 0) {
-    throw "curl.exe failed with exit $LASTEXITCODE"
-  }
-
+  $tmp = $null
   try {
-    return ($response | ConvertFrom-Json)
-  } catch {
-    throw "Cloudflare returned non-JSON response."
+    if ($Body) {
+      $tmp = Join-Path $env:TEMP ("cf-dns-" + [guid]::NewGuid().ToString() + ".json")
+      Set-Content -Path $tmp -Value $Body -NoNewline -Encoding Ascii
+      $args += @("--data-binary", "@$tmp")
+    }
+
+    $args += $Url
+    $response = & curl.exe @args
+    if ($LASTEXITCODE -ne 0) {
+      throw "curl.exe failed with exit $LASTEXITCODE"
+    }
+
+    try {
+      return ($response | ConvertFrom-Json)
+    } catch {
+      throw "Cloudflare returned non-JSON response."
+    }
+  } finally {
+    if ($tmp -and (Test-Path $tmp)) { Remove-Item $tmp -Force -ErrorAction SilentlyContinue }
   }
 }
 
