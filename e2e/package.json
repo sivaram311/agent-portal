@@ -5,6 +5,7 @@
   "scripts": {
     "test": "playwright test",
     "test:mobile": "playwright test --project=realme-p2-pro",
+    "test:realme-e2e": "playwright test tests/realme-p2-pro-multi-agent.spec.ts --project=realme-p2-pro",
     "test:ui": "playwright test --ui",
     "report": "playwright show-report",
     "headed": "playwright test --project=realme-p2-pro --headed"

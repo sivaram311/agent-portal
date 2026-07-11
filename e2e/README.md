@@ -58,13 +58,30 @@ $env:APP_URL = "http://103.118.183.185:4200"
 npm run test:mobile
 ```
 
-Other scripts:
-
 | Script | Purpose |
 |--------|---------|
+| `npm run test:mobile` | All Realme-project specs |
+| `npm run test:realme-e2e` | Multi-agent E2E (`realme-p2-pro-multi-agent.spec.ts`, 360×780) |
 | `npm run test:ui` | Playwright UI mode |
 | `npm run headed` | Headed browser on Realme profile |
 | `npm run report` | Open HTML report (`playwright show-report`) |
+
+## Realme P2 Pro multi-agent E2E (sub-agent)
+
+Skill: `.cursor/skills/ap-e2e-realme-p2-pro/SKILL.md`  
+Spec: `tests/realme-p2-pro-multi-agent.spec.ts` (viewport **360×780**)
+
+Covers login → FAB create session → `/api/agent/actions` → session tabs → Changes → optional prompt → App Home.
+
+```powershell
+cd e2e
+$env:APP_URL = "https://delena.buzz"
+$env:CSS_USER = "admin"
+$env:CSS_PASSWORD = "admin123"   # local only — do not commit
+npm run test:realme-e2e
+```
+
+Screenshots: `screenshots/realme/` (`01-after-login.png`, `05-changes-tab.png`, `06-final-state.png`, …).
 
 ## Output
 
