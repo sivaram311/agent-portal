@@ -75,6 +75,13 @@ public class AgentApiController {
                         action("getTask", "GET", "/api/platform/tasks/{id}", "Open Engineering Manager task"),
                         action("updateTask", "PATCH", "/api/platform/tasks/{id}", "Update Engineering Manager task"),
                         action("listRoles", "GET", "/api/platform/roles", "Engineering role catalog"),
+                        action("listMemory", "GET", "/api/platform/memory", "Shared project memory"),
+                        action("upsertMemory", "POST", "/api/platform/memory", "Upsert shared memory entry"),
+                        action("listMessages", "GET", "/api/platform/messages", "Inter-agent messages"),
+                        action("createMessage", "POST", "/api/platform/messages", "Send inter-agent message"),
+                        action("listPipelines", "GET", "/api/platform/pipelines", "Workflow pipeline presets"),
+                        action("runPipeline", "POST", "/api/platform/pipelines/{id}/run", "Spawn pipeline task graph"),
+                        action("linkTaskSession", "POST", "/api/platform/tasks/{id}/session", "Link task to portal session"),
                         action("platformHome", "GET", "/api/platform/home", "App Home payload")
                 )
         );

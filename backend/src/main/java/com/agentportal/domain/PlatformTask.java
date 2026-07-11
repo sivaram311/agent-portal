@@ -41,6 +41,11 @@ public class PlatformTask {
 
     private UUID sessionId;
 
+    private UUID parentTaskId;
+
+    @Column(length = 64)
+    private String pipelineId;
+
     @Column(nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
 
@@ -130,6 +135,22 @@ public class PlatformTask {
 
     public void setSessionId(UUID sessionId) {
         this.sessionId = sessionId;
+    }
+
+    public UUID getParentTaskId() {
+        return parentTaskId;
+    }
+
+    public void setParentTaskId(UUID parentTaskId) {
+        this.parentTaskId = parentTaskId;
+    }
+
+    public String getPipelineId() {
+        return pipelineId;
+    }
+
+    public void setPipelineId(String pipelineId) {
+        this.pipelineId = pipelineId;
     }
 
     public Instant getCreatedAt() {

@@ -3,7 +3,7 @@
     <header>
       <div>
         <h2>App Home</h2>
-        <p>CSS-registered apps, VirtualDev roles, and EM tasks</p>
+        <p>Apps, roles, EM tasks, shared memory, messages, pipelines</p>
       </div>
       <button type="button" class="ap-btn ap-btn-ghost" (click)="closed.emit()">Close</button>
     </header>
@@ -12,6 +12,9 @@
       <button type="button" class="tab" [class.on]="tab === 'apps'" (click)="tab = 'apps'">Apps</button>
       <button type="button" class="tab" [class.on]="tab === 'roles'" (click)="tab = 'roles'">Roles</button>
       <button type="button" class="tab" [class.on]="tab === 'tasks'" (click)="tab = 'tasks'">Tasks</button>
+      <button type="button" class="tab" [class.on]="tab === 'memory'" (click)="tab = 'memory'">Memory</button>
+      <button type="button" class="tab" [class.on]="tab === 'messages'" (click)="tab = 'messages'">Messages</button>
+      <button type="button" class="tab" [class.on]="tab === 'pipelines'" (click)="tab = 'pipelines'">Pipelines</button>
     </div>
 
     @if (loading) {
@@ -51,18 +54,61 @@
           <li class="muted">Roles API unavailable</li>
         }
       </ul>
-    } @else {
+    } @else if (tab === 'tasks') {
       <ul class="list">
         @for (t of tasks; track t.id) {
           <li>
             <strong>{{ t.title }}</strong>
-            <span class="meta">{{ t.role }} · {{ t.status }}</span>
+            <span class="meta">
+              {{ t.role }} · {{ t.status }}
+              @if (t.pipelineId) { · {{ t.pipelineId }} }
+              @if (t.sessionId) { · session linked }
+            </span>
             @if (t.description) {
               <p>{{ t.description }}</p>
             }
           </li>
         } @empty {
-          <li class="muted">No EM tasks yet — create via <code>POST /api/platform/tasks</code></li>
+          <li class="muted">No EM tasks yet — create via API or start a pipeline</li>
+        }
+      </ul>
+    } @else if (tab === 'memory') {
+      <ul class="list">
+        @for (m of memory; track m.id) {
+          <li>
+            <strong>{{ m.key }}</strong>
+            <span class="meta">{{ m.projectSlug }} · {{ m.kind }}</span>
+            <p>{{ m.value }}</p>
+          </li>
+        } @empty {
+          <li class="muted">No shared memory yet — <code>POST /api/platform/memory</code></li>
+        }
+      </ul>
+    } @else if (tab === 'messages') {
+      <ul class="list">
+        @for (msg of messages; track msg.id) {
+          <li>
+            <strong>{{ msg.subject }}</strong>
+            <span class="meta">{{ msg.fromRole }} → {{ msg.toRole }} · {{ msg.status }} · {{ msg.projectSlug }}</span>
+            <p>{{ msg.body }}</p>
+          </li>
+        } @empty {
+          <li class="muted">No inter-agent messages yet</li>
+        }
+      </ul>
+    } @else {
+      <ul class="list">
+        @for (p of pipelines; track p.id) {
+          <li class="pipeline">
+            <div>
+              <strong>{{ p.name }}</strong>
+              <span class="meta">{{ p.id }} · {{ p.steps.join(' → ') }}</span>
+              <p>{{ p.description }}</p>
+            </div>
+            <button type="button" class="ap-btn ap-btn-primary" (click)="runPipeline(p)">Run</button>
+          </li>
+        } @empty {
+          <li class="muted">Pipelines API unavailable</li>
         }
       </ul>
     }

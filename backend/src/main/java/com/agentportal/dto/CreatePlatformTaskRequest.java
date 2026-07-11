@@ -14,6 +14,8 @@ public record CreatePlatformTaskRequest(
         @Size(max = 128) String projectSlug,
         @Size(max = 1024) String workspacePath,
         @Size(max = 128) String assigneeUsername,
-        UUID sessionId
+        UUID sessionId,
+        UUID parentTaskId,
+        @Size(max = 64) String pipelineId
 ) {
 }

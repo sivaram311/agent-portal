@@ -14,4 +14,8 @@ public interface PlatformTaskRepository extends JpaRepository<PlatformTask, UUID
     List<PlatformTask> findByRoleOrderByCreatedAtDesc(String role);
 
     List<PlatformTask> findByStatusAndRoleOrderByCreatedAtDesc(String status, String role);
+
+    List<PlatformTask> findByParentTaskIdOrderByCreatedAtAsc(UUID parentTaskId);
+
+    List<PlatformTask> findByProjectSlugOrderByCreatedAtDesc(String projectSlug);
 }

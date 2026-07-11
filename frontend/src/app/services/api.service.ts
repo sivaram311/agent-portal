@@ -20,6 +20,9 @@ import {
   PlatformApp,
   PlatformRole,
   PlatformTask,
+  PlatformMemory,
+  PlatformAgentMessage,
+  PlatformPipeline,
 } from '../models/session.models';
 import { apiBaseUrl } from './backend-url';
 
@@ -254,5 +257,30 @@ export class ApiService {
     workspacePath?: string;
   }) {
     return this.http.post<PlatformTask>(`${this.base}/platform/tasks`, body);
+  }
+
+  platformMemory(projectSlug?: string, kind?: string) {
+    const params: Record<string, string> = {};
+    if (projectSlug) params['projectSlug'] = projectSlug;
+    if (kind) params['kind'] = kind;
+    return this.http.get<PlatformMemory[]>(`${this.base}/platform/memory`, { params });
+  }
+
+  platformMessages(projectSlug?: string, toRole?: string) {
+    const params: Record<string, string> = {};
+    if (projectSlug) params['projectSlug'] = projectSlug;
+    if (toRole) params['toRole'] = toRole;
+    return this.http.get<PlatformAgentMessage[]>(`${this.base}/platform/messages`, { params });
+  }
+
+  platformPipelines() {
+    return this.http.get<PlatformPipeline[]>(`${this.base}/platform/pipelines`);
+  }
+
+  runPlatformPipeline(
+    id: string,
+    body: { title: string; projectSlug: string; description?: string }
+  ) {
+    return this.http.post<PlatformTask[]>(`${this.base}/platform/pipelines/${id}/run`, body);
   }
 }

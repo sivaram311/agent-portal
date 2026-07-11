@@ -45,3 +45,13 @@ Each UI action below maps to one OpenAPI `operationId` and backend route. All ba
 | Release port | `releasePort` | POST | `/api/platform/ports/{port}/release` |
 | List platform apps | `listApps` | GET | `/api/platform/apps` |
 | Platform app home | `platformHome` | GET | `/api/platform/home` |
+| List EM tasks | `listTasks` | GET | `/api/platform/tasks` |
+| Create EM task | `createTask` | POST | `/api/platform/tasks` |
+| Link task session | `linkTaskSession` | POST | `/api/platform/tasks/{id}/session` |
+| List roles | `listRoles` | GET | `/api/platform/roles` |
+| List shared memory | `listMemory` | GET | `/api/platform/memory` |
+| Upsert shared memory | `upsertMemory` | POST | `/api/platform/memory` |
+| List agent messages | `listMessages` | GET | `/api/platform/messages` |
+| Send agent message | `createMessage` | POST | `/api/platform/messages` |
+| List pipelines | `listPipelines` | GET | `/api/platform/pipelines` |
+| Run pipeline | `runPipeline` | POST | `/api/platform/pipelines/{id}/run` |

@@ -834,7 +834,13 @@ function New-PlatformTask {
         [string]$ProjectSlug,
 
         [Parameter(Mandatory = $false)]
-        [string]$WorkspacePath
+        [string]$WorkspacePath,
+
+        [Parameter(Mandatory = $false)]
+        [string]$SessionId,
+
+        [Parameter(Mandatory = $false)]
+        [string]$ParentTaskId
     )
     $body = @{
         title = $Title
@@ -843,7 +849,141 @@ function New-PlatformTask {
     if ($Description) { $body['description'] = $Description }
     if ($ProjectSlug) { $body['projectSlug'] = $ProjectSlug }
     if ($WorkspacePath) { $body['workspacePath'] = $WorkspacePath }
+    if ($SessionId) { $body['sessionId'] = $SessionId }
+    if ($ParentTaskId) { $body['parentTaskId'] = $ParentTaskId }
     Invoke-AgentApi -Method POST -Path '/platform/tasks' -Body $body
+}
+
+function Link-PlatformTaskSession {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$TaskId,
+
+        [Parameter(Mandatory = $true)]
+        [string]$SessionId
+    )
+    Invoke-AgentApi -Method POST -Path "/platform/tasks/$TaskId/session" -Body @{ sessionId = $SessionId }
+}
+
+function Get-PlatformMemory {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $false)]
+        [string]$ProjectSlug,
+
+        [Parameter(Mandatory = $false)]
+        [string]$Kind
+    )
+    $query = @{}
+    if ($ProjectSlug) { $query['projectSlug'] = $ProjectSlug }
+    if ($Kind) { $query['kind'] = $Kind }
+    Invoke-AgentApi -Method GET -Path '/platform/memory' -Query $query
+}
+
+function Set-PlatformMemory {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$ProjectSlug,
+
+        [Parameter(Mandatory = $true)]
+        [string]$Key,
+
+        [Parameter(Mandatory = $true)]
+        [string]$Value,
+
+        [Parameter(Mandatory = $false)]
+        [ValidateSet('NOTE', 'DECISION', 'CONTRACT', 'ARTIFACT', 'MESSAGE_SUMMARY')]
+        [string]$Kind = 'NOTE'
+    )
+    Invoke-AgentApi -Method POST -Path '/platform/memory' -Body @{
+        projectSlug = $ProjectSlug
+        key = $Key
+        kind = $Kind
+        value = $Value
+    }
+}
+
+function Get-PlatformMessages {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $false)]
+        [string]$ProjectSlug,
+
+        [Parameter(Mandatory = $false)]
+        [string]$ToRole,
+
+        [Parameter(Mandatory = $false)]
+        [string]$Status
+    )
+    $query = @{}
+    if ($ProjectSlug) { $query['projectSlug'] = $ProjectSlug }
+    if ($ToRole) { $query['toRole'] = $ToRole }
+    if ($Status) { $query['status'] = $Status }
+    Invoke-AgentApi -Method GET -Path '/platform/messages' -Query $query
+}
+
+function Send-PlatformMessage {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$ProjectSlug,
+
+        [Parameter(Mandatory = $true)]
+        [string]$FromRole,
+
+        [Parameter(Mandatory = $true)]
+        [string]$ToRole,
+
+        [Parameter(Mandatory = $true)]
+        [string]$Subject,
+
+        [Parameter(Mandatory = $true)]
+        [string]$Body,
+
+        [Parameter(Mandatory = $false)]
+        [string]$TaskId
+    )
+    $payload = @{
+        projectSlug = $ProjectSlug
+        fromRole = $FromRole
+        toRole = $ToRole
+        subject = $Subject
+        body = $Body
+    }
+    if ($TaskId) { $payload['taskId'] = $TaskId }
+    Invoke-AgentApi -Method POST -Path '/platform/messages' -Body $payload
+}
+
+function Get-PlatformPipelines {
+    [CmdletBinding()]
+    param()
+    Invoke-AgentApi -Method GET -Path '/platform/pipelines'
+}
+
+function Start-PlatformPipeline {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateSet('FEATURE', 'BUGFIX', 'REFACTOR', 'SECURITY_AUDIT')]
+        [string]$PipelineId,
+
+        [Parameter(Mandatory = $true)]
+        [string]$Title,
+
+        [Parameter(Mandatory = $true)]
+        [string]$ProjectSlug,
+
+        [Parameter(Mandatory = $false)]
+        [string]$Description
+    )
+    $body = @{
+        title = $Title
+        projectSlug = $ProjectSlug
+    }
+    if ($Description) { $body['description'] = $Description }
+    Invoke-AgentApi -Method POST -Path "/platform/pipelines/$PipelineId/run" -Body $body
 }
 
 function Show-AgentApiUsage {

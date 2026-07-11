@@ -199,6 +199,7 @@ export interface PlatformHome {
   title: string;
   auth?: string;
   apps: PlatformApp[];
+  pipelines?: PlatformPipeline[];
   docs?: string;
 }
 
@@ -221,7 +222,40 @@ export interface PlatformTask {
   createdBy?: string;
   assigneeUsername?: string;
   sessionId?: string;
+  parentTaskId?: string;
+  pipelineId?: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface PlatformMemory {
+  id: string;
+  projectSlug: string;
+  key: string;
+  kind: string;
+  value: string;
+  createdBy?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PlatformAgentMessage {
+  id: string;
+  projectSlug: string;
+  taskId?: string;
+  fromRole: string;
+  toRole: string;
+  subject: string;
+  body: string;
+  status: string;
+  createdBy?: string;
+  createdAt: string;
+}
+
+export interface PlatformPipeline {
+  id: string;
+  name: string;
+  description: string;
+  steps: string[];
 }
 

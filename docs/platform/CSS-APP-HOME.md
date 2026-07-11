@@ -13,6 +13,9 @@ Agent Portal top bar **Apps** opens App Home:
 - **Apps** — tiles from `GET /api/platform/home` / `apps` (open URL)
 - **Roles** — VirtualDev departments from `GET /api/platform/roles`
 - **Tasks** — Engineering Manager tasks from `GET /api/platform/tasks`
+- **Memory** — shared project knowledge from `GET /api/platform/memory`
+- **Messages** — inter-agent bus from `GET /api/platform/messages`
+- **Pipelines** — run `FEATURE` / `BUGFIX` / `REFACTOR` / `SECURITY_AUDIT`
 
 ## Data sources
 

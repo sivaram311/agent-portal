@@ -83,12 +83,12 @@ Fixed pipelines: Feature, Bugfix, Refactor, Security audit.
 
 ## Phased delivery
 
-| Phase | Focus |
-|-------|--------|
-| 1 | Portal polish + platform docs (done / ongoing) |
-| 2 | Role-based agent presets (prompts + tools) |
-| 3 | Manager delegation (task graph) |
-| 4 | Shared memory + messaging |
-| 5 | Full virtual company + org dashboard |
+| Phase | Focus | Status |
+|-------|--------|--------|
+| 1 | Portal polish + platform docs | Done |
+| 2 | Role-based agent presets (prompts + tools) | Done (roles API + skills) |
+| 3 | Manager delegation (task graph) | Done (`/api/platform/tasks`, pipelines) |
+| 4 | Shared memory + messaging | Done (`/memory`, `/messages`) |
+| 5 | Full virtual company + org dashboard | Planned |
 
 See also [FUTURE-IMPLEMENTATION.md](FUTURE-IMPLEMENTATION.md) and [SUBAGENTS-ROADMAP.md](SUBAGENTS-ROADMAP.md).

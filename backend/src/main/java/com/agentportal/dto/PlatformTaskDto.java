@@ -16,6 +16,8 @@ public record PlatformTaskDto(
         String createdBy,
         String assigneeUsername,
         UUID sessionId,
+        UUID parentTaskId,
+        String pipelineId,
         Instant createdAt,
         Instant updatedAt
 ) {
@@ -31,6 +33,8 @@ public record PlatformTaskDto(
                 t.getCreatedBy(),
                 t.getAssigneeUsername(),
                 t.getSessionId(),
+                t.getParentTaskId(),
+                t.getPipelineId(),
                 t.getCreatedAt(),
                 t.getUpdatedAt()
         );

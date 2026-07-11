@@ -45,6 +45,7 @@ header p {
 
 .tabs {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.35rem;
   margin-bottom: 0.85rem;
 }
@@ -150,6 +151,13 @@ header p {
   margin: 0.4rem 0 0;
   font-size: 0.85rem;
   color: var(--ap-text-muted);
+}
+
+.list li.pipeline {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.85rem;
+  align-items: center;
 }
 
 .muted {
