@@ -1,6 +1,6 @@
 # System E2E Loop — Category System Agent
 
-**Status:** Shipped on PREPROD/PROD as **agent-portal 0.1.2** (`SYSTEM_E2E_LOOP`, category `SYSTEM`). Steps auto-invoke role-bound portal sessions.
+**Status:** Shipped on PREPROD/PROD as **agent-portal 0.1.3** (Console tab) / **0.1.2** (`SYSTEM_E2E_LOOP`, category `SYSTEM`). Steps auto-invoke role-bound portal sessions.
 
 Closed-loop multi-agent workflow: Playwright QA reports flaws → fixer → docs → human review/commit gate → retest. Stops early on green, or blocks at max iterations (default **20**).
 
@@ -71,7 +71,9 @@ Handoffs fire automatically on DONE (same as other pipelines). Swarm tick still 
 
 ## Guardrails (v1)
 
-- Commit/push require **human approval** via REVIEW (`SECURITY` has `humanApprovalRequired`)
+- Commit/push still require human judgment for **git push** (do not auto-push from REVIEW prompts)
+- With `AGENT_DEFAULT_AUTO_APPROVE=true` (PREPROD/PROD), Cursor tool permissions use **allow-always** (no per-tool clicks); role ACL denials still apply
+- Antigravity uses `--dangerously-skip-permissions` when `AGENT_ANTIGRAVITY_SKIP_PERMISSIONS=true`
 - Max iterations default **20**; override with `maxIterations` on run (1–100)
 - Do not “fix” flaky tests by deleting assertions; file `FLAKY` and investigate
 

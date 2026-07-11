@@ -64,7 +64,7 @@ When a session has `platformRole`:
 
 1. Prompt prefix includes role tools/actions/hint.
 2. ACP permission requests for disallowed tool categories are auto-rejected (`permission_acl_denied`).
-3. Roles with `humanApprovalRequired` skip global auto-approve.
+3. When `agent.default-auto-approve=true`, Cursor permissions are answered **`allow-always`** (no per-tool clicks), including roles that set `humanApprovalRequired`. Role tool ACLs still deny disallowed categories.
 4. Portal actions (`listFiles`, `acceptChange`, …) return **403** if not in `allowedActions`.
 5. Linking a platform task to a session copies the task role onto the session.
 

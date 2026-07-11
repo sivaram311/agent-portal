@@ -5,6 +5,7 @@ export type SessionTabId =
   | 'code'
   | 'transcript'
   | 'logs'
+  | 'console'
   | 'preview'
   | 'activity'
   | 'changes'
@@ -25,6 +26,7 @@ export class SessionTabsComponent {
   readonly tabs: { id: SessionTabId; label: string }[] = [
     { id: 'transcript', label: 'Transcript' },
     { id: 'logs', label: 'Logs' },
+    { id: 'console', label: 'Console' },
     { id: 'code', label: 'Code' },
     { id: 'preview', label: 'Preview' },
     { id: 'changes', label: 'Changes' },

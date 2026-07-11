@@ -70,7 +70,7 @@ Mobile checklist and audit frames: [docs/MOBILE-QA.md](docs/MOBILE-QA.md). Sampl
 | PREPROD | https://agent-portal-staging.delena.buzz | `:4080` on `F:\apps\agent-portal` |
 | PROD | https://agent-portal.delena.buzz | `:5080` on `G:\apps\agent-portal` |
 
-PREPROD/PROD auth → **prod CSS** (`https://css.delena.buzz`, `clientId=agent-portal`). Release + evidence: `H:\releases\agent-portal-0.1.2\`. Ops detail: [docs/OPS.md](docs/OPS.md#deployed-environments-2026-07-11). System E2E loop: [docs/platform/SYSTEM-E2E-LOOP.md](docs/platform/SYSTEM-E2E-LOOP.md).
+PREPROD/PROD auth → **prod CSS** (`https://css.delena.buzz`, `clientId=agent-portal`). Release + evidence: `H:\releases\agent-portal-0.1.3\`. Ops detail: [docs/OPS.md](docs/OPS.md#deployed-environments-2026-07-11). System E2E loop: [docs/platform/SYSTEM-E2E-LOOP.md](docs/platform/SYSTEM-E2E-LOOP.md). Session **Console** tab streams plain agent terminal output (same `terminal_chunk` feed as Logs).
 
 ## Quick start (Windows host stack)
 

@@ -12,8 +12,8 @@ Machine standing orders: `E:\MyAgent\workflow\CONSCIOUS.md` (drives, ports, DB s
 
 | Piece | Location |
 |-------|----------|
-| Release package | `H:\releases\agent-portal-0.1.2\` (prior: `0.1.1`, `0.1.0`) |
-| Promote evidence | `H:\releases\agent-portal-0.1.2\evidence\` (also under `0.1.1\`) |
+| Release package | `H:\releases\agent-portal-0.1.3\` (prior: `0.1.2`, `0.1.1`; older kept on H: until prune confirmed) |
+| Promote evidence | `H:\releases\agent-portal-0.1.3\evidence\` |
 | Start script | `F:\` / `G:\apps\agent-portal\start.ps1` |
 | Nginx confs | `E:\Source\Deployment\conf\apps\agent-portal*.delena.buzz.conf` |
 | Machine port registry | `E:\MyAgent\workflow\ports\REGISTRY.md` (source of truth for 4080/5080) |
@@ -52,6 +52,19 @@ After deploy, with a CSS token against `:5080` (or Host `agent-portal.delena.buz
 3. Session messages / events / `GET /api/guidance/packs`
 
 Promote gates: `E:\MyAgent\workflow\promote\` (`promote-em` + evidence packs).
+
+### Session UI tabs
+
+| Tab | Purpose |
+|-----|---------|
+| Transcript | Chat (markdown) |
+| Logs | Subagents + tool runs + embedded terminal |
+| **Console** | Plain terminal scrollback — same live agent output you would see in PowerShell (`terminal_chunk` WS + event replay) |
+| Code / Preview | Workspace files |
+| Changes | Diff accept/reject |
+| History | Merged timeline |
+| Guidance | Rules/skills |
+| Activity | User audit |
 
 ## Docker hybrid deploy (recommended on this Windows host)
 
@@ -201,7 +214,9 @@ Important env (from `.env` or process):
 |----------|---------|
 | `PUBLIC_HOST` | LAN/public IP used in CORS / CSS auth URL hints |
 | `AGENT_WORKSPACE_ROOT` | Absolute workspace sandbox (script sets `…\agent-portal\workspaces`) |
-| `AGENT_DEFAULT_AUTO_APPROVE` | Wire into `agent.default-auto-approve` for Cursor permissions |
+| `AGENT_DEFAULT_AUTO_APPROVE` | Cursor ACP: `true` = **allow-always** (no per-tool clicks), including role gates. PREPROD/PROD: `true` |
+| `AGENT_ANTIGRAVITY_SKIP_PERMISSIONS` | Antigravity `--dangerously-skip-permissions`. PREPROD/PROD: `true` |
+| `CURSOR_AGENT_CMD` | Absolute path to `agent.cmd` (required on Windows for CreateProcess) |
 | `CURSOR_API_KEY` | Cursor ACP auth |
 | `CSS_ENABLED` | Enable JWT resource-server mode |
 | `CLOUDFLARE_API_TOKEN` | Cloudflare API token (Zone Edit: DNS read/write + zone read) |

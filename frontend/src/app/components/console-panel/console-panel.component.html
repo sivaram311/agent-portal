@@ -1,0 +1,12 @@
+<div class="console" data-testid="session-console">
+  <div class="console-bar">
+    <span class="title">Console</span>
+    <span class="status" [class.live]="busy">{{ busy ? 'live' : 'idle' }}</span>
+    <button type="button" class="copy" (click)="copyAll()" [disabled]="!lines.length">
+      {{ copyHint || 'Copy' }}
+    </button>
+  </div>
+  <pre class="console-body" #body>@if (lines.length === 0) {
+<span class="empty">Agent output will stream here the same way it appears in the terminal…</span>
+}@for (line of lines; track $index) {{{ line }}}</pre>
+</div>

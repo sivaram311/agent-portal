@@ -179,6 +179,9 @@
                 (abandon)="abandonSubagent($event)"
               />
             }
+            @case ('console') {
+              <app-console-panel [lines]="terminalLines" [busy]="busy" />
+            }
             @case ('code') {
               <app-code-viewer [sessionId]="active.id" />
             }

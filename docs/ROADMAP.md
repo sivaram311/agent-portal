@@ -20,6 +20,7 @@ Prioritized improvements and the Cursor skills (subagents) that own each track.
 | P2 | UX polish | `ap-ux-polish` | Toasts + capability badges |
 | P2 | E2E | `ap-e2e` | Device projects + auth.spec |
 | P2 | System E2E loop | `ap-system-e2e-loop` | **Shipped 0.1.2** — [SYSTEM-E2E-LOOP.md](platform/SYSTEM-E2E-LOOP.md); session auto-invoke |
+| P2b | Session Console tab | frontend `console-panel` | **Shipped 0.1.3** — plain `terminal_chunk` scrollback (PowerShell-like) |
 | P3 | Webhooks & quotas | `ap-webhooks-quotas` | `app.webhooks.url` + quota bytes |
 | P3 | Ops | `ap-ops` | [OPS.md](OPS.md) |
 | P3 | CSS starter | `ap-css-starter` | Portal uses `com.css:css-spring-boot-starter` |

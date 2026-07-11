@@ -1,10 +1,11 @@
 import { Component, HostListener, OnDestroy, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Subscription } from 'rxjs';
+import { Subscription, forkJoin } from 'rxjs';
 import { SessionListComponent } from './components/session-list/session-list.component';
 import { ChatComponent } from './components/chat/chat.component';
 import { TaskPanelComponent } from './components/task-panel/task-panel.component';
+import { ConsolePanelComponent } from './components/console-panel/console-panel.component';
 import { PermissionDialogComponent } from './components/permission-dialog/permission-dialog.component';
 import { SessionDetailHeaderComponent } from './components/session-detail-header/session-detail-header.component';
 import { SessionTabsComponent, SessionTabId } from './components/session-tabs/session-tabs.component';
@@ -42,6 +43,7 @@ import {
     SessionListComponent,
     ChatComponent,
     TaskPanelComponent,
+    ConsolePanelComponent,
     PermissionDialogComponent,
     SessionDetailHeaderComponent,
     SessionTabsComponent,
@@ -252,12 +254,31 @@ export class AppComponent implements OnInit, OnDestroy {
     });
 
     this.api.messages(id).subscribe({ next: (m) => (this.messages = m) });
-    this.api.tools(id).subscribe({
-      next: (t) => {
-        this.tools = t;
-        this.terminalLines = t
-          .filter((x) => !!x.output)
-          .flatMap((x) => [`$ ${x.toolName}`, x.output || '', '']);
+    forkJoin({
+      tools: this.api.tools(id),
+      events: this.api.events(id),
+    }).subscribe({
+      next: ({ tools, events }) => {
+        this.tools = tools;
+        const chunks = events
+          .filter((e) => e.type === 'terminal_chunk')
+          .map((e) => String(e.payload['text'] ?? ''))
+          .filter((text) => !!text);
+        this.terminalLines = chunks.length
+          ? chunks
+          : tools
+              .filter((x) => !!x.output)
+              .flatMap((x) => [`$ ${x.toolName}`, x.output || '', '']);
+      },
+      error: () => {
+        this.api.tools(id).subscribe({
+          next: (t) => {
+            this.tools = t;
+            this.terminalLines = t
+              .filter((x) => !!x.output)
+              .flatMap((x) => [`$ ${x.toolName}`, x.output || '', '']);
+          },
+        });
       },
     });
     this.api.permissions(id).subscribe({
