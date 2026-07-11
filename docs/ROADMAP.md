@@ -31,6 +31,14 @@ Keep root `README.md` and this roadmap updated when a track changes.
 
 ## Platform Future Implementation
 
-Machine workflow, port registry, sandbox, CSS App Home, VirtualDev Co, and sub-agent roadmaps live under **[docs/platform/](platform/README.md)** (documentation-first; runtime not built yet).
+Handbook: **[docs/platform/](platform/README.md)**. Runtime: sandbox cutover, `/api/platform/*` ports+apps, Agent API.
 
-New workspace for AIs that call our APIs: [`workspaces/agent-api/`](../workspaces/agent-api/).
+Skills (sub-agents):
+
+- `ap-platform-ops` — Ops/Deploy
+- `ap-platform-review` — Git review/merge
+- `ap-platform-qa` — E2E + Agent API smoke
+- `ap-platform-state` — Port/apps registry
+- `ap-platform-em` — Engineering Manager (VirtualDev Co)
+
+Workspace for external AIs: [`workspaces/agent-api/`](../workspaces/agent-api/).

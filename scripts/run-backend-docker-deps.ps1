@@ -109,7 +109,11 @@ $env:SPRING_PROFILES_ACTIVE = "postgres"
 $env:SPRING_DATASOURCE_URL = "jdbc:postgresql://localhost:5432/agentportal"
 $env:SPRING_DATASOURCE_USERNAME = "agent"
 $env:SPRING_DATASOURCE_PASSWORD = if ($dotenv["POSTGRES_PASSWORD"]) { $dotenv["POSTGRES_PASSWORD"] } else { "agent" }
-$env:AGENT_WORKSPACE_ROOT = Join-Path $Root "workspaces"
+$env:AGENT_WORKSPACE_ROOT = if ($dotenv["AGENT_WORKSPACE_ROOT"]) {
+  $dotenv["AGENT_WORKSPACE_ROOT"]
+} else {
+  Join-Path (Split-Path -Parent $Root) "sandbox"
+}
 
 Write-Host "Starting host backend on :8080 (agent/agy on PATH)..."
 Write-Host "UI http://${PublicHost}:4200  API http://${PublicHost}:8080  CSS http://${PublicHost}:9000"

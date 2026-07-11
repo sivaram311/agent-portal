@@ -65,7 +65,12 @@ public class AgentApiController {
                         action("putGuidanceDefaults", "PUT", "/api/guidance/defaults", "Set defaults"),
                         action("listGuidanceTemplates", "GET", "/api/guidance/templates", "Templates"),
                         action("installGuidanceTemplates", "POST", "/api/guidance/templates/install", "Install templates"),
-                        action("listAudit", "GET", "/api/audit", "Activity / audit")
+                        action("listAudit", "GET", "/api/audit", "Activity / audit"),
+                        action("listPorts", "GET", "/api/platform/ports", "Port registry"),
+                        action("claimPort", "POST", "/api/platform/ports/claim", "Claim a TCP port"),
+                        action("releasePort", "POST", "/api/platform/ports/{port}/release", "Release port"),
+                        action("listApps", "GET", "/api/platform/apps", "CSS App Home tiles"),
+                        action("platformHome", "GET", "/api/platform/home", "App Home payload")
                 )
         );
     }

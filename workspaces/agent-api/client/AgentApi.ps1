@@ -732,6 +732,71 @@ function Get-AgentAudit {
     Invoke-AgentApi -Method GET -Path '/audit' -Query $query
 }
 
+function Get-PlatformPorts {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $false)]
+        [bool]$ActiveOnly = $true
+    )
+    Invoke-AgentApi -Method GET -Path '/platform/ports' -Query @{ activeOnly = $ActiveOnly }
+}
+
+function Claim-PlatformPort {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [int]$Port,
+
+        [Parameter(Mandatory = $true)]
+        [string]$Service,
+
+        [Parameter(Mandatory = $true)]
+        [string]$OwnerApp,
+
+        [Parameter(Mandatory = $false)]
+        [string]$Env = 'host',
+
+        [Parameter(Mandatory = $false)]
+        [string]$BindAddress = '0.0.0.0',
+
+        [Parameter(Mandatory = $false)]
+        [string]$Notes
+    )
+    $body = @{
+        port = $Port
+        service = $Service
+        ownerApp = $OwnerApp
+        env = $Env
+        bindAddress = $BindAddress
+        notes = $Notes
+    }
+    Invoke-AgentApi -Method POST -Path '/platform/ports/claim' -Body $body
+}
+
+function Release-PlatformPort {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [int]$Port
+    )
+    Invoke-AgentApi -Method POST -Path "/platform/ports/$Port/release"
+}
+
+function Get-PlatformApps {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $false)]
+        [bool]$EnabledOnly = $true
+    )
+    Invoke-AgentApi -Method GET -Path '/platform/apps' -Query @{ enabledOnly = $EnabledOnly }
+}
+
+function Get-PlatformHome {
+    [CmdletBinding()]
+    param()
+    Invoke-AgentApi -Method GET -Path '/platform/home'
+}
+
 function Show-AgentApiUsage {
     [CmdletBinding()]
     param()

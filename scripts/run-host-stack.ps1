@@ -98,7 +98,12 @@ $env:APP_CORS_ORIGINS = if ($dotenv["APP_CORS_ORIGINS"]) {
 } else {
   "http://${PublicHost}:4200,http://localhost:4200,http://127.0.0.1:4200"
 }
-$env:AGENT_WORKSPACE_ROOT = Join-Path $Root "workspaces"
+$env:AGENT_WORKSPACE_ROOT = if ($dotenv["AGENT_WORKSPACE_ROOT"]) {
+  $dotenv["AGENT_WORKSPACE_ROOT"]
+} else {
+  # Phase 1: sandbox under MyWorkspace (junctions to legacy workspaces/*)
+  Join-Path $Workspace "sandbox"
+}
 
 # Cursor agent: absolute .cmd + API key + ensure user PATH for child tools
 $cursorAgentDir = Join-Path $env:LOCALAPPDATA "cursor-agent"

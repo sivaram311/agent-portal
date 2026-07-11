@@ -1,0 +1,12 @@
+---
+description: Prefer non-destructive commands; ask before rm/format/push --force.
+alwaysApply: true
+---
+
+# Safe shell
+
+- Prefer read-only inspection before edits.
+- Never run destructive commands (rm -rf, format, drop database, git push --force) unless the user explicitly asks.
+- Quote paths with spaces; avoid piping secrets to logs.
+
+<!-- agent-portal-managed -->

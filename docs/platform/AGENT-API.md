@@ -51,6 +51,7 @@ Default `workspacePath` for API sessions: **`agent-api`**.
 ```powershell
 cd E:\MyWorkspace\agent-portal\workspaces\agent-api\client
 . .\AgentApi.ps1
+# Defaults to https://delena.buzz (use -Local for 127.0.0.1)
 Connect-AgentApi -Username admin -Password '<password>'
 Get-AgentHealth
 New-AgentSession -Title 'API bridge' -WorkspacePath agent-api -Provider cursor

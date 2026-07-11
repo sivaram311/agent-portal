@@ -40,3 +40,8 @@ Each UI action below maps to one OpenAPI `operationId` and backend route. All ba
 | List guidance templates | `listGuidanceTemplates` | GET | `/api/guidance/templates` |
 | Install guidance templates | `installGuidanceTemplates` | POST | `/api/guidance/templates/install` |
 | List audit events | `listAudit` | GET | `/api/audit` |
+| List port leases | `listPorts` | GET | `/api/platform/ports` |
+| Claim port | `claimPort` | POST | `/api/platform/ports/claim` |
+| Release port | `releasePort` | POST | `/api/platform/ports/{port}/release` |
+| List platform apps | `listApps` | GET | `/api/platform/apps` |
+| Platform app home | `platformHome` | GET | `/api/platform/home` |
