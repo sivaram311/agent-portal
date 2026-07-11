@@ -18,6 +18,7 @@ import { ChangesPanelComponent } from './components/changes-panel/changes-panel.
 import { HistoryPanelComponent } from './components/history-panel/history-panel.component';
 import { GuidanceSettingsComponent } from './components/guidance-settings/guidance-settings.component';
 import { GuidancePanelComponent } from './components/guidance-panel/guidance-panel.component';
+import { AppHomeComponent } from './components/app-home/app-home.component';
 import { ApiService } from './services/api.service';
 import { AuthService } from './services/auth.service';
 import { RealtimeService } from './services/realtime.service';
@@ -54,6 +55,7 @@ import {
     HistoryPanelComponent,
     GuidanceSettingsComponent,
     GuidancePanelComponent,
+    AppHomeComponent,
   ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',
@@ -92,6 +94,7 @@ export class AppComponent implements OnInit, OnDestroy {
   drawerOpen = false;
   isMobile = false;
   showGuidanceSettings = false;
+  showAppHome = false;
 
   private eventSub?: Subscription;
 
@@ -190,6 +193,11 @@ export class AppComponent implements OnInit, OnDestroy {
 
   openGuidanceSettings(): void {
     this.showGuidanceSettings = true;
+    this.drawerOpen = false;
+  }
+
+  openAppHome(): void {
+    this.showAppHome = true;
     this.drawerOpen = false;
   }
 

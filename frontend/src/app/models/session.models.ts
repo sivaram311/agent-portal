@@ -179,3 +179,49 @@ export interface GuidanceTemplate {
   alwaysApply: boolean;
 }
 
+export interface PlatformApp {
+  id: string;
+  slug: string;
+  name: string;
+  clientId: string;
+  env: string;
+  baseUrl: string;
+  healthUrl?: string;
+  subdomain?: string;
+  upstreamPort?: number;
+  enabled: boolean;
+  description?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PlatformHome {
+  title: string;
+  auth?: string;
+  apps: PlatformApp[];
+  docs?: string;
+}
+
+export interface PlatformRole {
+  id: string;
+  name: string;
+  department: string;
+  defaultWorkspaceHint: string;
+  skillHint: string;
+}
+
+export interface PlatformTask {
+  id: string;
+  title: string;
+  description?: string;
+  role: string;
+  status: string;
+  projectSlug?: string;
+  workspacePath?: string;
+  createdBy?: string;
+  assigneeUsername?: string;
+  sessionId?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+

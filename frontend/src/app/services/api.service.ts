@@ -16,6 +16,10 @@ import {
   GuidanceKind,
   SessionGuidance,
   GuidanceTemplate,
+  PlatformHome,
+  PlatformApp,
+  PlatformRole,
+  PlatformTask,
 } from '../models/session.models';
 import { apiBaseUrl } from './backend-url';
 
@@ -219,5 +223,36 @@ export class ApiService {
     }[]
   ) {
     return this.http.put<SessionGuidance>(`${this.base}/sessions/${sessionId}/guidance`, { items });
+  }
+
+  platformHome() {
+    return this.http.get<PlatformHome>(`${this.base}/platform/home`);
+  }
+
+  platformApps(enabledOnly = true) {
+    return this.http.get<PlatformApp[]>(`${this.base}/platform/apps`, {
+      params: { enabledOnly: String(enabledOnly) },
+    });
+  }
+
+  platformRoles() {
+    return this.http.get<PlatformRole[]>(`${this.base}/platform/roles`);
+  }
+
+  platformTasks(status?: string, role?: string) {
+    const params: Record<string, string> = {};
+    if (status) params['status'] = status;
+    if (role) params['role'] = role;
+    return this.http.get<PlatformTask[]>(`${this.base}/platform/tasks`, { params });
+  }
+
+  createPlatformTask(body: {
+    title: string;
+    role: string;
+    description?: string;
+    projectSlug?: string;
+    workspacePath?: string;
+  }) {
+    return this.http.post<PlatformTask>(`${this.base}/platform/tasks`, body);
   }
 }

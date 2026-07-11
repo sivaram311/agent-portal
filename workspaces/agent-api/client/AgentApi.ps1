@@ -797,6 +797,55 @@ function Get-PlatformHome {
     Invoke-AgentApi -Method GET -Path '/platform/home'
 }
 
+function Get-PlatformRoles {
+    [CmdletBinding()]
+    param()
+    Invoke-AgentApi -Method GET -Path '/platform/roles'
+}
+
+function Get-PlatformTasks {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $false)]
+        [string]$Status,
+
+        [Parameter(Mandatory = $false)]
+        [string]$Role
+    )
+    $query = @{}
+    if ($Status) { $query['status'] = $Status }
+    if ($Role) { $query['role'] = $Role }
+    Invoke-AgentApi -Method GET -Path '/platform/tasks' -Query $query
+}
+
+function New-PlatformTask {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Title,
+
+        [Parameter(Mandatory = $true)]
+        [string]$Role,
+
+        [Parameter(Mandatory = $false)]
+        [string]$Description,
+
+        [Parameter(Mandatory = $false)]
+        [string]$ProjectSlug,
+
+        [Parameter(Mandatory = $false)]
+        [string]$WorkspacePath
+    )
+    $body = @{
+        title = $Title
+        role = $Role
+    }
+    if ($Description) { $body['description'] = $Description }
+    if ($ProjectSlug) { $body['projectSlug'] = $ProjectSlug }
+    if ($WorkspacePath) { $body['workspacePath'] = $WorkspacePath }
+    Invoke-AgentApi -Method POST -Path '/platform/tasks' -Body $body
+}
+
 function Show-AgentApiUsage {
     [CmdletBinding()]
     param()

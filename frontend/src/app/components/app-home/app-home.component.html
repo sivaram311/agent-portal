@@ -1,0 +1,70 @@
+<div class="backdrop" (click)="closed.emit()" data-testid="app-home">
+  <section class="sheet" (click)="$event.stopPropagation()" role="dialog" aria-label="App Home">
+    <header>
+      <div>
+        <h2>App Home</h2>
+        <p>CSS-registered apps, VirtualDev roles, and EM tasks</p>
+      </div>
+      <button type="button" class="ap-btn ap-btn-ghost" (click)="closed.emit()">Close</button>
+    </header>
+
+    <div class="tabs" role="tablist">
+      <button type="button" class="tab" [class.on]="tab === 'apps'" (click)="tab = 'apps'">Apps</button>
+      <button type="button" class="tab" [class.on]="tab === 'roles'" (click)="tab = 'roles'">Roles</button>
+      <button type="button" class="tab" [class.on]="tab === 'tasks'" (click)="tab = 'tasks'">Tasks</button>
+    </div>
+
+    @if (loading) {
+      <div class="ap-empty compact"><p>Loading…</p></div>
+    } @else if (tab === 'apps') {
+      <div class="grid">
+        @for (app of apps; track app.id) {
+          <button type="button" class="tile" (click)="openApp(app)">
+            <span class="env" [attr.data-env]="app.env">{{ app.env }}</span>
+            <strong>{{ app.name }}</strong>
+            <span class="url">{{ app.baseUrl }}</span>
+            @if (app.description) {
+              <span class="desc">{{ app.description }}</span>
+            }
+          </button>
+        } @empty {
+          <div class="ap-empty compact">
+            <h3>No apps yet</h3>
+            <p>Register apps via platform seeder / CSS App Home metadata.</p>
+          </div>
+        }
+      </div>
+      <footer>
+        <button type="button" class="ap-btn ap-btn-primary" (click)="openSessions.emit(); closed.emit()">
+          Open agent sessions
+        </button>
+      </footer>
+    } @else if (tab === 'roles') {
+      <ul class="list">
+        @for (r of roles; track r.id) {
+          <li>
+            <strong>{{ r.name }}</strong>
+            <span class="meta">{{ r.department }} · {{ r.skillHint }}</span>
+            <p>{{ r.defaultWorkspaceHint }}</p>
+          </li>
+        } @empty {
+          <li class="muted">Roles API unavailable</li>
+        }
+      </ul>
+    } @else {
+      <ul class="list">
+        @for (t of tasks; track t.id) {
+          <li>
+            <strong>{{ t.title }}</strong>
+            <span class="meta">{{ t.role }} · {{ t.status }}</span>
+            @if (t.description) {
+              <p>{{ t.description }}</p>
+            }
+          </li>
+        } @empty {
+          <li class="muted">No EM tasks yet — create via <code>POST /api/platform/tasks</code></li>
+        }
+      </ul>
+    }
+  </section>
+</div>

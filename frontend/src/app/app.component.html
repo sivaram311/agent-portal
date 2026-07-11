@@ -55,6 +55,9 @@
         }
         @if (signedInAs) {
           <span class="user-badge" data-testid="user-badge">{{ signedInAs }}</span>
+          <button type="button" class="ap-btn ap-btn-ghost rules-btn" (click)="openAppHome()" data-testid="app-home-btn">
+            Apps
+          </button>
           <button type="button" class="ap-btn ap-btn-ghost rules-btn" (click)="openGuidanceSettings()" data-testid="guidance-settings-btn">
             Rules
           </button>
@@ -290,6 +293,10 @@
 
 @if (showGuidanceSettings) {
   <app-guidance-settings (closed)="showGuidanceSettings = false" />
+}
+
+@if (showAppHome) {
+  <app-app-home (closed)="showAppHome = false" (openSessions)="showAppHome = false" />
 }
 
 <app-toast />

@@ -6,6 +6,14 @@ After a user signs in with the **Centralized Security System**, they land on a *
 
 Agent Portal remains one tile among many; new apps register once in CSS and appear automatically.
 
+## UI (shipped)
+
+Agent Portal top bar **Apps** opens App Home:
+
+- **Apps** — tiles from `GET /api/platform/home` / `apps` (open URL)
+- **Roles** — VirtualDev departments from `GET /api/platform/roles`
+- **Tasks** — Engineering Manager tasks from `GET /api/platform/tasks`
+
 ## Data sources
 
 | Source | Fields |

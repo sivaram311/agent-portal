@@ -9,6 +9,14 @@
 
 Credentials: gitignored `.env` (`CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ZONE_ID`, …). Token has zone edit.
 
+## Script
+
+```powershell
+cd E:\MyWorkspace\agent-portal
+.\scripts\cloudflare-dns.ps1 -List
+.\scripts\cloudflare-dns.ps1 -Upsert -Name myapp-sandbox -Content 103.x.x.x -Proxied
+```
+
 ## Target pattern
 
 | Hostname | Purpose | Upstream |

@@ -70,6 +70,11 @@ public class AgentApiController {
                         action("claimPort", "POST", "/api/platform/ports/claim", "Claim a TCP port"),
                         action("releasePort", "POST", "/api/platform/ports/{port}/release", "Release port"),
                         action("listApps", "GET", "/api/platform/apps", "CSS App Home tiles"),
+                        action("listTasks", "GET", "/api/platform/tasks", "Engineering Manager tasks"),
+                        action("createTask", "POST", "/api/platform/tasks", "Create Engineering Manager task"),
+                        action("getTask", "GET", "/api/platform/tasks/{id}", "Open Engineering Manager task"),
+                        action("updateTask", "PATCH", "/api/platform/tasks/{id}", "Update Engineering Manager task"),
+                        action("listRoles", "GET", "/api/platform/roles", "Engineering role catalog"),
                         action("platformHome", "GET", "/api/platform/home", "App Home payload")
                 )
         );
