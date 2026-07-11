@@ -10,8 +10,9 @@ Agent Portal remains one tile among many; new apps register once in CSS and appe
 
 Agent Portal top bar **Apps** opens App Home:
 
+- **Org** — VirtualDev Co dashboard from `GET /api/platform/org` (swarm tick)
 - **Apps** — tiles from `GET /api/platform/home` / `apps` (open URL)
-- **Roles** — VirtualDev departments from `GET /api/platform/roles`
+- **Roles** — departments + tool/action ACLs from `GET /api/platform/roles`
 - **Tasks** — Engineering Manager tasks from `GET /api/platform/tasks`
 - **Memory** — shared project knowledge from `GET /api/platform/memory`
 - **Messages** — inter-agent bus from `GET /api/platform/messages`

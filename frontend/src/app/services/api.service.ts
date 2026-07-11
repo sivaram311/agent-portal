@@ -23,6 +23,8 @@ import {
   PlatformMemory,
   PlatformAgentMessage,
   PlatformPipeline,
+  PlatformOrg,
+  SwarmTickResult,
 } from '../models/session.models';
 import { apiBaseUrl } from './backend-url';
 
@@ -282,5 +284,19 @@ export class ApiService {
     body: { title: string; projectSlug: string; description?: string }
   ) {
     return this.http.post<PlatformTask[]>(`${this.base}/platform/pipelines/${id}/run`, body);
+  }
+
+  platformOrg() {
+    return this.http.get<PlatformOrg>(`${this.base}/platform/org`);
+  }
+
+  platformSwarmTick(projectSlug?: string) {
+    return this.http.post<SwarmTickResult>(`${this.base}/platform/swarm/tick`, {
+      projectSlug: projectSlug ?? null,
+    });
+  }
+
+  updatePlatformTask(id: string, body: Partial<{ status: string; sessionId: string; title: string }>) {
+    return this.http.patch<PlatformTask>(`${this.base}/platform/tasks/${id}`, body);
   }
 }

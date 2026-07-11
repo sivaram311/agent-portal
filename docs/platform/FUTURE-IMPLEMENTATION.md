@@ -1,6 +1,6 @@
 # Future Implementation — Master Plan
 
-> Incremental delivery. Phases 0–6 have runnable pieces.
+> Incremental delivery. Phases 0–7 have runnable pieces.
 
 ## Status
 
@@ -13,7 +13,8 @@
 | **4** | DNS helpers | **Done** — `scripts/cloudflare-dns.ps1` (Ops-owned) |
 | **5** | Workflow sub-agents | **Done** — skills + `/api/platform/tasks` + roles |
 | **6** | Shared memory + swarm + pipelines | **Done** — memory, messages, pipeline presets, session link |
-| **7–8** | Full VirtualDev Co runtime | Planned (org dashboard, richer ACLs, auto-swarm) |
+| **7** | Org dashboard + role ACLs + auto-swarm | **Done** — `/org`, role tools/actions, `/swarm/tick` |
+| **8** | Full VirtualDev Co runtime | Planned (richer org UI, enforced tool ACLs at runtime) |
 
 ## Skills
 
@@ -25,17 +26,28 @@
 |------|---------|
 | `/api/platform/ports` | Port leases |
 | `/api/platform/apps` · `/home` | App launcher data |
-| `/api/platform/roles` | VirtualDev role catalog |
+| `/api/platform/org` | Org dashboard (counts, projects, blocked) |
+| `/api/platform/roles` · `/roles/{id}` | Role catalog + ACL/prompt hints |
 | `/api/platform/tasks` | EM task graph (CRUD) |
 | `/api/platform/tasks/{id}/session` | Link task → portal session |
-| `/api/platform/memory` | Shared project knowledge (upsert by slug+key) |
+| `/api/platform/memory` | Shared project knowledge |
 | `/api/platform/messages` | Inter-agent message bus |
 | `/api/platform/pipelines` · `.../{id}/run` | Workflow presets → task graph |
+| `/api/platform/swarm/tick` | Advance pipeline handoffs |
 | `/api/agent/actions` | Discovery |
 
 ## UI
 
-Top bar **Apps** → App Home (apps / roles / tasks / memory / messages / pipelines).
+Top bar **Apps** → App Home (**Org** / apps / roles / tasks / memory / messages / pipelines).
+
+## Swarm
+
+Marking a pipeline child `DONE` auto-assigns the next OPEN sibling and sends an EM handoff message. Or run:
+
+```powershell
+Invoke-PlatformSwarmTick -ProjectSlug profile-v1
+Update-PlatformTask -TaskId <id> -Status DONE
+```
 
 ## Pipelines
 
@@ -45,6 +57,7 @@ Top bar **Apps** → App Home (apps / roles / tasks / memory / messages / pipeli
 Start-PlatformPipeline -PipelineId FEATURE -Title "Profile page" -ProjectSlug profile-v1
 Set-PlatformMemory -ProjectSlug profile-v1 -Key "api/contract" -Kind CONTRACT -Value "..."
 Send-PlatformMessage -ProjectSlug profile-v1 -FromRole BACKEND -ToRole FRONTEND -Subject "DTO ready" -Body "..."
+Get-PlatformOrg
 ```
 
 ## DNS

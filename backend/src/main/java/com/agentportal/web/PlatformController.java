@@ -7,11 +7,14 @@ import com.agentportal.dto.LinkTaskSessionRequest;
 import com.agentportal.dto.PlatformAgentMessageDto;
 import com.agentportal.dto.PlatformAppDto;
 import com.agentportal.dto.PlatformMemoryDto;
+import com.agentportal.dto.PlatformOrgDto;
 import com.agentportal.dto.PlatformPipelineDto;
 import com.agentportal.dto.PlatformRoleDto;
 import com.agentportal.dto.PlatformTaskDto;
 import com.agentportal.dto.PortLeaseDto;
 import com.agentportal.dto.RunPlatformPipelineRequest;
+import com.agentportal.dto.SwarmTickRequest;
+import com.agentportal.dto.SwarmTickResultDto;
 import com.agentportal.dto.UpdatePlatformAgentMessageRequest;
 import com.agentportal.dto.UpdatePlatformTaskRequest;
 import com.agentportal.dto.UpsertPlatformMemoryRequest;
@@ -94,6 +97,21 @@ public class PlatformController {
         return platformRegistryService.listRoles();
     }
 
+    @GetMapping("/roles/{id}")
+    public PlatformRoleDto getRole(@PathVariable String id) {
+        return platformRegistryService.getRole(id);
+    }
+
+    @GetMapping("/org")
+    public PlatformOrgDto orgDashboard() {
+        return platformRegistryService.orgDashboard();
+    }
+
+    @PostMapping("/swarm/tick")
+    public SwarmTickResultDto swarmTick(@RequestBody(required = false) SwarmTickRequest request) {
+        return platformRegistryService.swarmTick(request == null ? new SwarmTickRequest(null) : request);
+    }
+
     @GetMapping("/memory")
     public List<PlatformMemoryDto> listMemory(
             @RequestParam(required = false) String projectSlug,
@@ -160,6 +178,7 @@ public class PlatformController {
                 "auth", "CSS JWT required for mutations; list is authenticated when CSS enabled",
                 "apps", platformRegistryService.listApps(true),
                 "pipelines", platformRegistryService.listPipelines(),
+                "org", platformRegistryService.orgDashboard(),
                 "docs", "docs/platform/CSS-APP-HOME.md"
         );
     }

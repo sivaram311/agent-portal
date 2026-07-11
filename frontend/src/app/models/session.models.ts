@@ -200,6 +200,7 @@ export interface PlatformHome {
   auth?: string;
   apps: PlatformApp[];
   pipelines?: PlatformPipeline[];
+  org?: PlatformOrg;
   docs?: string;
 }
 
@@ -209,6 +210,10 @@ export interface PlatformRole {
   department: string;
   defaultWorkspaceHint: string;
   skillHint: string;
+  allowedTools?: string[];
+  allowedActions?: string[];
+  promptHint?: string;
+  humanApprovalRequired?: boolean;
 }
 
 export interface PlatformTask {
@@ -257,5 +262,37 @@ export interface PlatformPipeline {
   name: string;
   description: string;
   steps: string[];
+}
+
+export interface PlatformProjectSummary {
+  projectSlug: string;
+  taskCount: number;
+  openCount: number;
+  doneCount: number;
+  blockedCount: number;
+  linkedSessions: number;
+  pipelineId?: string;
+}
+
+export interface PlatformOrg {
+  title: string;
+  tasksByStatus: Record<string, number>;
+  tasksByRole: Record<string, number>;
+  unreadMessages: number;
+  memoryEntries: number;
+  linkedSessions: number;
+  activeProjects: number;
+  projects: PlatformProjectSummary[];
+  blockedTasks: PlatformTask[];
+  recentOpenTasks: PlatformTask[];
+  roles: PlatformRole[];
+}
+
+export interface SwarmTickResult {
+  projectSlug?: string;
+  advanced: number;
+  parentsCompleted: number;
+  messagesSent: number;
+  actions: { type: string; taskId?: string; role?: string; detail?: string }[];
 }
 

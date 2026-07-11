@@ -13,11 +13,15 @@ import com.agentportal.dto.LinkTaskSessionRequest;
 import com.agentportal.dto.PlatformAgentMessageDto;
 import com.agentportal.dto.PlatformAppDto;
 import com.agentportal.dto.PlatformMemoryDto;
+import com.agentportal.dto.PlatformOrgDto;
 import com.agentportal.dto.PlatformPipelineDto;
+import com.agentportal.dto.PlatformProjectSummaryDto;
 import com.agentportal.dto.PlatformRoleDto;
 import com.agentportal.dto.PlatformTaskDto;
 import com.agentportal.dto.PortLeaseDto;
 import com.agentportal.dto.RunPlatformPipelineRequest;
+import com.agentportal.dto.SwarmTickRequest;
+import com.agentportal.dto.SwarmTickResultDto;
 import com.agentportal.dto.UpdatePlatformAgentMessageRequest;
 import com.agentportal.dto.UpdatePlatformTaskRequest;
 import com.agentportal.dto.UpsertPlatformMemoryRequest;
@@ -54,21 +58,50 @@ public class PlatformRegistryService {
             "OPEN", "ASSIGNED", "IN_PROGRESS", "BLOCKED", "DONE", "CANCELLED");
     private static final Set<String> MEMORY_KINDS = Set.of(
             "NOTE", "DECISION", "CONTRACT", "ARTIFACT", "MESSAGE_SUMMARY");
+    private static final List<String> TOOLS_READ = List.of("read", "search", "docs");
+    private static final List<String> TOOLS_IMPL = List.of("read", "search", "edit", "shell", "docs");
+    private static final List<String> ACTIONS_IMPL = List.of(
+            "listFiles", "readFile", "listChanges", "diffChange", "acceptChange", "rejectChange", "sendPrompt");
+    private static final List<String> ACTIONS_REVIEW = List.of(
+            "listChanges", "diffChange", "acceptChange", "rejectChange", "listAudit");
     private static final List<PlatformRoleDto> ROLE_DTOS = List.of(
             new PlatformRoleDto("ARCHITECTURE", "Architecture", "Engineering",
-                    "sandbox/platform-tasks/architecture", "ap-platform-em / architecture prompts"),
+                    "sandbox/platform-tasks/architecture", "ap-platform-em",
+                    TOOLS_READ, List.of("listFiles", "readFile", "sendPrompt", "listMemory", "upsertMemory"),
+                    "Design the approach; write CONTRACT memory; do not implement production code.",
+                    true),
             new PlatformRoleDto("BACKEND", "Backend", "Engineering",
-                    "sandbox/platform-tasks/backend", "ap-platform-em / backend prompts"),
+                    "sandbox/platform-tasks/backend", "ap-platform-em",
+                    TOOLS_IMPL, ACTIONS_IMPL,
+                    "Implement APIs/data under sandbox; publish CONTRACT updates; message FRONTEND when ready.",
+                    false),
             new PlatformRoleDto("FRONTEND", "Frontend", "Engineering",
-                    "sandbox/platform-tasks/frontend", "ap-platform-em / frontend prompts"),
+                    "sandbox/platform-tasks/frontend", "ap-platform-em",
+                    List.of("read", "search", "edit", "docs", "browser"), ACTIONS_IMPL,
+                    "Implement UI against CONTRACT memory; keep Changes reviewable.",
+                    false),
             new PlatformRoleDto("QA", "QA", "Engineering",
-                    "sandbox/platform-tasks/qa", "ap-platform-em / qa prompts"),
+                    "sandbox/platform-tasks/qa", "ap-platform-qa",
+                    List.of("read", "search", "shell", "browser", "test"),
+                    List.of("listFiles", "readFile", "sendPrompt", "listChanges", "listAudit"),
+                    "Verify acceptance criteria; block promote on severity ≥ threshold.",
+                    true),
             new PlatformRoleDto("DEVOPS", "DevOps", "Engineering",
-                    "sandbox/platform-tasks/devops", "ap-platform-em / devops prompts"),
+                    "sandbox/platform-tasks/devops", "ap-platform-ops",
+                    List.of("read", "shell", "ports", "deploy", "docs"),
+                    List.of("listPorts", "claimPort", "releasePort", "listApps", "sendPrompt"),
+                    "Claim ports; propose staging/prod via VERSIONING-PROMOTE; never mass-kill by process name.",
+                    true),
             new PlatformRoleDto("PRODUCT", "Product", "Product",
-                    "sandbox/platform-tasks/product", "ap-platform-em / product prompts"),
+                    "sandbox/platform-tasks/product", "ap-platform-em",
+                    TOOLS_READ, List.of("listFiles", "readFile", "sendPrompt", "listMemory", "upsertMemory"),
+                    "Clarify goals and acceptance criteria; write DECISION memory.",
+                    true),
             new PlatformRoleDto("SECURITY", "Security", "Security",
-                    "sandbox/platform-tasks/security", "ap-platform-em / security prompts")
+                    "sandbox/platform-tasks/security", "ap-platform-review",
+                    List.of("read", "search", "audit", "docs"), ACTIONS_REVIEW,
+                    "Audit for secrets, sandbox escapes, and protocol violations; require human merge approval.",
+                    true)
     );
     private static final Map<String, PlatformPipelineDto> PIPELINES = new LinkedHashMap<>();
 
@@ -218,6 +251,7 @@ public class PlatformRegistryService {
     @Transactional
     public PlatformTaskDto updateTask(UUID id, UpdatePlatformTaskRequest req) {
         PlatformTask task = findTask(id);
+        String previousStatus = task.getStatus();
         if (req.title() != null) {
             task.setTitle(requireText(req.title(), "title"));
         }
@@ -253,7 +287,11 @@ public class PlatformRegistryService {
         if (req.pipelineId() != null) {
             task.setPipelineId(trimToNull(req.pipelineId()));
         }
-        return PlatformTaskDto.from(platformTaskRepository.save(task));
+        PlatformTask saved = platformTaskRepository.save(task);
+        if (!"DONE".equals(previousStatus) && "DONE".equals(saved.getStatus())) {
+            advancePipelineAfterDone(saved);
+        }
+        return PlatformTaskDto.from(saved);
     }
 
     @Transactional
@@ -270,6 +308,146 @@ public class PlatformRegistryService {
     @Transactional(readOnly = true)
     public List<PlatformRoleDto> listRoles() {
         return ROLE_DTOS;
+    }
+
+    @Transactional(readOnly = true)
+    public PlatformRoleDto getRole(String roleId) {
+        String normalized = normalizeRole(roleId);
+        return ROLE_DTOS.stream()
+                .filter(r -> r.id().equals(normalized))
+                .findFirst()
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Role not found"));
+    }
+
+    @Transactional(readOnly = true)
+    public PlatformOrgDto orgDashboard() {
+        List<PlatformTask> tasks = platformTaskRepository.findAllByOrderByCreatedAtDesc();
+        Map<String, Long> byStatus = new LinkedHashMap<>();
+        Map<String, Long> byRole = new LinkedHashMap<>();
+        for (String status : List.of("OPEN", "ASSIGNED", "IN_PROGRESS", "BLOCKED", "DONE", "CANCELLED")) {
+            byStatus.put(status, 0L);
+        }
+        for (PlatformRoleDto role : ROLE_DTOS) {
+            byRole.put(role.id(), 0L);
+        }
+        long linked = 0;
+        Map<String, List<PlatformTask>> byProject = new LinkedHashMap<>();
+        for (PlatformTask task : tasks) {
+            byStatus.merge(task.getStatus(), 1L, Long::sum);
+            byRole.merge(task.getRole(), 1L, Long::sum);
+            if (task.getSessionId() != null) {
+                linked++;
+            }
+            if (task.getProjectSlug() != null && !task.getProjectSlug().isBlank()) {
+                byProject.computeIfAbsent(task.getProjectSlug(), k -> new ArrayList<>()).add(task);
+            }
+        }
+        List<PlatformProjectSummaryDto> projects = byProject.entrySet().stream()
+                .map(e -> {
+                    List<PlatformTask> rows = e.getValue();
+                    long open = rows.stream().filter(t -> Set.of("OPEN", "ASSIGNED", "IN_PROGRESS").contains(t.getStatus())).count();
+                    long done = rows.stream().filter(t -> "DONE".equals(t.getStatus())).count();
+                    long blocked = rows.stream().filter(t -> "BLOCKED".equals(t.getStatus())).count();
+                    long linkedSessions = rows.stream().filter(t -> t.getSessionId() != null).count();
+                    String pipelineId = rows.stream()
+                            .map(PlatformTask::getPipelineId)
+                            .filter(p -> p != null && !p.isBlank())
+                            .findFirst()
+                            .orElse(null);
+                    return new PlatformProjectSummaryDto(
+                            e.getKey(), rows.size(), open, done, blocked, linkedSessions, pipelineId);
+                })
+                .sorted((a, b) -> Long.compare(b.openCount(), a.openCount()))
+                .toList();
+        List<PlatformTaskDto> blocked = tasks.stream()
+                .filter(t -> "BLOCKED".equals(t.getStatus()))
+                .limit(20)
+                .map(PlatformTaskDto::from)
+                .toList();
+        List<PlatformTaskDto> recentOpen = tasks.stream()
+                .filter(t -> Set.of("OPEN", "ASSIGNED", "IN_PROGRESS").contains(t.getStatus()))
+                .limit(20)
+                .map(PlatformTaskDto::from)
+                .toList();
+        long unread = platformAgentMessageRepository.findAllByOrderByCreatedAtDesc().stream()
+                .filter(m -> "UNREAD".equals(m.getStatus()))
+                .count();
+        long memory = platformMemoryRepository.count();
+        return new PlatformOrgDto(
+                "VirtualDev Co",
+                byStatus,
+                byRole,
+                unread,
+                memory,
+                linked,
+                projects.size(),
+                projects,
+                blocked,
+                recentOpen,
+                ROLE_DTOS
+        );
+    }
+
+    @Transactional
+    public SwarmTickResultDto swarmTick(SwarmTickRequest req) {
+        String projectSlug = trimToNull(req == null ? null : req.projectSlug());
+        List<PlatformTask> candidates = projectSlug == null
+                ? platformTaskRepository.findAllByOrderByCreatedAtDesc()
+                : platformTaskRepository.findByProjectSlugOrderByCreatedAtDesc(projectSlug);
+        List<SwarmTickResultDto.SwarmActionDto> actions = new ArrayList<>();
+        int advanced = 0;
+        int parentsCompleted = 0;
+        int messagesSent = 0;
+
+        // Re-run advance for any DONE children that still have OPEN next siblings.
+        for (PlatformTask task : candidates) {
+            if (!"DONE".equals(task.getStatus()) || task.getParentTaskId() == null) {
+                continue;
+            }
+            SwarmAdvanceResult result = advancePipelineAfterDone(task);
+            advanced += result.advanced();
+            parentsCompleted += result.parentsCompleted();
+            messagesSent += result.messagesSent();
+            actions.addAll(result.actions());
+        }
+
+        // Activate the first OPEN child under each IN_PROGRESS pipeline parent.
+        Map<UUID, List<PlatformTask>> childrenByParent = new LinkedHashMap<>();
+        for (PlatformTask task : candidates) {
+            if (task.getParentTaskId() != null) {
+                childrenByParent.computeIfAbsent(task.getParentTaskId(), k -> new ArrayList<>()).add(task);
+            }
+        }
+        for (Map.Entry<UUID, List<PlatformTask>> entry : childrenByParent.entrySet()) {
+            PlatformTask parent = platformTaskRepository.findById(entry.getKey()).orElse(null);
+            if (parent == null || !"IN_PROGRESS".equals(parent.getStatus())) {
+                continue;
+            }
+            List<PlatformTask> children = entry.getValue().stream()
+                    .sorted((a, b) -> a.getCreatedAt().compareTo(b.getCreatedAt()))
+                    .toList();
+            boolean hasActive = children.stream()
+                    .anyMatch(c -> Set.of("ASSIGNED", "IN_PROGRESS").contains(c.getStatus()));
+            if (hasActive) {
+                continue;
+            }
+            PlatformTask next = children.stream()
+                    .filter(c -> "OPEN".equals(c.getStatus()))
+                    .findFirst()
+                    .orElse(null);
+            if (next == null) {
+                continue;
+            }
+            next.setStatus("ASSIGNED");
+            platformTaskRepository.save(next);
+            sendSwarmHandoff(next, "Pipeline ready — begin " + next.getRole() + " work.");
+            advanced++;
+            messagesSent++;
+            actions.add(new SwarmTickResultDto.SwarmActionDto(
+                    "ACTIVATE", next.getId(), next.getRole(), "Assigned next OPEN pipeline step"));
+        }
+
+        return new SwarmTickResultDto(projectSlug, advanced, parentsCompleted, messagesSent, actions);
     }
 
     @Transactional(readOnly = true)
@@ -430,6 +608,89 @@ public class PlatformRegistryService {
                         + pipeline.steps().size() + " role steps."
         ));
         return created;
+    }
+
+    private SwarmAdvanceResult advancePipelineAfterDone(PlatformTask doneTask) {
+        List<SwarmTickResultDto.SwarmActionDto> actions = new ArrayList<>();
+        int advanced = 0;
+        int parentsCompleted = 0;
+        int messagesSent = 0;
+        if (doneTask.getParentTaskId() == null) {
+            return new SwarmAdvanceResult(0, 0, 0, actions);
+        }
+        List<PlatformTask> siblings = platformTaskRepository
+                .findByParentTaskIdOrderByCreatedAtAsc(doneTask.getParentTaskId());
+        PlatformTask next = null;
+        boolean passedDone = false;
+        for (PlatformTask sibling : siblings) {
+            if (sibling.getId().equals(doneTask.getId())) {
+                passedDone = true;
+                continue;
+            }
+            if (passedDone && "OPEN".equals(sibling.getStatus())) {
+                next = sibling;
+                break;
+            }
+        }
+        if (next != null) {
+            next.setStatus("ASSIGNED");
+            platformTaskRepository.save(next);
+            sendSwarmHandoff(next, doneTask.getRole() + " marked DONE — your turn (" + next.getRole() + ").");
+            advanced = 1;
+            messagesSent = 1;
+            actions.add(new SwarmTickResultDto.SwarmActionDto(
+                    "HANDOFF", next.getId(), next.getRole(),
+                    "Advanced after " + doneTask.getRole() + " completed"));
+        }
+        boolean allDone = siblings.stream().allMatch(s -> {
+            if (s.getId().equals(doneTask.getId())) {
+                return true;
+            }
+            return "DONE".equals(s.getStatus()) || "CANCELLED".equals(s.getStatus());
+        });
+        if (allDone) {
+            PlatformTask parent = platformTaskRepository.findById(doneTask.getParentTaskId()).orElse(null);
+            if (parent != null && !"DONE".equals(parent.getStatus()) && !"CANCELLED".equals(parent.getStatus())) {
+                parent.setStatus("DONE");
+                platformTaskRepository.save(parent);
+                parentsCompleted = 1;
+                actions.add(new SwarmTickResultDto.SwarmActionDto(
+                        "PARENT_DONE", parent.getId(), parent.getRole(),
+                        "All pipeline steps finished"));
+                if (parent.getProjectSlug() != null) {
+                    upsertMemory(new UpsertPlatformMemoryRequest(
+                            parent.getProjectSlug(),
+                            "pipeline/" + (parent.getPipelineId() == null ? "none" : parent.getPipelineId())
+                                    + "/" + parent.getId() + "/complete",
+                            "DECISION",
+                            "Pipeline completed for \"" + parent.getTitle() + "\"."
+                    ));
+                }
+            }
+        }
+        return new SwarmAdvanceResult(advanced, parentsCompleted, messagesSent, actions);
+    }
+
+    private void sendSwarmHandoff(PlatformTask target, String body) {
+        String projectSlug = target.getProjectSlug() == null ? "default" : target.getProjectSlug();
+        PlatformAgentMessage msg = new PlatformAgentMessage();
+        msg.setProjectSlug(projectSlug);
+        msg.setTaskId(target.getId());
+        msg.setFromRole("EM");
+        msg.setToRole(target.getRole());
+        msg.setSubject("Handoff: " + target.getTitle());
+        msg.setBody(body);
+        msg.setStatus("UNREAD");
+        msg.setCreatedBy(CurrentUser.usernameOrAnonymous());
+        platformAgentMessageRepository.save(msg);
+    }
+
+    private record SwarmAdvanceResult(
+            int advanced,
+            int parentsCompleted,
+            int messagesSent,
+            List<SwarmTickResultDto.SwarmActionDto> actions
+    ) {
     }
 
     private PlatformTask findTask(UUID id) {

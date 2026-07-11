@@ -5,6 +5,7 @@ import { ToastService } from '../../services/toast.service';
 import {
   PlatformApp,
   PlatformMemory,
+  PlatformOrg,
   PlatformPipeline,
   PlatformRole,
   PlatformTask,
@@ -31,11 +32,29 @@ export class AppHomeComponent implements OnInit {
   memory: PlatformMemory[] = [];
   messages: PlatformAgentMessage[] = [];
   pipelines: PlatformPipeline[] = [];
+  org: PlatformOrg | null = null;
   loading = false;
-  tab: 'apps' | 'roles' | 'tasks' | 'memory' | 'messages' | 'pipelines' = 'apps';
+  swarmBusy = false;
+  tab: 'org' | 'apps' | 'roles' | 'tasks' | 'memory' | 'messages' | 'pipelines' = 'org';
 
   ngOnInit(): void {
     this.reload();
+  }
+
+  statusEntries(): { key: string; value: number }[] {
+    if (!this.org?.tasksByStatus) {
+      return [];
+    }
+    return Object.entries(this.org.tasksByStatus).map(([key, value]) => ({ key, value }));
+  }
+
+  roleEntries(): { key: string; value: number }[] {
+    if (!this.org?.tasksByRole) {
+      return [];
+    }
+    return Object.entries(this.org.tasksByRole)
+      .filter(([, value]) => value > 0)
+      .map(([key, value]) => ({ key, value }));
   }
 
   reload(): void {
@@ -44,6 +63,7 @@ export class AppHomeComponent implements OnInit {
       next: (home) => {
         this.apps = home.apps ?? [];
         this.pipelines = home.pipelines ?? [];
+        this.org = home.org ?? null;
         this.loading = false;
       },
       error: () => {
@@ -75,6 +95,10 @@ export class AppHomeComponent implements OnInit {
       },
       error: () => undefined,
     });
+    this.api.platformOrg().subscribe({
+      next: (org) => (this.org = org),
+      error: () => undefined,
+    });
   }
 
   openApp(app: PlatformApp): void {
@@ -100,5 +124,22 @@ export class AppHomeComponent implements OnInit {
         },
         error: () => this.toast.error('Could not start pipeline'),
       });
+  }
+
+  tickSwarm(): void {
+    this.swarmBusy = true;
+    this.api.platformSwarmTick().subscribe({
+      next: (result) => {
+        this.swarmBusy = false;
+        this.toast.success(
+          `Swarm: advanced ${result.advanced}, messages ${result.messagesSent}, parents done ${result.parentsCompleted}`
+        );
+        this.reload();
+      },
+      error: () => {
+        this.swarmBusy = false;
+        this.toast.error('Swarm tick failed');
+      },
+    });
   }
 }

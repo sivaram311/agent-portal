@@ -89,6 +89,6 @@ Fixed pipelines: Feature, Bugfix, Refactor, Security audit.
 | 2 | Role-based agent presets (prompts + tools) | Done (roles API + skills) |
 | 3 | Manager delegation (task graph) | Done (`/api/platform/tasks`, pipelines) |
 | 4 | Shared memory + messaging | Done (`/memory`, `/messages`) |
-| 5 | Full virtual company + org dashboard | Planned |
+| 5 | Full virtual company + org dashboard | Done (`/api/platform/org`, role ACLs, `/swarm/tick`) |
 
 See also [FUTURE-IMPLEMENTATION.md](FUTURE-IMPLEMENTATION.md) and [SUBAGENTS-ROADMAP.md](SUBAGENTS-ROADMAP.md).

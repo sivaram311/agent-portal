@@ -3,12 +3,13 @@
     <header>
       <div>
         <h2>App Home</h2>
-        <p>Apps, roles, EM tasks, shared memory, messages, pipelines</p>
+        <p>VirtualDev Co org, apps, roles, tasks, memory, messages, pipelines</p>
       </div>
       <button type="button" class="ap-btn ap-btn-ghost" (click)="closed.emit()">Close</button>
     </header>
 
     <div class="tabs" role="tablist">
+      <button type="button" class="tab" [class.on]="tab === 'org'" (click)="tab = 'org'">Org</button>
       <button type="button" class="tab" [class.on]="tab === 'apps'" (click)="tab = 'apps'">Apps</button>
       <button type="button" class="tab" [class.on]="tab === 'roles'" (click)="tab = 'roles'">Roles</button>
       <button type="button" class="tab" [class.on]="tab === 'tasks'" (click)="tab = 'tasks'">Tasks</button>
@@ -19,6 +20,63 @@
 
     @if (loading) {
       <div class="ap-empty compact"><p>Loading…</p></div>
+    } @else if (tab === 'org') {
+      @if (org) {
+        <div class="stats">
+          <div><span class="n">{{ org.activeProjects }}</span><span class="l">projects</span></div>
+          <div><span class="n">{{ org.unreadMessages }}</span><span class="l">unread msgs</span></div>
+          <div><span class="n">{{ org.memoryEntries }}</span><span class="l">memory</span></div>
+          <div><span class="n">{{ org.linkedSessions }}</span><span class="l">linked</span></div>
+        </div>
+        <div class="stats soft">
+          @for (s of statusEntries(); track s.key) {
+            <div><span class="n">{{ s.value }}</span><span class="l">{{ s.key }}</span></div>
+          }
+        </div>
+        @if (roleEntries().length) {
+          <p class="section-label">Active roles</p>
+          <p class="chips">
+            @for (r of roleEntries(); track r.key) {
+              <span>{{ r.key }} · {{ r.value }}</span>
+            }
+          </p>
+        }
+        <footer class="org-actions">
+          <button type="button" class="ap-btn ap-btn-primary" [disabled]="swarmBusy" (click)="tickSwarm()">
+            {{ swarmBusy ? 'Ticking…' : 'Run swarm tick' }}
+          </button>
+          <button type="button" class="ap-btn ap-btn-ghost" (click)="openSessions.emit(); closed.emit()">
+            Open sessions
+          </button>
+        </footer>
+        <p class="section-label">Projects</p>
+        <ul class="list">
+          @for (p of org.projects; track p.projectSlug) {
+            <li>
+              <strong>{{ p.projectSlug }}</strong>
+              <span class="meta">
+                {{ p.openCount }} open · {{ p.doneCount }} done · {{ p.blockedCount }} blocked
+                @if (p.pipelineId) { · {{ p.pipelineId }} }
+              </span>
+            </li>
+          } @empty {
+            <li class="muted">No project-scoped tasks yet — run a pipeline</li>
+          }
+        </ul>
+        @if (org.blockedTasks.length) {
+          <p class="section-label">Blocked</p>
+          <ul class="list">
+            @for (t of org.blockedTasks; track t.id) {
+              <li>
+                <strong>{{ t.title }}</strong>
+                <span class="meta">{{ t.role }} · {{ t.projectSlug || '—' }}</span>
+              </li>
+            }
+          </ul>
+        }
+      } @else {
+        <div class="ap-empty compact"><p>Org dashboard unavailable</p></div>
+      }
     } @else if (tab === 'apps') {
       <div class="grid">
         @for (app of apps; track app.id) {
@@ -37,18 +95,24 @@
           </div>
         }
       </div>
-      <footer>
-        <button type="button" class="ap-btn ap-btn-primary" (click)="openSessions.emit(); closed.emit()">
-          Open agent sessions
-        </button>
-      </footer>
     } @else if (tab === 'roles') {
       <ul class="list">
         @for (r of roles; track r.id) {
           <li>
             <strong>{{ r.name }}</strong>
-            <span class="meta">{{ r.department }} · {{ r.skillHint }}</span>
-            <p>{{ r.defaultWorkspaceHint }}</p>
+            <span class="meta">
+              {{ r.department }} · {{ r.skillHint }}
+              @if (r.humanApprovalRequired) { · human gate }
+            </span>
+            @if (r.promptHint) {
+              <p>{{ r.promptHint }}</p>
+            }
+            @if (r.allowedTools?.length) {
+              <p class="acl">tools: {{ r.allowedTools!.join(', ') }}</p>
+            }
+            @if (r.allowedActions?.length) {
+              <p class="acl">actions: {{ r.allowedActions!.join(', ') }}</p>
+            }
           </li>
         } @empty {
           <li class="muted">Roles API unavailable</li>

@@ -986,6 +986,54 @@ function Start-PlatformPipeline {
     Invoke-AgentApi -Method POST -Path "/platform/pipelines/$PipelineId/run" -Body $body
 }
 
+function Get-PlatformOrg {
+    [CmdletBinding()]
+    param()
+    Invoke-AgentApi -Method GET -Path '/platform/org'
+}
+
+function Get-PlatformRole {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$RoleId
+    )
+    Invoke-AgentApi -Method GET -Path "/platform/roles/$RoleId"
+}
+
+function Update-PlatformTask {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$TaskId,
+
+        [Parameter(Mandatory = $false)]
+        [string]$Status,
+
+        [Parameter(Mandatory = $false)]
+        [string]$Title,
+
+        [Parameter(Mandatory = $false)]
+        [string]$SessionId
+    )
+    $body = @{}
+    if ($Status) { $body['status'] = $Status }
+    if ($Title) { $body['title'] = $Title }
+    if ($SessionId) { $body['sessionId'] = $SessionId }
+    Invoke-AgentApi -Method PATCH -Path "/platform/tasks/$TaskId" -Body $body
+}
+
+function Invoke-PlatformSwarmTick {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $false)]
+        [string]$ProjectSlug
+    )
+    $body = @{}
+    if ($ProjectSlug) { $body['projectSlug'] = $ProjectSlug }
+    Invoke-AgentApi -Method POST -Path '/platform/swarm/tick' -Body $body
+}
+
 function Show-AgentApiUsage {
     [CmdletBinding()]
     param()

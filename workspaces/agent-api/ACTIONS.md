@@ -55,3 +55,6 @@ Each UI action below maps to one OpenAPI `operationId` and backend route. All ba
 | Send agent message | `createMessage` | POST | `/api/platform/messages` |
 | List pipelines | `listPipelines` | GET | `/api/platform/pipelines` |
 | Run pipeline | `runPipeline` | POST | `/api/platform/pipelines/{id}/run` |
+| Org dashboard | `orgDashboard` | GET | `/api/platform/org` |
+| Role detail / ACL | `getRole` | GET | `/api/platform/roles/{id}` |
+| Swarm tick | `swarmTick` | POST | `/api/platform/swarm/tick` |
