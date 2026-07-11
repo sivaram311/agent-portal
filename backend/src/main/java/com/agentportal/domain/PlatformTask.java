@@ -49,6 +49,20 @@ public class PlatformTask {
     @Column(length = 64)
     private String pipelineId;
 
+    /** Current or step iteration for SYSTEM looping pipelines (1-based). */
+    private Integer iteration;
+
+    /** Max iterations for looping pipeline parent runs. */
+    private Integer maxIterations;
+
+    /** QA/step result: PASS, FAIL, FLAKY. */
+    @Column(length = 16)
+    private String outcome;
+
+    /** Loop step key: RUN (parent), QA, FIX, DOCS, REVIEW. */
+    @Column(length = 16)
+    private String stepKey;
+
     @Column(nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
 
@@ -154,6 +168,38 @@ public class PlatformTask {
 
     public void setPipelineId(String pipelineId) {
         this.pipelineId = pipelineId;
+    }
+
+    public Integer getIteration() {
+        return iteration;
+    }
+
+    public void setIteration(Integer iteration) {
+        this.iteration = iteration;
+    }
+
+    public Integer getMaxIterations() {
+        return maxIterations;
+    }
+
+    public void setMaxIterations(Integer maxIterations) {
+        this.maxIterations = maxIterations;
+    }
+
+    public String getOutcome() {
+        return outcome;
+    }
+
+    public void setOutcome(String outcome) {
+        this.outcome = outcome;
+    }
+
+    public String getStepKey() {
+        return stepKey;
+    }
+
+    public void setStepKey(String stepKey) {
+        this.stepKey = stepKey;
     }
 
     public Instant getCreatedAt() {

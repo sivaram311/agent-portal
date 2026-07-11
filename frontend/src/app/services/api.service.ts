@@ -25,6 +25,7 @@ import {
   PlatformPipeline,
   PlatformOrg,
   SwarmTickResult,
+  E2eLoopProgress,
 } from '../models/session.models';
 import { apiBaseUrl } from './backend-url';
 
@@ -294,9 +295,13 @@ export class ApiService {
 
   runPlatformPipeline(
     id: string,
-    body: { title: string; projectSlug: string; description?: string }
+    body: { title: string; projectSlug: string; description?: string; maxIterations?: number }
   ) {
     return this.http.post<PlatformTask[]>(`${this.base}/platform/pipelines/${id}/run`, body);
+  }
+
+  e2eLoopProgress(runId: string) {
+    return this.http.get<E2eLoopProgress>(`${this.base}/platform/pipelines/runs/${runId}`);
   }
 
   platformOrg() {
@@ -309,7 +314,21 @@ export class ApiService {
     });
   }
 
-  updatePlatformTask(id: string, body: Partial<{ status: string; sessionId: string; title: string }>) {
+  updatePlatformTask(
+    id: string,
+    body: Partial<{
+      status: string;
+      sessionId: string;
+      title: string;
+      outcome: string;
+      stepKey: string;
+      description: string;
+    }>
+  ) {
     return this.http.patch<PlatformTask>(`${this.base}/platform/tasks/${id}`, body);
+  }
+
+  invokePlatformTask(id: string) {
+    return this.http.post<Session>(`${this.base}/platform/tasks/${id}/invoke`, {});
   }
 }

@@ -7,9 +7,12 @@ import com.agentportal.domain.PlatformApp;
 import com.agentportal.domain.PlatformMemoryEntry;
 import com.agentportal.domain.PlatformTask;
 import com.agentportal.domain.PortLease;
+import com.agentportal.domain.SessionStatus;
 import com.agentportal.dto.ClaimPortRequest;
 import com.agentportal.dto.CreatePlatformAgentMessageRequest;
 import com.agentportal.dto.CreatePlatformTaskRequest;
+import com.agentportal.dto.CreateSessionRequest;
+import com.agentportal.dto.E2eLoopProgressDto;
 import com.agentportal.dto.LinkTaskSessionRequest;
 import com.agentportal.dto.PlatformAgentMessageDto;
 import com.agentportal.dto.PlatformAppDto;
@@ -20,7 +23,9 @@ import com.agentportal.dto.PlatformProjectSummaryDto;
 import com.agentportal.dto.PlatformRoleDto;
 import com.agentportal.dto.PlatformTaskDto;
 import com.agentportal.dto.PortLeaseDto;
+import com.agentportal.dto.PromptRequest;
 import com.agentportal.dto.RunPlatformPipelineRequest;
+import com.agentportal.dto.SessionDto;
 import com.agentportal.dto.SwarmTickRequest;
 import com.agentportal.dto.SwarmTickResultDto;
 import com.agentportal.dto.UpdatePlatformAgentMessageRequest;
@@ -33,9 +38,14 @@ import com.agentportal.repo.PlatformMemoryRepository;
 import com.agentportal.repo.PlatformTaskRepository;
 import com.agentportal.repo.PortLeaseRepository;
 import com.agentportal.security.CurrentUser;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.nio.file.Path;
@@ -51,6 +61,8 @@ import java.util.UUID;
 @Service
 public class PlatformRegistryService {
 
+    private static final Logger log = LoggerFactory.getLogger(PlatformRegistryService.class);
+
     private static final Set<String> ROLES = Set.of(
             "ARCHITECTURE", "BACKEND", "FRONTEND", "QA", "DEVOPS", "PRODUCT", "SECURITY");
     private static final Set<String> MESSAGE_ROLES = Set.of(
@@ -58,7 +70,11 @@ public class PlatformRegistryService {
     private static final Set<String> STATUSES = Set.of(
             "OPEN", "ASSIGNED", "IN_PROGRESS", "BLOCKED", "DONE", "CANCELLED");
     private static final Set<String> MEMORY_KINDS = Set.of(
-            "NOTE", "DECISION", "CONTRACT", "ARTIFACT", "MESSAGE_SUMMARY");
+            "NOTE", "DECISION", "CONTRACT", "ARTIFACT", "MESSAGE_SUMMARY", "PROGRESS");
+    private static final String PIPELINE_SYSTEM_E2E = "SYSTEM_E2E_LOOP";
+    private static final int DEFAULT_E2E_MAX_ITERATIONS = 20;
+    private static final Set<String> OUTCOMES = Set.of("PASS", "FAIL", "FLAKY");
+    private static final Set<String> STEP_KEYS = Set.of("RUN", "QA", "FIX", "DOCS", "REVIEW");
     private static final List<String> TOOLS_READ = List.of("read", "search", "docs");
     private static final List<String> TOOLS_IMPL = List.of("read", "search", "edit", "shell", "docs");
     private static final List<String> ACTIONS_IMPL = List.of(
@@ -107,26 +123,32 @@ public class PlatformRegistryService {
     private static final Map<String, PlatformPipelineDto> PIPELINES = new LinkedHashMap<>();
 
     static {
-        PIPELINES.put("FEATURE", new PlatformPipelineDto(
+        PIPELINES.put("FEATURE", PlatformPipelineDto.standard(
                 "FEATURE",
                 "Feature delivery",
                 "Clarify → design → implement → verify → deploy proposal",
                 List.of("PRODUCT", "ARCHITECTURE", "BACKEND", "FRONTEND", "QA", "DEVOPS")));
-        PIPELINES.put("BUGFIX", new PlatformPipelineDto(
+        PIPELINES.put("BUGFIX", PlatformPipelineDto.standard(
                 "BUGFIX",
                 "Bug fix",
                 "Reproduce → fix → verify",
                 List.of("BACKEND", "FRONTEND", "QA")));
-        PIPELINES.put("REFACTOR", new PlatformPipelineDto(
+        PIPELINES.put("REFACTOR", PlatformPipelineDto.standard(
                 "REFACTOR",
                 "Refactor",
                 "Design → change → regression QA",
                 List.of("ARCHITECTURE", "BACKEND", "FRONTEND", "QA")));
-        PIPELINES.put("SECURITY_AUDIT", new PlatformPipelineDto(
+        PIPELINES.put("SECURITY_AUDIT", PlatformPipelineDto.standard(
                 "SECURITY_AUDIT",
                 "Security audit",
                 "Audit → harden → retest",
                 List.of("SECURITY", "BACKEND", "QA")));
+        PIPELINES.put(PIPELINE_SYSTEM_E2E, PlatformPipelineDto.systemLoop(
+                PIPELINE_SYSTEM_E2E,
+                "System E2E loop",
+                "Playwright QA → fix → docs → human review/commit → retest until green (default max 20)",
+                List.of("QA", "BACKEND", "PRODUCT", "SECURITY"),
+                DEFAULT_E2E_MAX_ITERATIONS));
     }
 
     private final PortLeaseRepository portLeaseRepository;
@@ -136,6 +158,7 @@ public class PlatformRegistryService {
     private final PlatformAgentMessageRepository platformAgentMessageRepository;
     private final AgentSessionRepository agentSessionRepository;
     private final AgentProperties agentProperties;
+    private final SessionService sessionService;
 
     public PlatformRegistryService(
             PortLeaseRepository portLeaseRepository,
@@ -144,7 +167,8 @@ public class PlatformRegistryService {
             PlatformMemoryRepository platformMemoryRepository,
             PlatformAgentMessageRepository platformAgentMessageRepository,
             AgentSessionRepository agentSessionRepository,
-            AgentProperties agentProperties
+            AgentProperties agentProperties,
+            @Lazy SessionService sessionService
     ) {
         this.portLeaseRepository = portLeaseRepository;
         this.platformAppRepository = platformAppRepository;
@@ -153,6 +177,7 @@ public class PlatformRegistryService {
         this.platformAgentMessageRepository = platformAgentMessageRepository;
         this.agentSessionRepository = agentSessionRepository;
         this.agentProperties = agentProperties;
+        this.sessionService = sessionService;
     }
 
     @Transactional(readOnly = true)
@@ -244,6 +269,18 @@ public class PlatformRegistryService {
             task.setParentTaskId(req.parentTaskId());
         }
         task.setPipelineId(trimToNull(req.pipelineId()));
+        if (req.iteration() != null) {
+            task.setIteration(req.iteration());
+        }
+        if (req.maxIterations() != null) {
+            task.setMaxIterations(req.maxIterations());
+        }
+        if (req.outcome() != null) {
+            task.setOutcome(normalizeOutcome(req.outcome()));
+        }
+        if (req.stepKey() != null) {
+            task.setStepKey(normalizeStepKey(req.stepKey()));
+        }
         PlatformTask saved = platformTaskRepository.save(task);
         saved.setWorkspacePath(resolveWorkspacePath(req.workspacePath(), saved.getId()));
         return PlatformTaskDto.from(platformTaskRepository.save(saved));
@@ -288,6 +325,18 @@ public class PlatformRegistryService {
         if (req.pipelineId() != null) {
             task.setPipelineId(trimToNull(req.pipelineId()));
         }
+        if (req.iteration() != null) {
+            task.setIteration(req.iteration());
+        }
+        if (req.maxIterations() != null) {
+            task.setMaxIterations(req.maxIterations());
+        }
+        if (req.outcome() != null) {
+            task.setOutcome(normalizeOutcome(req.outcome()));
+        }
+        if (req.stepKey() != null) {
+            task.setStepKey(normalizeStepKey(req.stepKey()));
+        }
         PlatformTask saved = platformTaskRepository.save(task);
         if (!"DONE".equals(previousStatus) && "DONE".equals(saved.getStatus())) {
             advancePipelineAfterDone(saved);
@@ -308,6 +357,33 @@ public class PlatformRegistryService {
         session.setPlatformTaskId(task.getId());
         agentSessionRepository.save(session);
         return PlatformTaskDto.from(platformTaskRepository.save(task));
+    }
+
+    /**
+     * Create (or reuse) a portal agent session for a platform task and send the handoff prompt —
+     * same path as manual "New session" + prompt.
+     */
+    public SessionDto invokeTaskSession(UUID taskId) {
+        PlatformTask task = findTask(taskId);
+        if (task.getSessionId() != null) {
+            AgentSession existing = agentSessionRepository.findById(task.getSessionId()).orElse(null);
+            if (existing != null && existing.getStatus() != SessionStatus.ARCHIVED) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT,
+                        "Task already linked to session " + existing.getId()
+                                + " — open that session and prompt, or clear sessionId first");
+            }
+        }
+        String handoff = task.getDescription() == null || task.getDescription().isBlank()
+                ? "Begin " + task.getRole() + " work for task " + task.getTitle()
+                : task.getDescription();
+        try {
+            return invokeStepSessionNow(task, handoff);
+        } catch (ResponseStatusException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,
+                    "Failed to invoke agent session: " + e.getMessage());
+        }
     }
 
     @Transactional(readOnly = true)
@@ -445,7 +521,12 @@ public class PlatformRegistryService {
             }
             next.setStatus("ASSIGNED");
             platformTaskRepository.save(next);
-            sendSwarmHandoff(next, "Pipeline ready — begin " + next.getRole() + " work.");
+            String activateBody = "Pipeline ready — begin " + next.getRole() + " work.";
+            sendSwarmHandoff(next, activateBody);
+            if (PIPELINE_SYSTEM_E2E.equalsIgnoreCase(
+                    next.getPipelineId() == null ? "" : next.getPipelineId())) {
+                scheduleStepSessionInvoke(next, activateBody);
+            }
             advanced++;
             messagesSent++;
             actions.add(new SwarmTickResultDto.SwarmActionDto(
@@ -584,11 +665,48 @@ public class PlatformRegistryService {
         parent.setProjectSlug(projectSlug);
         parent.setCreatedBy(user);
         parent.setPipelineId(pipeline.id());
+        parent.setStepKey("RUN");
+
+        List<PlatformTaskDto> created = new ArrayList<>();
+        if (pipeline.looping()) {
+            int maxIterations = resolveMaxIterations(pipeline, req.maxIterations());
+            parent.setIteration(1);
+            parent.setMaxIterations(maxIterations);
+            PlatformTask savedParent = platformTaskRepository.save(parent);
+            savedParent.setWorkspacePath(resolveWorkspacePath(req.workspacePath(), savedParent.getId()));
+            savedParent = platformTaskRepository.save(savedParent);
+            created.add(PlatformTaskDto.from(savedParent));
+
+            PlatformTask qa = createLoopStep(
+                    savedParent,
+                    title,
+                    "QA",
+                    "QA",
+                    1,
+                    "ASSIGNED",
+                    "Iteration 1/" + maxIterations
+                            + " — run Playwright E2E; set outcome PASS/FAIL/FLAKY before DONE."
+            );
+            created.add(PlatformTaskDto.from(qa));
+            String startBody = "SYSTEM_E2E_LOOP started — begin QA iteration 1/" + maxIterations + ".";
+            sendSwarmHandoff(qa, startBody);
+            scheduleStepSessionInvoke(qa, startBody);
+            writeE2eProgressMemory(savedParent, null, "STARTED",
+                    "Started SYSTEM_E2E_LOOP maxIterations=" + maxIterations);
+            upsertMemory(new UpsertPlatformMemoryRequest(
+                    projectSlug,
+                    "pipeline/" + pipeline.id() + "/" + savedParent.getId(),
+                    "DECISION",
+                    "Started looping pipeline " + pipeline.id() + " for \"" + title
+                            + "\" (maxIterations=" + maxIterations + "). "
+                            + "Flow: QA → (FAIL? FIX) → DOCS → REVIEW → retest until PASS or max."
+            ));
+            return created;
+        }
+
         PlatformTask savedParent = platformTaskRepository.save(parent);
         savedParent.setWorkspacePath(resolveWorkspacePath(req.workspacePath(), savedParent.getId()));
         savedParent = platformTaskRepository.save(savedParent);
-
-        List<PlatformTaskDto> created = new ArrayList<>();
         created.add(PlatformTaskDto.from(savedParent));
         for (String stepRole : pipeline.steps()) {
             PlatformTask child = new PlatformTask();
@@ -615,7 +733,62 @@ public class PlatformRegistryService {
         return created;
     }
 
+    @Transactional(readOnly = true)
+    public E2eLoopProgressDto getE2eLoopProgress(UUID runId) {
+        PlatformTask parent = findTask(runId);
+        if (parent.getParentTaskId() != null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "runId must be the pipeline parent task id");
+        }
+        if (!PIPELINE_SYSTEM_E2E.equalsIgnoreCase(parent.getPipelineId() == null ? "" : parent.getPipelineId())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Not a SYSTEM_E2E_LOOP run: " + parent.getPipelineId());
+        }
+        List<PlatformTask> children = platformTaskRepository.findByParentTaskIdOrderByCreatedAtAsc(runId);
+        String lastQaOutcome = children.stream()
+                .filter(c -> "QA".equals(c.getStepKey()))
+                .reduce((a, b) -> b)
+                .map(PlatformTask::getOutcome)
+                .orElse(null);
+        String stopReason = null;
+        if ("DONE".equals(parent.getStatus())) {
+            stopReason = "GREEN";
+        } else if ("BLOCKED".equals(parent.getStatus())) {
+            stopReason = "MAX_ITERATIONS";
+        } else if ("CANCELLED".equals(parent.getStatus())) {
+            stopReason = "CANCELLED";
+        }
+        List<E2eLoopProgressDto.StepDto> steps = children.stream()
+                .map(c -> new E2eLoopProgressDto.StepDto(
+                        c.getId(),
+                        c.getIteration() == null ? 0 : c.getIteration(),
+                        c.getStepKey(),
+                        c.getRole(),
+                        c.getStatus(),
+                        c.getOutcome(),
+                        c.getTitle(),
+                        c.getUpdatedAt()
+                ))
+                .toList();
+        return new E2eLoopProgressDto(
+                parent.getId(),
+                parent.getProjectSlug(),
+                parent.getPipelineId(),
+                parent.getStatus(),
+                parent.getIteration() == null ? 1 : parent.getIteration(),
+                parent.getMaxIterations() == null ? DEFAULT_E2E_MAX_ITERATIONS : parent.getMaxIterations(),
+                lastQaOutcome,
+                stopReason,
+                steps,
+                parent.getUpdatedAt()
+        );
+    }
+
     private SwarmAdvanceResult advancePipelineAfterDone(PlatformTask doneTask) {
+        if (PIPELINE_SYSTEM_E2E.equalsIgnoreCase(
+                doneTask.getPipelineId() == null ? "" : doneTask.getPipelineId())) {
+            return advanceE2eLoopAfterDone(doneTask);
+        }
         List<SwarmTickResultDto.SwarmActionDto> actions = new ArrayList<>();
         int advanced = 0;
         int parentsCompleted = 0;
@@ -674,6 +847,375 @@ public class PlatformRegistryService {
             }
         }
         return new SwarmAdvanceResult(advanced, parentsCompleted, messagesSent, actions);
+    }
+
+    private SwarmAdvanceResult advanceE2eLoopAfterDone(PlatformTask doneTask) {
+        List<SwarmTickResultDto.SwarmActionDto> actions = new ArrayList<>();
+        int advanced = 0;
+        int parentsCompleted = 0;
+        int messagesSent = 0;
+        if (doneTask.getParentTaskId() == null) {
+            return new SwarmAdvanceResult(0, 0, 0, actions);
+        }
+        PlatformTask parent = platformTaskRepository.findById(doneTask.getParentTaskId()).orElse(null);
+        if (parent == null) {
+            return new SwarmAdvanceResult(0, 0, 0, actions);
+        }
+        String stepKey = doneTask.getStepKey() == null ? inferE2eStepKey(doneTask.getRole()) : doneTask.getStepKey();
+        int iteration = doneTask.getIteration() == null
+                ? (parent.getIteration() == null ? 1 : parent.getIteration())
+                : doneTask.getIteration();
+        int maxIterations = parent.getMaxIterations() == null
+                ? DEFAULT_E2E_MAX_ITERATIONS
+                : parent.getMaxIterations();
+
+        switch (stepKey) {
+            case "QA" -> {
+                String outcome = doneTask.getOutcome();
+                if (outcome == null || outcome.isBlank()) {
+                    outcome = "FAIL";
+                    doneTask.setOutcome(outcome);
+                    platformTaskRepository.save(doneTask);
+                }
+                writeE2eProgressMemory(parent, outcome, "QA_" + outcome,
+                        "Iteration " + iteration + " QA outcome=" + outcome);
+                if ("PASS".equals(outcome)) {
+                    PlatformTask docs = createLoopStep(
+                            parent,
+                            parent.getTitle(),
+                            "DOCS",
+                            "PRODUCT",
+                            iteration,
+                            "ASSIGNED",
+                            "E2E green on iteration " + iteration
+                                    + " — update docs/evidence. Commit/push still require REVIEW human gate."
+                    );
+                    String docsBody = "QA PASS on iteration " + iteration
+                            + " — update docs and evidence, then hand to REVIEW.";
+                    sendSwarmHandoff(docs, docsBody);
+                    scheduleStepSessionInvoke(docs, docsBody);
+                    advanced = 1;
+                    messagesSent = 1;
+                    actions.add(new SwarmTickResultDto.SwarmActionDto(
+                            "E2E_GREEN_DOCS", docs.getId(), docs.getRole(),
+                            "QA passed — docs wrap-up before review"));
+                } else {
+                    PlatformTask fix = createLoopStep(
+                            parent,
+                            parent.getTitle(),
+                            "FIX",
+                            "BACKEND",
+                            iteration,
+                            "ASSIGNED",
+                            "QA " + outcome + " on iteration " + iteration
+                                    + " — fix product bugs from QA report; message FRONTEND if UI-owned. "
+                                    + "Do not weaken tests to force green."
+                    );
+                    String qaReport = doneTask.getDescription() == null ? "(no QA description)" : doneTask.getDescription();
+                    String fixBody = "QA reported " + outcome + " (iteration " + iteration + ").\n\n" + qaReport;
+                    sendSwarmHandoff(fix, fixBody);
+                    scheduleStepSessionInvoke(fix, fixBody);
+                    advanced = 1;
+                    messagesSent = 1;
+                    actions.add(new SwarmTickResultDto.SwarmActionDto(
+                            "E2E_FAIL_FIX", fix.getId(), fix.getRole(),
+                            "QA failed — assigned fixer"));
+                }
+            }
+            case "FIX" -> {
+                PlatformTask docs = createLoopStep(
+                        parent,
+                        parent.getTitle(),
+                        "DOCS",
+                        "PRODUCT",
+                        iteration,
+                        "ASSIGNED",
+                        "Document fixes for iteration " + iteration + " and point to evidence paths."
+                );
+                String docsBody = "FIX done on iteration " + iteration + " — update docs, then REVIEW.";
+                sendSwarmHandoff(docs, docsBody);
+                scheduleStepSessionInvoke(docs, docsBody);
+                advanced = 1;
+                messagesSent = 1;
+                actions.add(new SwarmTickResultDto.SwarmActionDto(
+                        "E2E_DOCS", docs.getId(), docs.getRole(),
+                        "Fix complete — docs next"));
+            }
+            case "DOCS" -> {
+                PlatformTask review = createLoopStep(
+                        parent,
+                        parent.getTitle(),
+                        "REVIEW",
+                        "SECURITY",
+                        iteration,
+                        "ASSIGNED",
+                        "Human gate for iteration " + iteration
+                                + ": approve commit/push only after review. Do not auto-push."
+                );
+                String reviewBody = "DOCS done on iteration " + iteration
+                        + " — review changes; human must approve commit/push.";
+                sendSwarmHandoff(review, reviewBody);
+                scheduleStepSessionInvoke(review, reviewBody);
+                advanced = 1;
+                messagesSent = 1;
+                actions.add(new SwarmTickResultDto.SwarmActionDto(
+                        "E2E_REVIEW", review.getId(), review.getRole(),
+                        "Docs complete — human review/commit gate"));
+            }
+            case "REVIEW" -> {
+                String qaOutcome = findLatestQaOutcome(parent.getId(), iteration);
+                if ("PASS".equals(qaOutcome)) {
+                    parent.setStatus("DONE");
+                    platformTaskRepository.save(parent);
+                    parentsCompleted = 1;
+                    writeE2eProgressMemory(parent, qaOutcome, "GREEN",
+                            "Stopped green after review on iteration " + iteration);
+                    upsertMemory(new UpsertPlatformMemoryRequest(
+                            parent.getProjectSlug(),
+                            "pipeline/" + PIPELINE_SYSTEM_E2E + "/" + parent.getId() + "/complete",
+                            "DECISION",
+                            "SYSTEM_E2E_LOOP GREEN for \"" + parent.getTitle()
+                                    + "\" at iteration " + iteration + "/" + maxIterations + "."
+                    ));
+                    actions.add(new SwarmTickResultDto.SwarmActionDto(
+                            "E2E_GREEN", parent.getId(), parent.getRole(),
+                            "All E2E passed — run complete"));
+                } else if (iteration >= maxIterations) {
+                    parent.setStatus("BLOCKED");
+                    platformTaskRepository.save(parent);
+                    writeE2eProgressMemory(parent, qaOutcome, "MAX_ITERATIONS",
+                            "Blocked after " + maxIterations + " iterations without green");
+                    upsertMemory(new UpsertPlatformMemoryRequest(
+                            parent.getProjectSlug(),
+                            "pipeline/" + PIPELINE_SYSTEM_E2E + "/" + parent.getId() + "/blocked",
+                            "DECISION",
+                            "SYSTEM_E2E_LOOP BLOCKED at maxIterations=" + maxIterations
+                                    + " for \"" + parent.getTitle() + "\"."
+                    ));
+                    actions.add(new SwarmTickResultDto.SwarmActionDto(
+                            "E2E_MAX_BLOCKED", parent.getId(), parent.getRole(),
+                            "Max iterations reached without green"));
+                } else {
+                    int nextIteration = iteration + 1;
+                    parent.setIteration(nextIteration);
+                    platformTaskRepository.save(parent);
+                    PlatformTask qa = createLoopStep(
+                            parent,
+                            parent.getTitle(),
+                            "QA",
+                            "QA",
+                            nextIteration,
+                            "ASSIGNED",
+                            "Iteration " + nextIteration + "/" + maxIterations
+                                    + " — re-run Playwright E2E after fixes; set outcome before DONE."
+                    );
+                    String qaBody = "Iteration " + nextIteration + " — retest after review of iteration "
+                            + iteration + ".";
+                    sendSwarmHandoff(qa, qaBody);
+                    scheduleStepSessionInvoke(qa, qaBody);
+                    writeE2eProgressMemory(parent, qaOutcome, "LOOP_NEXT",
+                            "Advanced to iteration " + nextIteration);
+                    advanced = 1;
+                    messagesSent = 1;
+                    actions.add(new SwarmTickResultDto.SwarmActionDto(
+                            "E2E_LOOP_NEXT", qa.getId(), qa.getRole(),
+                            "Starting iteration " + nextIteration));
+                }
+            }
+            default -> actions.add(new SwarmTickResultDto.SwarmActionDto(
+                    "E2E_UNKNOWN_STEP", doneTask.getId(), doneTask.getRole(),
+                    "Unknown stepKey " + stepKey + " — no handoff"));
+        }
+        return new SwarmAdvanceResult(advanced, parentsCompleted, messagesSent, actions);
+    }
+
+    private PlatformTask createLoopStep(
+            PlatformTask parent,
+            String title,
+            String stepKey,
+            String role,
+            int iteration,
+            String status,
+            String description
+    ) {
+        PlatformTask child = new PlatformTask();
+        child.setTitle(title + " — " + stepKey + " #" + iteration);
+        child.setDescription(description);
+        child.setRole(role);
+        child.setStatus(status);
+        child.setProjectSlug(parent.getProjectSlug());
+        child.setCreatedBy(CurrentUser.usernameOrAnonymous());
+        child.setParentTaskId(parent.getId());
+        child.setPipelineId(PIPELINE_SYSTEM_E2E);
+        child.setIteration(iteration);
+        child.setMaxIterations(parent.getMaxIterations());
+        child.setStepKey(stepKey);
+        PlatformTask saved = platformTaskRepository.save(child);
+        saved.setWorkspacePath(resolveWorkspacePath(parent.getWorkspacePath(), saved.getId()));
+        return platformTaskRepository.save(saved);
+    }
+
+    private String findLatestQaOutcome(UUID parentId, int iteration) {
+        return platformTaskRepository.findByParentTaskIdOrderByCreatedAtAsc(parentId).stream()
+                .filter(c -> "QA".equals(c.getStepKey())
+                        && c.getIteration() != null
+                        && c.getIteration() == iteration)
+                .map(PlatformTask::getOutcome)
+                .filter(o -> o != null && !o.isBlank())
+                .reduce((a, b) -> b)
+                .orElse("FAIL");
+    }
+
+    private String inferE2eStepKey(String role) {
+        if (role == null) {
+            return "QA";
+        }
+        return switch (role) {
+            case "QA" -> "QA";
+            case "BACKEND", "FRONTEND" -> "FIX";
+            case "PRODUCT" -> "DOCS";
+            case "SECURITY" -> "REVIEW";
+            default -> "QA";
+        };
+    }
+
+    private int resolveMaxIterations(PlatformPipelineDto pipeline, Integer requested) {
+        if (requested != null) {
+            return requested;
+        }
+        if (pipeline.maxIterations() != null) {
+            return pipeline.maxIterations();
+        }
+        return DEFAULT_E2E_MAX_ITERATIONS;
+    }
+
+    private void writeE2eProgressMemory(
+            PlatformTask parent,
+            String lastQaOutcome,
+            String event,
+            String detail
+    ) {
+        if (parent.getProjectSlug() == null || parent.getProjectSlug().isBlank()) {
+            return;
+        }
+        int iteration = parent.getIteration() == null ? 1 : parent.getIteration();
+        int maxIterations = parent.getMaxIterations() == null
+                ? DEFAULT_E2E_MAX_ITERATIONS
+                : parent.getMaxIterations();
+        String qa = lastQaOutcome == null ? "null" : "\"" + lastQaOutcome + "\"";
+        String value = """
+                {
+                  "runId": "%s",
+                  "pipelineId": "%s",
+                  "status": "%s",
+                  "iteration": %d,
+                  "maxIterations": %d,
+                  "lastQaOutcome": %s,
+                  "event": "%s",
+                  "detail": "%s",
+                  "updatedAt": "%s"
+                }
+                """.formatted(
+                parent.getId(),
+                PIPELINE_SYSTEM_E2E,
+                parent.getStatus(),
+                iteration,
+                maxIterations,
+                qa,
+                event.replace("\"", "'"),
+                detail.replace("\"", "'"),
+                Instant.now()
+        ).trim();
+        upsertMemory(new UpsertPlatformMemoryRequest(
+                parent.getProjectSlug(),
+                "e2e-loop/" + parent.getId() + "/progress",
+                "PROGRESS",
+                value
+        ));
+    }
+
+    private void scheduleStepSessionInvoke(PlatformTask task, String handoffBody) {
+        UUID taskId = task.getId();
+        Runnable run = () -> {
+            try {
+                PlatformTask latest = platformTaskRepository.findById(taskId).orElse(null);
+                if (latest == null) {
+                    return;
+                }
+                if (latest.getSessionId() != null) {
+                    log.info("Skip auto-invoke for task {} — already linked to session {}",
+                            taskId, latest.getSessionId());
+                    return;
+                }
+                SessionDto session = invokeStepSessionNow(latest, handoffBody);
+                log.info("Auto-invoked session {} for task {} role {} step {}",
+                        session.id(), taskId, latest.getRole(), latest.getStepKey());
+            } catch (Exception e) {
+                log.warn("Auto-invoke session failed for task {}: {}", taskId, e.getMessage());
+            }
+        };
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    run.run();
+                }
+            });
+        } else {
+            run.run();
+        }
+    }
+
+    private SessionDto invokeStepSessionNow(PlatformTask task, String handoffBody) throws Exception {
+        String workspace = sessionWorkspaceFor(task);
+        SessionDto created = sessionService.create(new CreateSessionRequest(
+                task.getTitle(),
+                workspace,
+                "cursor",
+                true,
+                task.getRole(),
+                task.getId()
+        ));
+        task.setSessionId(created.id());
+        if ("OPEN".equals(task.getStatus())) {
+            task.setStatus("ASSIGNED");
+        }
+        platformTaskRepository.save(task);
+        String prompt = buildE2eStepPrompt(task, handoffBody);
+        sessionService.prompt(created.id(), new PromptRequest(prompt));
+        return sessionService.get(created.id());
+    }
+
+    private String sessionWorkspaceFor(PlatformTask task) {
+        Path root = Path.of(agentProperties.getWorkspace().getRoot()).toAbsolutePath().normalize();
+        String wp = task.getWorkspacePath();
+        if (wp != null && !wp.isBlank()) {
+            Path p = Path.of(wp).toAbsolutePath().normalize();
+            if (p.startsWith(root)) {
+                return root.relativize(p).toString().replace('\\', '/');
+            }
+        }
+        return "agent-api";
+    }
+
+    private String buildE2eStepPrompt(PlatformTask task, String handoffBody) {
+        String step = task.getStepKey() == null ? "" : task.getStepKey();
+        String skill = switch (step) {
+            case "QA" -> "Load skill ap-platform-qa (and ap-e2e-realme-p2-pro for Realme). "
+                    + "When finished, PATCH this platform task status=DONE with outcome PASS|FAIL|FLAKY "
+                    + "and put the report in description. Task id: " + task.getId();
+            case "FIX" -> "Load skill ap-platform-em / implement fixes from the QA report. "
+                    + "Do not weaken tests. When done, PATCH task " + task.getId() + " status=DONE.";
+            case "DOCS" -> "Update docs/evidence for this E2E iteration. When done, PATCH task "
+                    + task.getId() + " status=DONE.";
+            case "REVIEW" -> "Load skill ap-platform-review. This is the human commit/push gate "
+                    + "(role SECURITY, humanApprovalRequired). Review Changes; do NOT auto-push. "
+                    + "When the human approves (or you confirm no push needed), PATCH task "
+                    + task.getId() + " status=DONE. Progress: GET /api/platform/pipelines/runs/{parentRunId}.";
+            default -> "Complete platform task " + task.getId() + " then mark DONE.";
+        };
+        return "[SYSTEM_E2E_LOOP handoff — step " + step + " / role " + task.getRole() + "]\n"
+                + handoffBody + "\n\n" + skill;
     }
 
     private void sendSwarmHandoff(PlatformTask target, String body) {
@@ -775,6 +1317,22 @@ public class PlatformRegistryService {
         String normalized = requireText(kind, "kind").toUpperCase(Locale.ROOT);
         if (!MEMORY_KINDS.contains(normalized)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid memory kind: " + kind);
+        }
+        return normalized;
+    }
+
+    private String normalizeOutcome(String outcome) {
+        String normalized = requireText(outcome, "outcome").toUpperCase(Locale.ROOT);
+        if (!OUTCOMES.contains(normalized)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid outcome: " + outcome);
+        }
+        return normalized;
+    }
+
+    private String normalizeStepKey(String stepKey) {
+        String normalized = requireText(stepKey, "stepKey").toUpperCase(Locale.ROOT);
+        if (!STEP_KEYS.contains(normalized)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid stepKey: " + stepKey);
         }
         return normalized;
     }

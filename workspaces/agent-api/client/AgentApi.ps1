@@ -992,7 +992,7 @@ function Start-PlatformPipeline {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory = $true)]
-        [ValidateSet('FEATURE', 'BUGFIX', 'REFACTOR', 'SECURITY_AUDIT')]
+        [ValidateSet('FEATURE', 'BUGFIX', 'REFACTOR', 'SECURITY_AUDIT', 'SYSTEM_E2E_LOOP')]
         [string]$PipelineId,
 
         [Parameter(Mandatory = $true)]
@@ -1002,14 +1002,28 @@ function Start-PlatformPipeline {
         [string]$ProjectSlug,
 
         [Parameter(Mandatory = $false)]
-        [string]$Description
+        [string]$Description,
+
+        [Parameter(Mandatory = $false)]
+        [ValidateRange(1, 100)]
+        [int]$MaxIterations
     )
     $body = @{
         title = $Title
         projectSlug = $ProjectSlug
     }
     if ($Description) { $body['description'] = $Description }
+    if ($PSBoundParameters.ContainsKey('MaxIterations')) { $body['maxIterations'] = $MaxIterations }
     Invoke-AgentApi -Method POST -Path "/platform/pipelines/$PipelineId/run" -Body $body
+}
+
+function Get-PlatformE2eLoopProgress {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$RunId
+    )
+    Invoke-AgentApi -Method GET -Path "/platform/pipelines/runs/$RunId"
 }
 
 function Get-PlatformOrg {
@@ -1040,12 +1054,21 @@ function Update-PlatformTask {
         [string]$Title,
 
         [Parameter(Mandatory = $false)]
-        [string]$SessionId
+        [string]$SessionId,
+
+        [Parameter(Mandatory = $false)]
+        [ValidateSet('PASS', 'FAIL', 'FLAKY')]
+        [string]$Outcome,
+
+        [Parameter(Mandatory = $false)]
+        [string]$Description
     )
     $body = @{}
     if ($Status) { $body['status'] = $Status }
     if ($Title) { $body['title'] = $Title }
     if ($SessionId) { $body['sessionId'] = $SessionId }
+    if ($Outcome) { $body['outcome'] = $Outcome }
+    if ($Description) { $body['description'] = $Description }
     Invoke-AgentApi -Method PATCH -Path "/platform/tasks/$TaskId" -Body $body
 }
 

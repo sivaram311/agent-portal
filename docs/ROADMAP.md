@@ -19,9 +19,11 @@ Prioritized improvements and the Cursor skills (subagents) that own each track.
 | P2 | Audit UI | `ap-audit-ui` | Activity tab |
 | P2 | UX polish | `ap-ux-polish` | Toasts + capability badges |
 | P2 | E2E | `ap-e2e` | Device projects + auth.spec |
+| P2 | System E2E loop | `ap-system-e2e-loop` | **Shipped 0.1.2** — [SYSTEM-E2E-LOOP.md](platform/SYSTEM-E2E-LOOP.md); session auto-invoke |
 | P3 | Webhooks & quotas | `ap-webhooks-quotas` | `app.webhooks.url` + quota bytes |
 | P3 | Ops | `ap-ops` | [OPS.md](OPS.md) |
 | P3 | CSS starter | `ap-css-starter` | Portal uses `com.css:css-spring-boot-starter` |
+| P4 | Dual-CLI promote jobs | `ap-platform-em` + MyAgent `promote-*` | **Backlog** — Cursor CLI + Antigravity job runner; configure via Portal pipelines later (`E:\MyAgent\ideas\dual-cli-subagent-workflow.md`, platform SUBAGENTS-ROADMAP) |
 
 ## How to use
 

@@ -12,8 +12,8 @@ Machine standing orders: `E:\MyAgent\workflow\CONSCIOUS.md` (drives, ports, DB s
 
 | Piece | Location |
 |-------|----------|
-| Release package | `H:\releases\agent-portal-0.1.0\` |
-| Promote evidence | `H:\releases\agent-portal-0.1.0\evidence\` |
+| Release package | `H:\releases\agent-portal-0.1.2\` (prior: `0.1.1`, `0.1.0`) |
+| Promote evidence | `H:\releases\agent-portal-0.1.2\evidence\` (also under `0.1.1\`) |
 | Start script | `F:\` / `G:\apps\agent-portal\start.ps1` |
 | Nginx confs | `E:\Source\Deployment\conf\apps\agent-portal*.delena.buzz.conf` |
 | Machine port registry | `E:\MyAgent\workflow\ports\REGISTRY.md` (source of truth for 4080/5080) |

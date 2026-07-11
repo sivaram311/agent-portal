@@ -18,7 +18,7 @@ Agent Portal top bar **Apps** opens App Home:
 - **Tasks** — Engineering Manager tasks from `GET /api/platform/tasks`
 - **Memory** — shared project knowledge from `GET /api/platform/memory`
 - **Messages** — inter-agent bus from `GET /api/platform/messages`
-- **Pipelines** — run `FEATURE` / `BUGFIX` / `REFACTOR` / `SECURITY_AUDIT`
+- **Pipelines** — run `FEATURE` / `BUGFIX` / `REFACTOR` / `SECURITY_AUDIT` / `SYSTEM_E2E_LOOP` (see [SYSTEM-E2E-LOOP.md](SYSTEM-E2E-LOOP.md))
 
 ## Data sources
 

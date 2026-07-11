@@ -1,5 +1,7 @@
 package com.agentportal.dto;
 
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -16,6 +18,10 @@ public record CreatePlatformTaskRequest(
         @Size(max = 128) String assigneeUsername,
         UUID sessionId,
         UUID parentTaskId,
-        @Size(max = 64) String pipelineId
+        @Size(max = 64) String pipelineId,
+        @Min(1) @Max(100) Integer iteration,
+        @Min(1) @Max(100) Integer maxIterations,
+        @Pattern(regexp = "PASS|FAIL|FLAKY") String outcome,
+        @Pattern(regexp = "RUN|QA|FIX|DOCS|REVIEW") String stepKey
 ) {
 }

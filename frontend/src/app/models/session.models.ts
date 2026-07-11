@@ -235,6 +235,10 @@ export interface PlatformTask {
   sessionId?: string;
   parentTaskId?: string;
   pipelineId?: string;
+  iteration?: number;
+  maxIterations?: number;
+  outcome?: string;
+  stepKey?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -268,6 +272,31 @@ export interface PlatformPipeline {
   name: string;
   description: string;
   steps: string[];
+  category?: string;
+  maxIterations?: number;
+  looping?: boolean;
+}
+
+export interface E2eLoopProgress {
+  runId: string;
+  projectSlug?: string;
+  pipelineId?: string;
+  status: string;
+  iteration: number;
+  maxIterations: number;
+  lastQaOutcome?: string;
+  stopReason?: string;
+  steps: {
+    taskId: string;
+    iteration: number;
+    stepKey?: string;
+    role: string;
+    status: string;
+    outcome?: string;
+    title: string;
+    updatedAt: string;
+  }[];
+  updatedAt: string;
 }
 
 export interface PlatformProjectSummary {

@@ -33,10 +33,11 @@ Postgres long strings: use `TEXT` / `@JdbcTypeCode(LONGVARCHAR)` — never `@Lob
 3. Richer VirtualDev Co (more departments, auto session spawn)
 4. Full NGINX-from-template deploy automation
 5. Enforced review/merge bot writing `review_event`
+6. **Dual-CLI subagent job runner** (Cursor `agent` + Antigravity `agy`) for promote/incident/docs — MyAgent role packs + Agent Portal predefined pipelines (`PROMOTE_Q1`/`Q2`). See `E:\MyAgent\ideas\dual-cli-subagent-workflow.md` and [SUBAGENTS-ROADMAP.md](SUBAGENTS-ROADMAP.md#dual-cli--portal-predefined-roadmap).
 
 ## Skills
 
-`ap-platform-ops` · `ap-platform-review` · `ap-platform-qa` · `ap-platform-state` · `ap-platform-em` · `ap-e2e-realme-p2-pro`
+`ap-platform-ops` · `ap-platform-review` · `ap-platform-qa` · `ap-platform-state` · `ap-platform-em` · `ap-e2e-realme-p2-pro` · `ap-system-e2e-loop`
 
 ## Key APIs
 
@@ -51,6 +52,7 @@ Postgres long strings: use `TEXT` / `@JdbcTypeCode(LONGVARCHAR)` — never `@Lob
 | `/api/platform/memory` | Shared project knowledge |
 | `/api/platform/messages` | Inter-agent message bus |
 | `/api/platform/pipelines` · `.../{id}/run` | Workflow presets → task graph |
+| `/api/platform/pipelines/runs/{runId}` | SYSTEM_E2E_LOOP progress timeline |
 | `/api/platform/swarm/tick` | Advance pipeline handoffs |
 | `/api/sessions` (+ `platformRole`) | Create session with role ACL |
 | `/api/sessions/{id}/platform-role` | Bind/change VirtualDev role |
@@ -87,7 +89,9 @@ Update-PlatformTask -TaskId <id> -Status DONE
 
 ## Pipelines
 
-`FEATURE` · `BUGFIX` · `REFACTOR` · `SECURITY_AUDIT`
+`FEATURE` · `BUGFIX` · `REFACTOR` · `SECURITY_AUDIT` · **`SYSTEM_E2E_LOOP`** (category SYSTEM — looping QA→fix→docs→review, default max 20)
+
+See [SYSTEM-E2E-LOOP.md](SYSTEM-E2E-LOOP.md). Progress: `GET /api/platform/pipelines/runs/{runId}`.
 
 ## DNS
 

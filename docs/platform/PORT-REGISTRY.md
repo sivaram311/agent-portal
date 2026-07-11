@@ -31,9 +31,12 @@ Any human or AI **must** read this before binding a port. After claiming, update
 |------|---------|-----------|-----|------|--------|-------|
 | 80 | nginx-http | Deployment | host | 0.0.0.0 | active | Cloudflare Flexible → origin |
 | 443 | nginx-https | Deployment | host | — | reserved | Enable when origin TLS ready |
+| 3010 | h-drive-server | h-drive-server | host | 0.0.0.0 | active | Exposes H:\ over HTTP; open CORS |
+| 4010 | h-drive-server | h-drive-server | staging | 0.0.0.0 | active | PREPROD `F:\apps\h-drive-server` |
 | 4080 | agent-portal-api | agent-portal | staging | 0.0.0.0 | active | PREPROD `F:\apps\agent-portal`; agent-portal-staging.delena.buzz |
 | 4200 | agent-portal-ui | agent-portal | host | 0.0.0.0 | active | DEV `ng serve` / delena.buzz / |
 | 4900 | css-auth | css | staging | 0.0.0.0 | active | Preprod CSS IdP |
+| 5010 | h-drive-server | h-drive-server | prod | 0.0.0.0 | active | PROD `G:\apps\h-drive-server`; https://hdrive.delena.buzz |
 | 5080 | agent-portal-api | agent-portal | prod | 0.0.0.0 | active | PROD `G:\apps\agent-portal`; agent-portal.delena.buzz |
 | 5432 | postgres | docker/local | host | — | active | Shared; schemas per app |
 | 5900 | css-auth | css | prod | 0.0.0.0 | active | Prod CSS; css.delena.buzz |
@@ -63,6 +66,7 @@ Any human or AI **must** read this before binding a port. After claiming, update
 | `https://delena.buzz/.well-known/` | `127.0.0.1:9000` |
 | `https://agent-portal-staging.delena.buzz/` | static `F:\apps\agent-portal\ui` + API `:4080`; `/auth` → `:5900` |
 | `https://agent-portal.delena.buzz/` | static `G:\apps\agent-portal\ui` + API `:5080`; `/auth` → `:5900` |
+| `https://hdrive.delena.buzz/` | `127.0.0.1:5010` (H: file expose) |
 | `https://css.delena.buzz/` | `127.0.0.1:5900` |
 
 Future app subdomains: see [CLOUDFLARE-DNS-PROXY.md](CLOUDFLARE-DNS-PROXY.md).

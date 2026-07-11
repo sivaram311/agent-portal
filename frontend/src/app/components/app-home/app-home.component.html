@@ -126,10 +126,25 @@
             <span class="meta">
               {{ t.role }} · {{ t.status }}
               @if (t.pipelineId) { · {{ t.pipelineId }} }
+              @if (t.stepKey) { · {{ t.stepKey }} }
+              @if (t.iteration) { · iter {{ t.iteration }}@if (t.maxIterations) {/{{ t.maxIterations }}} }
+              @if (t.outcome) { · {{ t.outcome }} }
               @if (t.sessionId) { · session linked }
             </span>
             @if (t.description) {
               <p>{{ t.description }}</p>
+            }
+            @if (t.sessionId) {
+              <span class="meta">session {{ t.sessionId }} — open it from the main session list</span>
+            } @else if (t.status === 'ASSIGNED' || t.status === 'IN_PROGRESS' || t.status === 'OPEN') {
+              <button
+                type="button"
+                class="ap-btn ap-btn-primary"
+                [disabled]="invokeBusyId === t.id"
+                (click)="invokeTask(t)"
+              >
+                {{ invokeBusyId === t.id ? 'Opening…' : 'Open agent session' }}
+              </button>
             }
           </li>
         } @empty {
@@ -166,13 +181,38 @@
           <li class="pipeline">
             <div>
               <strong>{{ p.name }}</strong>
-              <span class="meta">{{ p.id }} · {{ p.steps.join(' → ') }}</span>
+              <span class="meta">
+                {{ p.id }}
+                @if (p.category) { · {{ p.category }} }
+                @if (p.looping) { · loop max {{ p.maxIterations ?? 20 }} }
+                · {{ p.steps.join(' → ') }}
+              </span>
               <p>{{ p.description }}</p>
             </div>
             <button type="button" class="ap-btn ap-btn-primary" (click)="runPipeline(p)">Run</button>
           </li>
         } @empty {
           <li class="muted">Pipelines API unavailable</li>
+        }
+        @if (e2eProgress) {
+          <li class="pipeline e2e-progress">
+            <div>
+              <strong>E2E loop progress</strong>
+              <span class="meta">
+                {{ e2eProgress.status }} · iter {{ e2eProgress.iteration }}/{{ e2eProgress.maxIterations }}
+                @if (e2eProgress.lastQaOutcome) { · last QA {{ e2eProgress.lastQaOutcome }} }
+                @if (e2eProgress.stopReason) { · {{ e2eProgress.stopReason }} }
+              </span>
+              <ul class="timeline">
+                @for (s of e2eProgress.steps; track s.taskId) {
+                  <li>
+                    #{{ s.iteration }} {{ s.stepKey || s.role }} · {{ s.status }}
+                    @if (s.outcome) { · {{ s.outcome }} }
+                  </li>
+                }
+              </ul>
+            </div>
+          </li>
         }
       </ul>
     }

@@ -19,6 +19,7 @@ Live Agent Portal URLs: DEV `https://delena.buzz`, PREPROD `https://agent-portal
 | [CLOUDFLARE-DNS-PROXY.md](CLOUDFLARE-DNS-PROXY.md) | Subdomains → NGINX → host services |
 | [VERSIONING-PROMOTE.md](VERSIONING-PROMOTE.md) | Sandbox → version → staging → prod |
 | [VIRTUALDEV-CO.md](VIRTUALDEV-CO.md) | Multi-agent virtual company vision |
+| [SYSTEM-E2E-LOOP.md](SYSTEM-E2E-LOOP.md) | Category System Agent — Playwright QA→fix→docs→review loop |
 | [SUBAGENTS-ROADMAP.md](SUBAGENTS-ROADMAP.md) | Deploy / Postgres / Git-review / QA agents |
 | [indexes/INDEX-MYWORKSPACE.md](indexes/INDEX-MYWORKSPACE.md) | Indexed markdown under MyWorkspace |
 | [indexes/INDEX-SOURCE.md](indexes/INDEX-SOURCE.md) | Indexed doc roots under E:\Source |

@@ -3,6 +3,7 @@ package com.agentportal.web;
 import com.agentportal.dto.ClaimPortRequest;
 import com.agentportal.dto.CreatePlatformAgentMessageRequest;
 import com.agentportal.dto.CreatePlatformTaskRequest;
+import com.agentportal.dto.E2eLoopProgressDto;
 import com.agentportal.dto.LinkTaskSessionRequest;
 import com.agentportal.dto.PlatformAgentMessageDto;
 import com.agentportal.dto.PlatformAppDto;
@@ -13,6 +14,7 @@ import com.agentportal.dto.PlatformRoleDto;
 import com.agentportal.dto.PlatformTaskDto;
 import com.agentportal.dto.PortLeaseDto;
 import com.agentportal.dto.RunPlatformPipelineRequest;
+import com.agentportal.dto.SessionDto;
 import com.agentportal.dto.SwarmTickRequest;
 import com.agentportal.dto.SwarmTickResultDto;
 import com.agentportal.dto.UpdatePlatformAgentMessageRequest;
@@ -92,6 +94,11 @@ public class PlatformController {
         return platformRegistryService.linkTaskSession(id, request);
     }
 
+    @PostMapping("/tasks/{id}/invoke")
+    public SessionDto invokeTaskSession(@PathVariable UUID id) {
+        return platformRegistryService.invokeTaskSession(id);
+    }
+
     @GetMapping("/roles")
     public List<PlatformRoleDto> listRoles() {
         return platformRegistryService.listRoles();
@@ -169,6 +176,11 @@ public class PlatformController {
             @Valid @RequestBody RunPlatformPipelineRequest request
     ) {
         return platformRegistryService.runPipeline(id, request);
+    }
+
+    @GetMapping("/pipelines/runs/{runId}")
+    public E2eLoopProgressDto getE2eLoopProgress(@PathVariable UUID runId) {
+        return platformRegistryService.getE2eLoopProgress(runId);
     }
 
     @GetMapping("/home")

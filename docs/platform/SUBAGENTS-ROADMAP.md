@@ -43,6 +43,22 @@ Encoded under `.cursor/skills/`:
 - `ap-e2e-realme-p2-pro` — Realme 360×780 E2E
 - Machine promote skills live under `E:\MyAgent\workflow\promote\` (`promote-em`, `promote-qa`, …)
 
+## Dual-CLI + Portal predefined (roadmap)
+
+**Status:** backlog — idea parked 2026-07-11. **Not implemented.**
+
+Automate machine promote/incident/docs using **Cursor CLI** and **Antigravity CLI** as workers, with **Agent Portal** as the eventual UI/config surface:
+
+| Layer | Role |
+|-------|------|
+| MyAgent | CONSCIOUS + `promote-*` skills + future `workflow/agents/<role>/` packs |
+| Job runner | `job.json` → spawn `agent` / `agy` with role prompts; evidence under `H:\releases\` |
+| Agent Portal | Predefined pipelines (`PROMOTE_Q1`, `PROMOTE_Q2`, `INCIDENT_*`, **`SYSTEM_E2E_LOOP`**) → tasks/roles → swarm tick; sessions inherit `platformRole` ACLs |
+
+Human gates remain: deletes, disk ops, DNS delete, G: overwrite, Q2 prod GO, secret resets.
+
+Full sketch: `E:\MyAgent\ideas\dual-cli-subagent-workflow.md`.
+
 ## Commit / review / merge agent behavior
 
 1. Diff against base branch.

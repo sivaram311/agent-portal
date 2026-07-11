@@ -50,7 +50,7 @@ Agents message each other (shared memory + bus). Example: Backend asks Frontend 
 
 ### 3. Pipeline / workflow (later)
 
-Fixed pipelines: Feature, Bugfix, Refactor, Security audit.
+Fixed pipelines: Feature, Bugfix, Refactor, Security audit, **System E2E loop** (`SYSTEM_E2E_LOOP` — see [SYSTEM-E2E-LOOP.md](SYSTEM-E2E-LOOP.md)).
 
 ## Key capabilities to build
 

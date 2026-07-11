@@ -85,7 +85,9 @@ public class AgentApiController {
                         action("createMessage", "POST", "/api/platform/messages", "Send inter-agent message"),
                         action("listPipelines", "GET", "/api/platform/pipelines", "Workflow pipeline presets"),
                         action("runPipeline", "POST", "/api/platform/pipelines/{id}/run", "Spawn pipeline task graph"),
+                        action("e2eLoopProgress", "GET", "/api/platform/pipelines/runs/{runId}", "SYSTEM_E2E_LOOP progress timeline"),
                         action("linkTaskSession", "POST", "/api/platform/tasks/{id}/session", "Link task to portal session"),
+                        action("invokeTaskSession", "POST", "/api/platform/tasks/{id}/invoke", "Spawn role session + prompt for task"),
                         action("platformHome", "GET", "/api/platform/home", "App Home payload")
                 )
         );

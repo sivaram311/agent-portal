@@ -18,6 +18,10 @@ public record PlatformTaskDto(
         UUID sessionId,
         UUID parentTaskId,
         String pipelineId,
+        Integer iteration,
+        Integer maxIterations,
+        String outcome,
+        String stepKey,
         Instant createdAt,
         Instant updatedAt
 ) {
@@ -35,6 +39,10 @@ public record PlatformTaskDto(
                 t.getSessionId(),
                 t.getParentTaskId(),
                 t.getPipelineId(),
+                t.getIteration(),
+                t.getMaxIterations(),
+                t.getOutcome(),
+                t.getStepKey(),
                 t.getCreatedAt(),
                 t.getUpdatedAt()
         );
