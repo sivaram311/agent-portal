@@ -29,5 +29,5 @@ $env:AGENT_WORKSPACE_ROOT = "E:\MyWorkspace\sandbox"
 | Allowed | Denied |
 |---------|--------|
 | Create/edit under sandbox | Arbitrary writes across E:\ |
-| Claim ports before bind | Steal 8080/9000/4200/80 |
+| Claim ports before bind | Steal 8080/4080/5080/9000/5900/4200/80 |
 | Use delena.buzz URLs | Prefer raw public IP in clients |

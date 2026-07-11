@@ -31,13 +31,16 @@ Keep root `README.md` and this roadmap updated when a track changes.
 
 ## Platform Future Implementation
 
-Handbook: **[docs/platform/](platform/README.md)**. Runtime: sandbox cutover, `/api/platform/*` ports+apps, Agent API.
+Handbook: **[docs/platform/](platform/README.md)**. Runtime: sandbox, `/api/platform/*`, Agent API, role ACLs.
+
+**Live envs:** DEV `delena.buzz` · PREPROD `agent-portal-staging.delena.buzz` · PROD `agent-portal.delena.buzz` — [OPS.md](OPS.md#deployed-environments-2026-07-11).
 
 Skills (sub-agents):
 
 - `ap-platform-ops` — Ops/Deploy
 - `ap-platform-review` — Git review/merge
 - `ap-platform-qa` — E2E + Agent API smoke
+- `ap-e2e-realme-p2-pro` — Realme P2 Pro 360×780 multi-agent E2E
 - `ap-platform-state` — Port/apps registry
 - `ap-platform-em` — Engineering Manager (VirtualDev Co)
 

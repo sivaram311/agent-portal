@@ -27,5 +27,8 @@ Against the public HTTPS front door:
 
 ```powershell
 $env:APP_URL = "https://delena.buzz"
+# Or PREPROD/PROD:
+# $env:APP_URL = "https://agent-portal-staging.delena.buzz"
+# $env:APP_URL = "https://agent-portal.delena.buzz"
 npm run test:mobile
 ```

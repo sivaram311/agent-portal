@@ -1,16 +1,16 @@
-# Sub-agents roadmap (Future Implementation)
+# Sub-agents roadmap
 
-Specialized agents that know **this machine’s protocols** and keep state in **PostgreSQL**. They are not implemented yet; this is the contract.
+Specialized agents that know **this machine’s protocols**. Cursor **skills** + portal APIs are live; long-lived worker *services* and dedicated control-plane event tables remain planned.
 
 ## Sub-agent roster
 
-| Agent | Knows | Owns | Writes to Postgres (future) |
-|-------|-------|------|------------------------------|
-| **Ops / Deploy** | Ports, NGINX, Cloudflare, process-by-port | Staging/prod deploys | `deploy_event`, `port_lease` |
-| **State** | Registry schemas | Port leases, project registry, run history | `port_lease`, `project`, `agent_run` |
-| **Review / Merge** | Git protocol, secrets scan, ACCESS-PROTOCOLS | PR review comments, merge gates | `review_event` |
-| **QA / Test** | e2e, checklists, bug format | Test reports, bug tickets | `test_run`, `bug` |
-| **Engineering Manager** | VIRTUALDEV-CO | Task graph, delegation | `task`, `assignment` |
+| Agent | Knows | Owns today | Writes to Postgres (planned) |
+|-------|-------|------------|------------------------------|
+| **Ops / Deploy** | Ports, NGINX, Cloudflare, process-by-port | Promote ops + DNS scripts | `deploy_event`, `port_lease` |
+| **State** | Registry schemas | Port doc + `/api/platform/ports` | `port_lease`, `project`, `agent_run` |
+| **Review / Merge** | Git protocol, secrets scan, ACCESS-PROTOCOLS | `ap-platform-review` skill | `review_event` |
+| **QA / Test** | e2e, checklists, bug format | `ap-platform-qa`, `ap-e2e-realme-p2-pro` | `test_run`, `bug` |
+| **Engineering Manager** | VIRTUALDEV-CO | `/api/platform/tasks`, pipelines, swarm | `task`, `assignment` |
 
 All sub-agents must load:
 
@@ -21,23 +21,27 @@ All sub-agents must load:
 
 ## Postgres control plane (planned)
 
-Suggested database: shared Postgres (compose already used for portal profile) or dedicated `platform` DB.
+Shared Postgres `:5432` already hosts `app_agent_portal` schemas `preprod` / `prod` for the portal app. A dedicated control-plane (or extra tables) for promote/review/QA events is still planned.
 
 Core tables (sketch):
 
 - `port_lease` — see PORT-REGISTRY
 - `project` — slug, sandbox_path, client_id, subdomains
 - `agent_run` — who, session_id, role, status, timestamps
-- `task` / `assignment` — orchestrator graph
+- `task` / `assignment` — orchestrator graph (portal `platform_tasks` is the interim)
 - `deploy_event` — version, env, result
 - `review_event` — PR, verdict
 - `test_run` / `bug` — QA output
 
 State sub-agent is the only writer to registry tables; others call its API.
 
-## Cursor skills bridge (near-term)
+## Cursor skills bridge (shipped)
 
-Until services exist, encode each sub-agent as a **Cursor skill** under `.cursor/skills/` that points at these docs (similar to existing `ap-*` skills). Future Implementation: add `ap-platform-ops`, `ap-platform-review`, `ap-platform-qa`.
+Encoded under `.cursor/skills/`:
+
+- `ap-platform-ops` · `ap-platform-review` · `ap-platform-qa` · `ap-platform-state` · `ap-platform-em`
+- `ap-e2e-realme-p2-pro` — Realme 360×780 E2E
+- Machine promote skills live under `E:\MyAgent\workflow\promote\` (`promote-em`, `promote-qa`, …)
 
 ## Commit / review / merge agent behavior
 

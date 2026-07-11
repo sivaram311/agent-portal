@@ -1,4 +1,6 @@
-# CSS App Home (Future Implementation)
+# CSS App Home
+
+**Status:** Agent Portal **Apps** sheet is shipped. Standalone CSS launcher (`home.delena.buzz`) and full CSS-driven app registry remain future.
 
 ## Vision
 

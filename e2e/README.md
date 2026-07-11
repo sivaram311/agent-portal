@@ -73,11 +73,11 @@ Spec: `tests/realme-p2-pro-multi-agent.spec.ts` (viewport **360×780**)
 
 Covers login → FAB create session → `/api/agent/actions` → session tabs → Changes → optional prompt → App Home.
 
+Against DEV / PREPROD / PROD:
+
 ```powershell
 cd e2e
-$env:APP_URL = "https://delena.buzz"
-$env:CSS_USER = "admin"
-$env:CSS_PASSWORD = "admin123"   # local only — do not commit
+$env:APP_URL = "https://delena.buzz"   # or agent-portal-staging / agent-portal.delena.buzz
 npm run test:realme-e2e
 ```
 

@@ -62,6 +62,16 @@ Mobile checklist and audit frames: [docs/MOBILE-QA.md](docs/MOBILE-QA.md). Sampl
 
 **Platform Future Implementation** (machine workflow, ports, sandbox, VirtualDev Co, Agent API): [docs/platform/README.md](docs/platform/README.md).
 
+## Live environments
+
+| Env | URL | API port |
+|-----|-----|----------|
+| DEV (workspace) | https://delena.buzz | `:8080` (+ UI `:4200`) |
+| PREPROD | https://agent-portal-staging.delena.buzz | `:4080` on `F:\apps\agent-portal` |
+| PROD | https://agent-portal.delena.buzz | `:5080` on `G:\apps\agent-portal` |
+
+PREPROD/PROD auth → **prod CSS** (`https://css.delena.buzz`, `clientId=agent-portal`). Release + evidence: `H:\releases\agent-portal-0.1.0\`. Ops detail: [docs/OPS.md](docs/OPS.md#deployed-environments-2026-07-11).
+
 ## Quick start (Windows host stack)
 
 Runs CSS + portal backend + Angular on the host (recommended when Docker is Windows containers / CE):

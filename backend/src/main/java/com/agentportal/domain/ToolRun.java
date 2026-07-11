@@ -1,6 +1,8 @@
 package com.agentportal.domain;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -23,7 +25,8 @@ public class ToolRun {
     @Column(nullable = false, length = 128)
     private String toolName;
 
-    @Lob
+    @JdbcTypeCode(SqlTypes.LONGVARCHAR)
+    @Column(columnDefinition = "TEXT")
     private String argsJson;
 
     @Column(nullable = false, length = 32)
@@ -39,7 +42,8 @@ public class ToolRun {
     @Column(length = 128)
     private String subagentId;
 
-    @Lob
+    @JdbcTypeCode(SqlTypes.LONGVARCHAR)
+    @Column(columnDefinition = "TEXT")
     private String output;
 
     private Integer exitCode;

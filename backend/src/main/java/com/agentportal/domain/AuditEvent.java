@@ -1,6 +1,8 @@
 package com.agentportal.domain;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -23,7 +25,8 @@ public class AuditEvent {
     @Column(length = 64)
     private String sessionId;
 
-    @Lob
+    @JdbcTypeCode(SqlTypes.LONGVARCHAR)
+    @Column(columnDefinition = "TEXT")
     private String details;
 
     @Column(nullable = false, updatable = false)

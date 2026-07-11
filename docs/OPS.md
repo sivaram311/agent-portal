@@ -1,5 +1,58 @@
 # Operations
 
+## Deployed environments (2026-07-11)
+
+Machine standing orders: `E:\MyAgent\workflow\CONSCIOUS.md` (drives, ports, DB schemas, CSS, promote evidence).
+
+| Env | Drive | API | Public URL | Spring profile | DB |
+|-----|-------|-----|------------|----------------|-----|
+| DEV | `E:\MyWorkspace\agent-portal` | `:8080` (+ UI `:4200`) | https://delena.buzz | default / H2 or `postgres` | local H2 or legacy |
+| PREPROD | `F:\apps\agent-portal` | `:4080` | https://agent-portal-staging.delena.buzz | `preprod` | `app_agent_portal`.`preprod` |
+| PROD | `G:\apps\agent-portal` | `:5080` | https://agent-portal.delena.buzz | `prod` | `app_agent_portal`.`prod` |
+
+| Piece | Location |
+|-------|----------|
+| Release package | `H:\releases\agent-portal-0.1.0\` |
+| Promote evidence | `H:\releases\agent-portal-0.1.0\evidence\` |
+| Start script | `F:\` / `G:\apps\agent-portal\start.ps1` |
+| Nginx confs | `E:\Source\Deployment\conf\apps\agent-portal*.delena.buzz.conf` |
+| Machine port registry | `E:\MyAgent\workflow\ports\REGISTRY.md` (source of truth for 4080/5080) |
+
+### Auth (PREPROD + PROD)
+
+Both use **prod CSS** (user-directed):
+
+| Setting | Value |
+|---------|--------|
+| IdP | `https://css.delena.buzz` / local `:5900` |
+| `clientId` | `agent-portal` |
+| Browser login | Same-origin `/auth/*` (nginx → `:5900`); empty `CSS_AUTH_URL` is OK |
+| JWKS | `http://127.0.0.1:5900/.well-known/jwks.json` |
+| Issuer | `https://css.delena.buzz` |
+
+Unauthenticated `/api/**` → **403** is expected. Use a CSS JWT (`Authorization: Bearer …`).
+
+DEV CSS remains `:9000` / `https://delena.buzz/auth/` (seeded `admin` / `admin123`). Prod admin password lives in `G:\apps\css\.env` (`CSS_ADMIN_PASSWORD`) — never commit it.
+
+### Postgres text columns (do not use `@Lob` / CLOB)
+
+On PostgreSQL, JPA `@Lob` / `columnDefinition = "CLOB"` maps to large objects (`oid`) and causes:
+
+- `ERROR: type "clob" does not exist` (DDL skip → missing tables)
+- `Unable to access lob stream` / `Large Objects may not be used in auto-commit mode`
+
+**Rule:** map long strings with `@JdbcTypeCode(SqlTypes.LONGVARCHAR)` + `columnDefinition = "TEXT"`. Evidence: `H:\releases\agent-portal-0.1.0\evidence\jdbc-fix.md`, `e2e-sanity-prod.md`.
+
+### E2E sanity (API)
+
+After deploy, with a CSS token against `:5080` (or Host `agent-portal.delena.buzz`):
+
+1. `GET /api/health`, `GET /api/auth/config`
+2. Login → `GET /api/sessions` → `POST /api/sessions`
+3. Session messages / events / `GET /api/guidance/packs`
+
+Promote gates: `E:\MyAgent\workflow\promote\` (`promote-em` + evidence packs).
+
 ## Docker hybrid deploy (recommended on this Windows host)
 
 **Requires [Docker Desktop](https://www.docker.com/products/docker-desktop/) for Windows** (`docker` on PATH).
@@ -81,7 +134,16 @@ cd backend
 .\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=postgres"
 ```
 
-Defaults in `application-postgres.properties`: DB `agentportal`, user/password `agent` (change for real deploys). Override with `POSTGRES_PASSWORD` / `SPRING_DATASOURCE_PASSWORD`.
+Defaults in `application-postgres.properties`: legacy DB `agentportal`, user/password `agent` (change for real deploys).
+
+**PREPROD / PROD** use shared Postgres `:5432` with schema-per-env (machine policy):
+
+| Env | Database | Schema | Role |
+|-----|----------|--------|------|
+| preprod | `app_agent_portal` | `preprod` | `app_agent_portal_preprod` |
+| prod | `app_agent_portal` | `prod` | `app_agent_portal_prod` |
+
+Registry: `E:\MyAgent\workflow\db\SCHEMA-REGISTRY.md`. Secrets: `E:\MyAgent\workflow\db\secrets\postgres.env` (gitignored). Profiles `application-preprod.properties` / `application-prod.properties` set JDBC URL + CSS JWKS to prod CSS.
 
 ### Backup / restore
 
@@ -147,7 +209,7 @@ Important env (from `.env` or process):
 | `CLOUDFLARE_ZONE_NAME` | Zone hostname (e.g. `delena.buzz`) |
 | `CLOUDFLARE_ACCOUNT_ID` | Cloudflare account ID |
 
-When restarting only the API, stop the Java process listening on **8080** (or matching `backend-0.0.1-SNAPSHOT.jar`). Do **not** `Stop-Process` by broad name match on `cursor` / `node` / `agent` — those include the Cursor IDE agent and will kill your editing session.
+When restarting only the API, stop the Java process listening on the **target env port** — DEV **8080**, PREPROD **4080**, PROD **5080** (or matching JAR on that drive). Do **not** `Stop-Process` by broad name match on `cursor` / `node` / `agent` — those include the Cursor IDE agent and will kill your editing session.
 
 ## Cloudflare DNS / zone
 

@@ -16,8 +16,8 @@
 
 | Path | Purpose |
 |------|---------|
-| `agent-portal\` | Agent sessions UI/API — foundation for VirtualDev Co |
-| `centralized-security-system\` | SSO / JWT / JWKS |
+| `agent-portal\` | Agent sessions UI/API — DEV tree; foundation for VirtualDev Co |
+| `centralized-security-system\` | SSO / JWT / JWKS (DEV `:9000`) |
 | `sandbox\` | Target agent write root (see SANDBOX.md) |
 | `persistent-agent-platform\` | Earlier agent platform experiments |
 | `mt5-dev\`, `MT5_Docs\` | Trading / MT5 work |
@@ -37,13 +37,25 @@
 
 ## Runtime topology (typical)
 
+### DEV (`delena.buzz`)
+
 ```text
 Internet → Cloudflare (delena.buzz)
         → NGINX :80
-           ├─ /          → :4200 Agent Portal UI
+           ├─ /          → :4200 Agent Portal UI (ng serve)
            ├─ /api /ws   → :8080 Agent Portal API
-           └─ /auth      → :9000 CSS
+           └─ /auth      → :9000 CSS (DEV)
 ```
+
+### PREPROD / PROD
+
+| Host | UI | API | Auth |
+|------|----|-----|------|
+| `agent-portal-staging.delena.buzz` | `F:\apps\agent-portal\ui` | `:4080` | CSS prod `:5900` |
+| `agent-portal.delena.buzz` | `G:\apps\agent-portal\ui` | `:5080` | CSS prod `:5900` |
+| `css.delena.buzz` | — | `:5900` | Prod CSS IdP |
+
+Release packages: `H:\releases\`. Standing orders: `E:\MyAgent\workflow\`. Details: [../OPS.md](../OPS.md#deployed-environments-2026-07-11).
 
 ## Markdown indexing
 

@@ -1,6 +1,8 @@
 package com.agentportal.domain;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -28,8 +30,8 @@ public class SessionGuidance {
     private String title;
 
     /** Session-only markdown when packId is null; otherwise unused (body comes from pack). */
-    @Lob
-    @Column(columnDefinition = "CLOB")
+    @JdbcTypeCode(SqlTypes.LONGVARCHAR)
+    @Column(columnDefinition = "TEXT")
     private String sessionBody;
 
     @Column(nullable = false)

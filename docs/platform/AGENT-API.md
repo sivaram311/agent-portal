@@ -17,10 +17,12 @@ Workspace: [`workspaces/agent-api/`](../../workspaces/agent-api/).
 
 | Env | UI | API | CSS |
 |-----|----|-----|-----|
-| **Public (default for clients)** | `https://delena.buzz` | `https://delena.buzz/api` | `https://delena.buzz/auth` |
+| **DEV (default client)** | `https://delena.buzz` | `https://delena.buzz/api` | `https://delena.buzz/auth` → `:9000` |
+| **PREPROD** | `https://agent-portal-staging.delena.buzz` | same-origin `/api` (`:4080`) | same-origin `/auth` → CSS prod `:5900` |
+| **PROD** | `https://agent-portal.delena.buzz` | same-origin `/api` (`:5080`) | same-origin `/auth` → CSS prod `:5900` |
 | Local host | `http://127.0.0.1:4200` | `http://127.0.0.1:8080/api` | `http://127.0.0.1:9000` |
 
-Use **`delena.buzz`**, not the public IP and not `delena.com` (unrelated domain).
+Use **`delena.buzz` hostnames**, not the public IP and not `delena.com` (unrelated domain). PREPROD/PROD login against **prod CSS** (`clientId=agent-portal`). Unauthenticated `/api/**` → **403** is expected.
 
 ## Security
 
@@ -32,7 +34,7 @@ Use **`delena.buzz`**, not the public IP and not `delena.com` (unrelated domain)
 | API key | Optional `X-API-Key` when `AGENT_PORTAL_API_KEY` / `app.security.api-key` is set |
 | WS | SockJS `/ws/**` — pass `access_token` when CSS enabled |
 
-Dev seeds: `admin` / `admin123` (change for real prod).
+Dev seeds (DEV CSS only): `admin` / `admin123`. Prod admin password is in `G:\apps\css\.env` — never commit it.
 
 ## Auth sequence
 

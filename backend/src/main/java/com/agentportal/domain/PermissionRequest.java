@@ -1,6 +1,8 @@
 package com.agentportal.domain;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -21,7 +23,8 @@ public class PermissionRequest {
     @Column(length = 128)
     private String toolCallId;
 
-    @Lob
+    @JdbcTypeCode(SqlTypes.LONGVARCHAR)
+    @Column(columnDefinition = "TEXT")
     private String detailsJson;
 
     @Enumerated(EnumType.STRING)
@@ -31,7 +34,8 @@ public class PermissionRequest {
     @Column(length = 32)
     private String kind = "permission";
 
-    @Lob
+    @JdbcTypeCode(SqlTypes.LONGVARCHAR)
+    @Column(columnDefinition = "TEXT")
     private String planMarkdown;
 
     @Column(nullable = false, updatable = false)

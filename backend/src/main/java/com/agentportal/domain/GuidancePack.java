@@ -1,6 +1,8 @@
 package com.agentportal.domain;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -33,8 +35,8 @@ public class GuidancePack {
     @Column(length = 500)
     private String description;
 
-    @Lob
-    @Column(nullable = false, columnDefinition = "CLOB")
+    @JdbcTypeCode(SqlTypes.LONGVARCHAR)
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String bodyMarkdown;
 
     /** Comma-separated globs for RULE packs (optional). */

@@ -1,4 +1,14 @@
-# Versioning and promote (Future Implementation)
+# Versioning and promote
+
+## Status (2026-07-11)
+
+Promote is **live** via machine workflow (not only future):
+
+- Gates: `E:\MyAgent\workflow\promote\` + skills `promote-em` / `promote-qa` / `promote-security` / `promote-review` / `promote-ops`
+- Evidence: `H:\releases\<app>-<version>\evidence\q1|q2\`
+- Agent Portal **0.1.0** Q1+Q2 GO — see `H:\releases\agent-portal-0.1.0\evidence\`
+
+This doc remains the product-facing checklist; machine standing orders win on drives/ports/DB/CSS.
 
 ## Principle
 
@@ -9,8 +19,9 @@ Agent edits are **not** production. Every production change is a **named version
 | Env | Where | Who writes |
 |-----|-------|------------|
 | sandbox | `sandbox/<app>` + `*-sandbox.delena.buzz` | Builder / agents |
-| staging | versioned build + `*-staging` subdomain | Releaser after QA |
-| prod | tagged release + prod subdomain | Releaser after approval |
+| DEV | `E:\MyWorkspace\agent-portal` + `delena.buzz` | Builder (not a promote target) |
+| staging (PREPROD) | `F:\apps\agent-portal` + `agent-portal-staging.delena.buzz` (`:4080`) | Releaser after QA |
+| prod | `G:\apps\agent-portal` + `agent-portal.delena.buzz` (`:5080`) | Releaser after approval |
 
 ## Promote gates
 
@@ -23,7 +34,7 @@ sandbox work
   → smoke + regression
   → human go/no-go
   → deploy prod
-  → record version in Postgres (future)
+  → record version + evidence under `H:\releases\` (and Postgres `deploy_event` when control plane lands)
 ```
 
 ## Version definition
@@ -38,7 +49,7 @@ A version is:
 
 ## Agent Portal Changes tab
 
-Until full promote automation exists, use Keep/Restore + human review as the **inner** gate for workspace file edits. Outer gate (staging/prod) remains this document.
+Use Keep/Restore + human review as the **inner** gate for workspace file edits. Outer gate (PREPROD/PROD) is the promote workflow + evidence packs under `H:\releases\`.
 
 ## Forbidden
 

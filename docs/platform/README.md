@@ -1,8 +1,8 @@
-# Platform docs (Future Implementation)
+# Platform docs
 
-**Status:** Documentation and workflow contracts only. Runtime orchestration, CSS App Home, Postgres port leases, and deploy/review sub-agents are **not built yet**.
+**Status:** Control-plane handbook. Port/DNS/CSS/promote contracts are **in use** on this machine (see `E:\MyAgent\workflow\`). Remaining future work: richer VirtualDev Co runtime, Postgres control-plane tables beyond portal schemas, and autonomous sub-agent *services* (skills + APIs exist today).
 
-This folder is the **control-plane handbook** for humans and AI agents working on this machine and evolving Agent Portal into a multi-agent platform (“VirtualDev Co”).
+Live Agent Portal URLs: DEV `https://delena.buzz`, PREPROD `https://agent-portal-staging.delena.buzz`, PROD `https://agent-portal.delena.buzz` — details in [../OPS.md](../OPS.md#deployed-environments-2026-07-11).
 
 ## Start here
 

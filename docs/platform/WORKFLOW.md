@@ -1,6 +1,6 @@
 # Workflow — Team & AI operating model
 
-**Status:** Future Implementation (protocol). Follow these steps even before automation exists.
+**Status:** Operating protocol (in use). Promote/gates are live via `E:\MyAgent\workflow\promote\`; autonomous worker services remain future (see [SUBAGENTS-ROADMAP.md](SUBAGENTS-ROADMAP.md)).
 
 This is how a **team of people and AI agents** works on projects on this machine. The goal is repeatable, reviewable delivery — not ad-hoc edits on production.
 
@@ -16,7 +16,7 @@ This is how a **team of people and AI agents** works on projects on this machine
 | **Releaser** | Version bump, promote staging → prod per VERSIONING-PROMOTE |
 | **Ops** | Ports, NGINX, Cloudflare, process restarts (narrow kill rules) |
 
-Future: each role maps to a **sub-agent** (see [SUBAGENTS-ROADMAP.md](SUBAGENTS-ROADMAP.md)). Until then, Cursor agents **must act as if** these roles exist.
+Each role maps to a **skill** today (`ap-platform-*`, promote-*); long-lived services are future. Cursor agents **must act as if** these roles exist.
 
 ## Standard loop
 

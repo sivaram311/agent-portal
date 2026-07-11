@@ -6,15 +6,27 @@ Canonical NGINX files live outside this repo: `E:\Source\Deployment\` (`conf\del
 
 ## Topology
 
+### DEV apex (`delena.buzz`)
+
 ```
 Browser (HTTPS)
   → Cloudflare (Flexible SSL, proxied DNS)
   → Origin 103.118.183.185:80 (Windows Firewall: allow TCP 80)
   → NGINX (C:\nginx-1.30.3)
-       ├─ /api/*, /ws     → 127.0.0.1:8080  Agent Portal
-       ├─ /auth/*, /.well-known/* → 127.0.0.1:9000  CSS
+       ├─ /api/*, /ws     → 127.0.0.1:8080  Agent Portal (DEV)
+       ├─ /auth/*, /.well-known/* → 127.0.0.1:9000  CSS (DEV)
        └─ /*              → 127.0.0.1:4200  Angular (ng serve)
 ```
+
+### PREPROD / PROD subdomains (versioned release)
+
+| Host | UI | API | Auth / JWKS |
+|------|----|-----|-------------|
+| `agent-portal-staging.delena.buzz` | static `F:\apps\agent-portal\ui` | `:4080` | nginx → CSS **prod** `:5900` |
+| `agent-portal.delena.buzz` | static `G:\apps\agent-portal\ui` | `:5080` | nginx → CSS **prod** `:5900` |
+| `css.delena.buzz` | — | `:5900` | Prod CSS IdP |
+
+Confs: `E:\Source\Deployment\conf\apps\agent-portal-staging.delena.buzz.conf`, `agent-portal.delena.buzz.conf`.
 
 ## Required host env (`.env`, not committed)
 

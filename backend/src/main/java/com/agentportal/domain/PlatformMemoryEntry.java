@@ -1,6 +1,8 @@
 package com.agentportal.domain;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -26,8 +28,8 @@ public class PlatformMemoryEntry {
     @Column(nullable = false, length = 32)
     private String kind = "NOTE";
 
-    @Lob
-    @Column(name = "entry_value", nullable = false)
+    @JdbcTypeCode(SqlTypes.LONGVARCHAR)
+    @Column(name = "entry_value", nullable = false, columnDefinition = "TEXT")
     private String value;
 
     @Column(nullable = false, length = 128)

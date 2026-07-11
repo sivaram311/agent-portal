@@ -25,17 +25,23 @@ Any human or AI **must** read this before binding a port. After claiming, update
 
 ## Active leases (host — observed 2026-07-11)
 
+**Machine source of truth:** `E:\MyAgent\workflow\ports\REGISTRY.md` (update both when claiming).
+
 | port | service | owner_app | env | bind | status | notes |
 |------|---------|-----------|-----|------|--------|-------|
 | 80 | nginx-http | Deployment | host | 0.0.0.0 | active | Cloudflare Flexible → origin |
 | 443 | nginx-https | Deployment | host | — | reserved | Enable when origin TLS ready |
-| 4200 | agent-portal-ui | agent-portal | host | 0.0.0.0 | active | `ng serve` / static UI |
-| 5432 | postgres | docker/local | host | — | active | Optional portal postgres profile |
-| 8080 | agent-portal-api | agent-portal | host | 0.0.0.0 | active | Spring Boot JAR |
+| 4080 | agent-portal-api | agent-portal | staging | 0.0.0.0 | active | PREPROD `F:\apps\agent-portal`; agent-portal-staging.delena.buzz |
+| 4200 | agent-portal-ui | agent-portal | host | 0.0.0.0 | active | DEV `ng serve` / delena.buzz / |
+| 4900 | css-auth | css | staging | 0.0.0.0 | active | Preprod CSS IdP |
+| 5080 | agent-portal-api | agent-portal | prod | 0.0.0.0 | active | PROD `G:\apps\agent-portal`; agent-portal.delena.buzz |
+| 5432 | postgres | docker/local | host | — | active | Shared; schemas per app |
+| 5900 | css-auth | css | prod | 0.0.0.0 | active | Prod CSS; css.delena.buzz |
+| 8080 | agent-portal-api | agent-portal | host | 0.0.0.0 | active | DEV Spring Boot JAR |
 | 8081 | legacy-grok-or-other | grok_dev / misc | host | — | active | Confirm before reuse |
 | 8082 | filebridge | agent-portal/workspaces/FileBridge | host | 0.0.0.0 | active | Sample app |
 | 8091 | stack-pilot | stack-pilot | host | — | active | Remote/ops tooling |
-| 9000 | css-auth | centralized-security-system | host | 0.0.0.0 | active | SSO + JWKS |
+| 9000 | css-auth | centralized-security-system | host | 0.0.0.0 | active | DEV SSO + JWKS |
 
 ## Available ranges (prefer these for new apps)
 
@@ -55,13 +61,18 @@ Any human or AI **must** read this before binding a port. After claiming, update
 | `https://delena.buzz/ws/` | `127.0.0.1:8080` |
 | `https://delena.buzz/auth/` | `127.0.0.1:9000` |
 | `https://delena.buzz/.well-known/` | `127.0.0.1:9000` |
+| `https://agent-portal-staging.delena.buzz/` | static `F:\apps\agent-portal\ui` + API `:4080`; `/auth` → `:5900` |
+| `https://agent-portal.delena.buzz/` | static `G:\apps\agent-portal\ui` + API `:5080`; `/auth` → `:5900` |
+| `https://css.delena.buzz/` | `127.0.0.1:5900` |
 
 Future app subdomains: see [CLOUDFLARE-DNS-PROXY.md](CLOUDFLARE-DNS-PROXY.md).
 
-## Future: Postgres schema (not implemented)
+## Future: dedicated `port_lease` table
+
+Interim: portal API `/api/platform/ports*` (+ doc registry above). Machine SoT: `E:\MyAgent\workflow\ports\REGISTRY.md`.
 
 ```sql
--- Future Implementation
+-- Planned control-plane table (beyond portal app schemas)
 CREATE TABLE port_lease (
   port          INT PRIMARY KEY,
   service       TEXT NOT NULL,

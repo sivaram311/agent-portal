@@ -1,6 +1,6 @@
 # VirtualDev Co — Multi-Agent Orchestration Vision
 
-**Status:** Future Implementation. Agent Portal today is the **foundation OS**; this document is the product vision.
+**Status:** Product vision + shipped foundation. Agent Portal is the **runtime OS**; VirtualDev Co orchestration APIs (roles, tasks, pipelines, memory, org, ACLs) are live. Richer departments and autonomous workers remain future.
 
 Also known as **AgentForge** — a virtual MNC-style software company where specialized AI agents collaborate across departments.
 
@@ -11,7 +11,7 @@ Agent Portal already provides:
 - Multi-session workspace, dual providers (Cursor / Antigravity)
 - Realtime streaming, permissions, Changes Keep/Restore
 - Guidance (Rules & Skills), sharing via CSS, audit
-- Mobile-ready UI on delena.buzz
+- Mobile-ready UI on delena.buzz (DEV); PREPROD/PROD on `agent-portal-*.delena.buzz`
 
 That becomes the **runtime** for department agents and the Engineering Manager orchestrator.
 
