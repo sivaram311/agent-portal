@@ -11,10 +11,12 @@ backend/data/
 backend/src/main/resources/application-local.properties
 *.log
 .env
+logs/
 e2e/test-results/
 e2e/playwright-report/
 e2e/blob-report/
 e2e/.cache/
+e2e/screenshots/
 # Session runtime under workspaces (baselines, logs, scratch)
 workspaces/**/.agent-portal/
 workspaces/**/.agent-portal-*
