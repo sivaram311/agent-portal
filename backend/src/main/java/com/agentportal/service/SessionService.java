@@ -262,7 +262,34 @@ public class SessionService {
         userMsg.setSequenceNo(nextSequence(id));
         messageRepository.save(userMsg);
         auditService.record("session.prompt", id.toString(), "len=" + request.prompt().length());
+        maybeAutotitleFromPrompt(session, request.prompt());
         return userMsg;
+    }
+
+    /** Replace placeholder titles with a short prompt summary so mobile lists stay scannable. */
+    private void maybeAutotitleFromPrompt(AgentSession session, String prompt) {
+        if (!isPlaceholderTitle(session.getTitle()) || prompt == null || prompt.isBlank()) {
+            return;
+        }
+        String compact = prompt.trim().replaceAll("\\s+", " ");
+        if (compact.length() > 72) {
+            compact = compact.substring(0, 69) + "...";
+        }
+        session.setTitle(compact);
+        sessionRepository.save(session);
+    }
+
+    static boolean isPlaceholderTitle(String title) {
+        if (title == null || title.isBlank()) {
+            return true;
+        }
+        String t = title.trim();
+        if ("New session".equalsIgnoreCase(t)) {
+            return true;
+        }
+        return t.regionMatches(true, 0, "Session ", 0, "Session ".length())
+                && t.length() > 8
+                && Character.isDigit(t.charAt(8));
     }
 
     @Transactional

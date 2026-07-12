@@ -8,9 +8,13 @@ On mobile session detail, keep **topbar + session header + tabs ≤ ~30–35%** 
 
 - Compact topbar (~44px) with brand + truncated user chip + **⋯ overflow** (Apps / Rules / Sign out)
 - Single-line session header (title + badges + compact Archive); path truncated; long-press/tap copy
-- Pill-style horizontally scrollable tabs with edge fade
+- **Share** collapsed behind a toggle (expand only when needed)
+- Pill-style horizontally scrollable tabs with edge fade; **Preview tab hidden** — use Code → Preview toggle instead
+- Session auto-title from first prompt / ACP `session_info_update` (no more stuck “New session” after a real run)
 - Small fonts preserved; tap targets ≥ 44px via padding, not larger type
 - Friendly empty / restricted / loading states + Retry (no raw "Forbidden")
+- Create dialog as bottom sheet on phones
+- Edge-to-edge Console; denser Logs
 
 ## Checklist
 

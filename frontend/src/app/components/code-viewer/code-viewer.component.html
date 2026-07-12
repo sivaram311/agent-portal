@@ -17,17 +17,27 @@
     </div>
   } @else if (entries.length === 0 && !selectedPath && !loadError) {
     <div class="ap-empty">
-      <h3>{{ previewMode ? 'Nothing to preview' : 'No files yet' }}</h3>
+      <h3>{{ effectivePreview ? 'Nothing to preview' : 'No files yet' }}</h3>
       <p>
         {{
-          previewMode
+          effectivePreview
             ? 'Ask the agent to create HTML or Markdown, then open it here.'
             : 'This workspace is empty. Ask the agent to create or fetch files, then refresh.'
         }}
       </p>
     </div>
   } @else {
-    <div class="layout">
+    <div class="layout" [class.with-mode]="allowInlinePreview">
+      @if (allowInlinePreview) {
+        <div class="mode-toggle" role="tablist" aria-label="Code or preview">
+          <button type="button" role="tab" [class.on]="!inlinePreview" [attr.aria-selected]="!inlinePreview" (click)="setInlinePreview(false)">
+            Code
+          </button>
+          <button type="button" role="tab" [class.on]="inlinePreview" [attr.aria-selected]="inlinePreview" (click)="setInlinePreview(true)">
+            Preview
+          </button>
+        </div>
+      }
       <aside class="tree">
         <nav class="crumbs" aria-label="Path">
           @for (crumb of breadcrumbs; track crumb.path; let last = $last) {
@@ -73,7 +83,7 @@
           </div>
         } @else if (!selectedPath) {
           <div class="ap-empty inline">
-            <p>Select a file to view its contents.</p>
+            <p>{{ effectivePreview ? 'Select HTML or Markdown to preview.' : 'Select a file to view its contents.' }}</p>
           </div>
         } @else if (loading && !fileContent) {
           <div class="ap-empty inline">
@@ -98,6 +108,10 @@
               [src]="htmlPreviewUrl"
               data-testid="html-preview"
             ></iframe>
+          } @else if (effectivePreview) {
+            <div class="ap-empty inline">
+              <p>Preview supports HTML and Markdown. Switch to Code to edit this file.</p>
+            </div>
           } @else {
             <app-monaco-viewer [content]="fileContent.content" [path]="fileContent.path" />
           }

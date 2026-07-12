@@ -165,54 +165,79 @@
           (archive)="archiveSession($event)"
         />
         @if (health?.cssEnabled) {
-          <div class="share-bar" data-testid="share-bar" [class.busy]="shareBusy">
-            <form class="share-form" (ngSubmit)="shareSession()">
-              <label class="share-field">
-                <span class="sr-only">Share with CSS username</span>
-                <input
-                  [(ngModel)]="shareUsername"
-                  name="shareUser"
-                  placeholder="Share with CSS username"
-                  data-testid="share-username"
-                  autocomplete="username"
-                  [disabled]="shareBusy"
-                  [attr.aria-invalid]="shareError ? true : null"
-                  [class.invalid]="!!shareError"
-                  (input)="shareError = ''"
-                  (keydown.enter)="$event.preventDefault(); shareSession()"
-                />
-              </label>
+          <div
+            class="share-bar"
+            data-testid="share-bar"
+            [class.busy]="shareBusy"
+            [class.collapsed]="isMobile && !shareExpanded"
+          >
+            @if (isMobile) {
               <button
-                type="submit"
-                class="ap-btn ap-btn-ghost share-submit"
-                [disabled]="shareBusy || !shareUsername.trim()"
-                [attr.aria-busy]="shareBusy"
-                data-testid="share-submit"
+                type="button"
+                class="share-toggle"
+                (click)="shareExpanded = !shareExpanded"
+                [attr.aria-expanded]="shareExpanded"
+                data-testid="share-toggle"
               >
-                {{ shareBusy ? 'Sharing…' : 'Share' }}
-              </button>
-            </form>
-            @if (shareError) {
-              <p class="share-error" role="alert">{{ shareError }}</p>
-            }
-            @if (collaborators.length) {
-              <div class="share-chips" aria-label="Collaborators">
-                @for (c of collaborators; track c.username) {
-                  <button
-                    type="button"
-                    class="chip"
-                    (click)="unshare(c.username)"
-                    [title]="'Remove ' + c.username"
-                    [disabled]="shareBusy"
-                  >
-                    {{ c.username }} ×
-                  </button>
+                {{ shareExpanded ? 'Hide share' : 'Share' }}
+                @if (collaborators.length) {
+                  <span class="share-count">{{ collaborators.length }}</span>
                 }
-              </div>
+              </button>
+            }
+            @if (!isMobile || shareExpanded) {
+              <form class="share-form" (ngSubmit)="shareSession()">
+                <label class="share-field">
+                  <span class="sr-only">Share with CSS username</span>
+                  <input
+                    [(ngModel)]="shareUsername"
+                    name="shareUser"
+                    placeholder="Share with CSS username"
+                    data-testid="share-username"
+                    autocomplete="username"
+                    [disabled]="shareBusy"
+                    [attr.aria-invalid]="shareError ? true : null"
+                    [class.invalid]="!!shareError"
+                    (input)="shareError = ''"
+                    (keydown.enter)="$event.preventDefault(); shareSession()"
+                  />
+                </label>
+                <button
+                  type="submit"
+                  class="ap-btn ap-btn-ghost share-submit"
+                  [disabled]="shareBusy || !shareUsername.trim()"
+                  [attr.aria-busy]="shareBusy"
+                  data-testid="share-submit"
+                >
+                  {{ shareBusy ? 'Sharing…' : 'Share' }}
+                </button>
+              </form>
+              @if (shareError) {
+                <p class="share-error" role="alert">{{ shareError }}</p>
+              }
+              @if (collaborators.length) {
+                <div class="share-chips" aria-label="Collaborators">
+                  @for (c of collaborators; track c.username) {
+                    <button
+                      type="button"
+                      class="chip"
+                      (click)="unshare(c.username)"
+                      [title]="'Remove ' + c.username"
+                      [disabled]="shareBusy"
+                    >
+                      {{ c.username }} ×
+                    </button>
+                  }
+                </div>
+              }
             }
           </div>
         }
-        <app-session-tabs [active]="activeTab" (activeChange)="activeTab = $event" />
+        <app-session-tabs
+          [active]="activeTab"
+          [compact]="isMobile"
+          (activeChange)="onTabChange($event)"
+        />
 
         <div class="tab-body">
           @switch (activeTab) {
@@ -231,7 +256,7 @@
               <app-console-panel [lines]="terminalLines" [busy]="busy" />
             }
             @case ('code') {
-              <app-code-viewer [sessionId]="active.id" />
+              <app-code-viewer [sessionId]="active.id" [allowInlinePreview]="isMobile" />
             }
             @case ('preview') {
               <app-code-viewer [sessionId]="active.id" [previewMode]="true" />

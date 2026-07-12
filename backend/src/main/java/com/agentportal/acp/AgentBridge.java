@@ -354,6 +354,15 @@ public class AgentBridge implements AutoCloseable {
                     emit(thinking ? "thinking_delta" : "assistant_delta", Map.of("text", text));
                 }
                 case "tool_call", "tool_call_update" -> handleToolCall(update);
+                case "session_info_update" -> {
+                    String title = update.path("title").asText(null);
+                    maybeApplyAcpSessionTitle(title);
+                    emit("session_update", Map.of(
+                            "sessionUpdate", sessionUpdate,
+                            "title", title == null ? "" : title,
+                            "raw", update.toString()
+                    ));
+                }
                 default -> emit("session_update", Map.of("raw", update.toString(), "sessionUpdate", sessionUpdate));
             }
         } catch (Exception e) {
@@ -523,6 +532,30 @@ public class AgentBridge implements AutoCloseable {
                 update.path("kind").asText(null),
                 toolKey
         );
+    }
+
+    private void maybeApplyAcpSessionTitle(String title) {
+        if (title == null || title.isBlank()) {
+            return;
+        }
+        sessionRepository.findById(portalSessionId).ifPresent(session -> {
+            String current = session.getTitle();
+            boolean placeholder = current == null || current.isBlank()
+                    || "New session".equalsIgnoreCase(current.trim())
+                    || (current.trim().regionMatches(true, 0, "Session ", 0, 8)
+                    && current.trim().length() > 8
+                    && Character.isDigit(current.trim().charAt(8)));
+            if (!placeholder) {
+                return;
+            }
+            String compact = title.trim().replaceAll("\\s+", " ");
+            if (compact.length() > 72) {
+                compact = compact.substring(0, 69) + "...";
+            }
+            session.setTitle(compact);
+            sessionRepository.save(session);
+            emit("session_title", Map.of("title", compact));
+        });
     }
 
     private void labelRunningToolWithTask(String description) {

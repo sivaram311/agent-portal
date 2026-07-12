@@ -21,9 +21,11 @@ export type SessionTabId =
 })
 export class SessionTabsComponent {
   @Input() active: SessionTabId = 'transcript';
+  /** Mobile: hide Preview (use Code tab’s Preview toggle instead) to shorten the strip. */
+  @Input() compact = false;
   @Output() activeChange = new EventEmitter<SessionTabId>();
 
-  readonly tabs: { id: SessionTabId; label: string }[] = [
+  private readonly allTabs: { id: SessionTabId; label: string }[] = [
     { id: 'transcript', label: 'Transcript' },
     { id: 'logs', label: 'Logs' },
     { id: 'console', label: 'Console' },
@@ -34,6 +36,13 @@ export class SessionTabsComponent {
     { id: 'guidance', label: 'Guidance' },
     { id: 'activity', label: 'Activity' },
   ];
+
+  get tabs(): { id: SessionTabId; label: string }[] {
+    if (!this.compact) {
+      return this.allTabs;
+    }
+    return this.allTabs.filter((t) => t.id !== 'preview');
+  }
 
   select(id: SessionTabId): void {
     this.active = id;

@@ -20,6 +20,8 @@ export class CodeViewerComponent implements OnChanges {
 
   @Input() sessionId?: string;
   @Input() previewMode = false;
+  /** When true (mobile Code tab), show a Code/Preview segmented control. */
+  @Input() allowInlinePreview = false;
 
   entries: FileEntry[] = [];
   currentPath = '';
@@ -28,6 +30,7 @@ export class CodeViewerComponent implements OnChanges {
   loading = false;
   loadError = '';
   htmlPreviewUrl?: SafeResourceUrl;
+  inlinePreview = false;
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['sessionId']) {
@@ -36,15 +39,25 @@ export class CodeViewerComponent implements OnChanges {
       this.fileContent = undefined;
       this.htmlPreviewUrl = undefined;
       this.loadError = '';
+      this.inlinePreview = false;
       if (this.sessionId) {
         this.loadDirectory('');
       } else {
         this.entries = [];
       }
     }
-    if (changes['previewMode'] && this.fileContent) {
+    if ((changes['previewMode'] || changes['allowInlinePreview']) && this.fileContent) {
       this.refreshHtmlPreview();
     }
+  }
+
+  get effectivePreview(): boolean {
+    return this.previewMode || (this.allowInlinePreview && this.inlinePreview);
+  }
+
+  setInlinePreview(on: boolean): void {
+    this.inlinePreview = on;
+    this.refreshHtmlPreview();
   }
 
   get breadcrumbs(): { label: string; path: string }[] {
@@ -63,7 +76,7 @@ export class CodeViewerComponent implements OnChanges {
 
   get isMarkdownPreview(): boolean {
     return (
-      this.previewMode &&
+      this.effectivePreview &&
       !!this.selectedPath &&
       this.selectedPath.toLowerCase().endsWith('.md') &&
       !!this.fileContent &&
@@ -72,7 +85,7 @@ export class CodeViewerComponent implements OnChanges {
   }
 
   get isHtmlPreview(): boolean {
-    if (!this.previewMode || !this.selectedPath || !this.fileContent || this.isImage) {
+    if (!this.effectivePreview || !this.selectedPath || !this.fileContent || this.isImage) {
       return false;
     }
     const p = this.selectedPath.toLowerCase();

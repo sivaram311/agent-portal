@@ -89,6 +89,7 @@ export class AppComponent implements OnInit, OnDestroy {
   shareUsername = '';
   shareBusy = false;
   shareError = '';
+  shareExpanded = false;
   collaborators: { username: string; role: string }[] = [];
   error = '';
   sessionSearch = '';
@@ -153,10 +154,14 @@ export class AppComponent implements OnInit, OnDestroy {
 
   @HostListener('window:resize')
   updateViewport(): void {
-    this.isMobile = window.innerWidth < 640;
-    if (!this.isMobile) {
+    const mobile = window.innerWidth < 640;
+    this.isMobile = mobile;
+    if (!mobile) {
       this.drawerOpen = false;
       this.overflowMenuOpen = false;
+      this.shareExpanded = false;
+    } else if (this.activeTab === 'preview') {
+      this.activeTab = 'code';
     }
   }
 
@@ -314,6 +319,14 @@ export class AppComponent implements OnInit, OnDestroy {
     }
   }
 
+  onTabChange(tab: SessionTabId): void {
+    if (this.isMobile && tab === 'preview') {
+      this.activeTab = 'code';
+      return;
+    }
+    this.activeTab = tab;
+  }
+
   reloadCollaborators(id: string): void {
     this.api.listCollaborators(id).subscribe({
       next: (c) => (this.collaborators = c),
@@ -398,6 +411,11 @@ export class AppComponent implements OnInit, OnDestroy {
       next: (msg) => {
         this.messages = this.messages.map((m) => (m.id === optimistic.id ? msg : m));
         this.refreshSessions();
+        if (this.active) {
+          this.api.getSession(this.active.id).subscribe({
+            next: (session) => (this.active = session),
+          });
+        }
       },
       error: (err) => {
         this.busy = false;
@@ -608,6 +626,14 @@ export class AppComponent implements OnInit, OnDestroy {
         const text = String(event.payload['text'] ?? '');
         if (text) {
           this.terminalLines = [...this.terminalLines, text];
+        }
+        break;
+      }
+      case 'session_title': {
+        const title = String(event.payload['title'] ?? '');
+        if (title && this.active) {
+          this.active = { ...this.active, title };
+          this.refreshSessions();
         }
         break;
       }

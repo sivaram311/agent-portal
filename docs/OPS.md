@@ -70,6 +70,10 @@ Promote gates: `E:\MyAgent\workflow\promote\` (`promote-em` + evidence packs).
 
 If search/filter hides the currently open session, the detail pane clears (avoids master–detail desync).
 
+### Mobile
+
+See [MOBILE-QA.md](MOBILE-QA.md). On phones: share collapsed, Preview folded into Code, auto session titles, bottom-sheet create dialog.
+
 ### Tool / subagent names
 
 Cursor ACP often sends a useful title on the first `tool_call`, then later updates with empty fields that would overwrite the DB name to `tool`. AgentBridge keeps the best label, prefers `cursor/task` descriptions for running subagents, and the UI re-derives display names from event history when opening a session.
