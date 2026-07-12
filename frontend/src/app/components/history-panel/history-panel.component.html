@@ -3,7 +3,9 @@
     <div class="titles">
       <h3>History</h3>
       @if (collapsedNoiseCount > 0) {
-        <span class="noise-hint">{{ collapsedNoiseCount }} protocol events collapsed</span>
+        <span class="noise-hint">{{ collapsedNoiseCount }} protocol events collapsed · newest first</span>
+      } @else if (items.length) {
+        <span class="noise-hint">Newest first</span>
       }
     </div>
     <div class="actions">
@@ -20,6 +22,7 @@
       <button type="button" class="ap-btn ap-btn-ghost" (click)="reload()">Refresh</button>
     </div>
   </header>
+
   @if (loading) {
     <div class="ap-empty compact">
       <h3>Loading workspace data…</h3>
@@ -37,16 +40,28 @@
       <p>Messages, tools, and events will appear here as the session runs.</p>
     </div>
   } @else {
-    <ol>
-      @for (item of items; track item.at + item.title + item.kind) {
-        <li [attr.data-kind]="item.kind">
-          <div class="row">
-            <strong>{{ item.title }}</strong>
-            <time>{{ item.at | date: 'short' }}</time>
-          </div>
-          <p>{{ item.detail }}</p>
-        </li>
-      }
-    </ol>
+    <div class="scroll-wrap">
+      <div class="scroll-box" #scrollBox>
+        <ol>
+          @for (item of items; track item.at + item.title + item.kind + $index) {
+            <li [attr.data-kind]="item.kind">
+              <div class="row">
+                <strong>{{ item.title }}</strong>
+                <time>{{ item.at | date: 'short' }}</time>
+              </div>
+              <p>{{ item.detail }}</p>
+            </li>
+          }
+        </ol>
+      </div>
+      <div class="scroll-fabs" aria-label="History scroll">
+        <button type="button" class="fab-scroll" (click)="scrollToTop()" title="Scroll to top" aria-label="Scroll to top">
+          ↑
+        </button>
+        <button type="button" class="fab-scroll" (click)="scrollToBottom()" title="Scroll to bottom" aria-label="Scroll to bottom">
+          ↓
+        </button>
+      </div>
+    </div>
   }
 </div>

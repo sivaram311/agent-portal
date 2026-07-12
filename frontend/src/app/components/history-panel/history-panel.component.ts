@@ -1,10 +1,20 @@
-import { Component, Input, OnChanges, SimpleChanges, inject } from '@angular/core';
+import {
+  AfterViewChecked,
+  Component,
+  ElementRef,
+  Input,
+  OnChanges,
+  SimpleChanges,
+  ViewChild,
+  inject,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ApiService } from '../../services/api.service';
 import { friendlyHttpError } from '../../core/friendly-error';
+import { formatHistoryEvent } from '../../core/history-format';
 import { ChatMessage, HistoryItem, ToolRun } from '../../models/session.models';
 
-/** High-churn ACP stream events — collapsed by default in History. */
+/** High-churn stream events — collapsed by default (Cursor + Antigravity). */
 const NOISY_EVENT_TYPES = new Set([
   'assistant_delta',
   'thinking_delta',
@@ -19,18 +29,21 @@ const NOISY_EVENT_TYPES = new Set([
   templateUrl: './history-panel.component.html',
   styleUrl: './history-panel.component.scss',
 })
-export class HistoryPanelComponent implements OnChanges {
+export class HistoryPanelComponent implements OnChanges, AfterViewChecked {
   private readonly api = inject(ApiService);
 
   @Input() sessionId?: string;
   @Input() messages: ChatMessage[] = [];
   @Input() tools: ToolRun[] = [];
 
+  @ViewChild('scrollBox') scrollBox?: ElementRef<HTMLElement>;
+
   items: HistoryItem[] = [];
   loading = false;
   error = '';
   showProtocolNoise = false;
   collapsedNoiseCount = 0;
+  private pendingScrollTop = false;
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['sessionId'] || changes['messages'] || changes['tools']) {
@@ -38,9 +51,31 @@ export class HistoryPanelComponent implements OnChanges {
     }
   }
 
+  ngAfterViewChecked(): void {
+    if (!this.pendingScrollTop) {
+      return;
+    }
+    this.pendingScrollTop = false;
+    this.scrollToTop();
+  }
+
   toggleNoise(): void {
     this.showProtocolNoise = !this.showProtocolNoise;
     this.reload();
+  }
+
+  scrollToTop(): void {
+    const el = this.scrollBox?.nativeElement;
+    if (el) {
+      el.scrollTop = 0;
+    }
+  }
+
+  scrollToBottom(): void {
+    const el = this.scrollBox?.nativeElement;
+    if (el) {
+      el.scrollTop = el.scrollHeight;
+    }
   }
 
   reload(): void {
@@ -58,7 +93,7 @@ export class HistoryPanelComponent implements OnChanges {
           items.push({
             kind: 'message',
             at: m.createdAt,
-            title: m.role,
+            title: m.role === 'USER' ? 'You' : 'Agent',
             detail: m.content.slice(0, 240),
           });
         }
@@ -93,11 +128,12 @@ export class HistoryPanelComponent implements OnChanges {
             }
             continue;
           }
+          const formatted = formatHistoryEvent(e.type, e.payload);
           items.push({
             kind: 'event',
             at: e.createdAt,
-            title: e.type,
-            detail: JSON.stringify(e.payload ?? {}).slice(0, 180),
+            title: formatted.title,
+            detail: formatted.detail,
           });
         }
 
@@ -106,22 +142,20 @@ export class HistoryPanelComponent implements OnChanges {
             items.push({
               kind: 'event',
               at: bucket.at,
-              title: `${type} (collapsed ×${bucket.count})`,
+              title: `${type.replace(/_/g, ' ')} (collapsed ×${bucket.count})`,
               detail: bucket.sample ? `…${bucket.sample}` : `${bucket.count} stream chunks omitted`,
             });
           }
-          if (noise > 0) {
-            this.collapsedNoiseCount = noise;
-          } else {
-            this.collapsedNoiseCount = 0;
-          }
+          this.collapsedNoiseCount = noise > 0 ? noise : 0;
         } else {
           this.collapsedNoiseCount = 0;
         }
 
-        items.sort((a, b) => a.at.localeCompare(b.at));
+        // Newest first — matches live refresh expectation
+        items.sort((a, b) => b.at.localeCompare(a.at));
         this.items = items;
         this.loading = false;
+        this.pendingScrollTop = true;
       },
       error: (err) => {
         this.loading = false;

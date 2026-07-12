@@ -1,4 +1,4 @@
-<div class="panel">
+<div class="panel" [class.terminal-collapsed]="!terminalOpen">
   <app-subagent-panel [tools]="tools" [busy]="busy" (abandon)="abandon.emit($event)" />
 
   <div class="tools">
@@ -22,11 +22,28 @@
     }
   </div>
 
-  <div class="terminal">
-    <div class="terminal-bar">
-      <span></span><span></span><span></span>
+  <div class="terminal" [class.open]="terminalOpen">
+    <button
+      type="button"
+      class="terminal-bar"
+      (click)="toggleTerminal()"
+      [attr.aria-expanded]="terminalOpen"
+      title="Same stream as the Console tab (Cursor + Antigravity)"
+    >
+      <span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>
       <label>terminal</label>
-    </div>
-    <pre class="terminal-body" #terminalBody>@if (terminalLines.length === 0) {<span class="term-empty">Waiting for agent tool output…</span>}@for (line of terminalLines; track $index) {{{ line }}}</pre>
+      <span class="term-meta">
+        @if (terminalLineCount) {
+          {{ terminalLineCount }} chunk{{ terminalLineCount === 1 ? '' : 's' }}
+        } @else {
+          empty
+        }
+        · Console has full scrollback
+      </span>
+      <span class="chev" aria-hidden="true">{{ terminalOpen ? '▾' : '▸' }}</span>
+    </button>
+    @if (terminalOpen) {
+      <pre class="terminal-body" #terminalBody>@if (terminalLines.length === 0) {<span class="term-empty">Waiting for agent tool output…</span>}@for (line of terminalLines; track $index) {{{ line }}}</pre>
+    }
   </div>
 </div>

@@ -28,6 +28,9 @@ export class TaskPanelComponent implements OnChanges, AfterViewChecked {
 
   @ViewChild('terminalBody') terminalBody?: ElementRef<HTMLElement>;
 
+  /** Collapsed by default — full scrollback lives in Console (Cursor + Antigravity). */
+  terminalOpen = false;
+  private userToggledTerminal = false;
   private pendingScroll = false;
 
   /** Tool runs list excludes subagents — those live only in the Sub-agents panel. */
@@ -37,14 +40,36 @@ export class TaskPanelComponent implements OnChanges, AfterViewChecked {
     );
   }
 
+  get terminalLineCount(): number {
+    return this.terminalLines.length;
+  }
+
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['terminalLines'] || changes['tools']) {
+      this.pendingScroll = true;
+    }
+    if (changes['terminalLines']) {
+      if (!this.terminalLines.length) {
+        // Session switch / clear — reset so the next run can auto-open again.
+        this.userToggledTerminal = false;
+        this.terminalOpen = false;
+      } else if (!this.userToggledTerminal) {
+        // Auto-open when chunks arrive (Cursor + Antigravity share terminalLines).
+        this.terminalOpen = true;
+      }
+    }
+  }
+
+  toggleTerminal(): void {
+    this.userToggledTerminal = true;
+    this.terminalOpen = !this.terminalOpen;
+    if (this.terminalOpen) {
       this.pendingScroll = true;
     }
   }
 
   ngAfterViewChecked(): void {
-    if (!this.pendingScroll) {
+    if (!this.pendingScroll || !this.terminalOpen) {
       return;
     }
     this.pendingScroll = false;

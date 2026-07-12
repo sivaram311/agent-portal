@@ -1,7 +1,16 @@
+:host {
+  display: block;
+  height: 100%;
+  min-height: 0;
+}
+
 .history {
   height: 100%;
-  overflow: auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
   padding: 0.75rem 1rem;
+  overflow: hidden;
 }
 
 header {
@@ -10,6 +19,7 @@ header {
   align-items: flex-start;
   gap: 0.75rem;
   margin-bottom: 0.55rem;
+  flex: 0 0 auto;
 }
 
 .titles {
@@ -40,6 +50,48 @@ h3 {
   font-size: 0.95rem;
 }
 
+.scroll-wrap {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.scroll-box {
+  height: 100%;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.scroll-fabs {
+  position: absolute;
+  right: 0.55rem;
+  bottom: 0.55rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  z-index: 2;
+}
+
+.fab-scroll {
+  width: 2.25rem;
+  height: 2.25rem;
+  min-width: var(--ap-touch);
+  min-height: var(--ap-touch);
+  border-radius: 999px;
+  border: 1px solid var(--ap-border);
+  background: rgba(15, 23, 42, 0.92);
+  color: var(--ap-text);
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+
+.fab-scroll:active {
+  transform: scale(0.96);
+}
+
 ol {
   list-style: none;
   margin: 0;
@@ -64,6 +116,10 @@ li[data-kind='tool'] {
   border-left: 2px solid color-mix(in srgb, var(--ap-accent) 55%, transparent);
 }
 
+li[data-kind='message'] {
+  border-left: 2px solid color-mix(in srgb, #38bdf8 50%, transparent);
+}
+
 .row {
   display: flex;
   justify-content: space-between;
@@ -76,6 +132,8 @@ p {
   font-size: 0.7rem;
   color: var(--ap-text-muted);
   line-height: 1.35;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .ap-empty.compact {
@@ -102,5 +160,10 @@ p {
 
   .row {
     font-size: 0.72rem;
+  }
+
+  .fab-scroll {
+    width: 2.5rem;
+    height: 2.5rem;
   }
 }
