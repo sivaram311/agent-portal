@@ -89,7 +89,31 @@ pre {
 }
 
 @media (max-width: 640px) {
+  .changes {
+    padding: 0.5rem 0.65rem;
+  }
+
+  header {
+    margin-bottom: 0.4rem;
+  }
+
+  h3 {
+    font-size: 0.85rem;
+  }
+
   .layout {
     grid-template-columns: 1fr;
+    gap: 0.45rem;
+    min-height: 0;
+  }
+
+  button {
+    min-height: var(--ap-touch);
+    padding: 0.35rem 0.4rem;
+  }
+
+  .ap-empty.inline {
+    min-height: 5rem;
+    padding: 0.85rem 0.5rem;
   }
 }

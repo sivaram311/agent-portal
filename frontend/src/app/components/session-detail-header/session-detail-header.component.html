@@ -18,6 +18,20 @@
               </span>
             }
           </div>
+          <div class="actions inline-actions">
+            @if (busy) {
+              <button type="button" class="ap-btn ap-btn-ghost cancel-btn" (click)="cancel.emit()">Cancel</button>
+            }
+            <button
+              type="button"
+              class="ap-btn ap-btn-danger archive-btn"
+              (click)="archive.emit(session.id)"
+              title="Archive"
+              aria-label="Archive session"
+            >
+              <span class="archive-label">Archive</span>
+            </button>
+          </div>
         </div>
         <div class="path-row">
           <p
@@ -48,7 +62,7 @@
         }
       </div>
     </div>
-    <div class="actions">
+    <div class="actions desktop-actions">
       @if (busy) {
         <button type="button" class="ap-btn ap-btn-ghost" (click)="cancel.emit()">Cancel</button>
       }

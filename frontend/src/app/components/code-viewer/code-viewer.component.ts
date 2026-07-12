@@ -2,6 +2,7 @@ import { Component, Input, OnChanges, SimpleChanges, inject } from '@angular/cor
 import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ApiService } from '../../services/api.service';
+import { friendlyHttpError } from '../../core/friendly-error';
 import { FileContent, FileEntry } from '../../models/session.models';
 import { MarkdownPipe } from '../../pipes/markdown.pipe';
 import { MonacoViewerComponent } from '../monaco-viewer/monaco-viewer.component';
@@ -96,7 +97,7 @@ export class CodeViewerComponent implements OnChanges {
       },
       error: (err) => {
         this.loading = false;
-        this.loadError = err?.error?.error || 'Failed to list files';
+        this.loadError = friendlyHttpError(err, 'Failed to list files');
         this.entries = [];
       },
     });
@@ -126,7 +127,7 @@ export class CodeViewerComponent implements OnChanges {
       },
       error: (err) => {
         this.loading = false;
-        this.loadError = err?.error?.error || 'Failed to read file';
+        this.loadError = friendlyHttpError(err, 'Failed to read file');
         this.fileContent = undefined;
       },
     });

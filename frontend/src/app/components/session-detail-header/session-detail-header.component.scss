@@ -126,45 +126,95 @@ h2 {
   flex-shrink: 0;
 }
 
+.inline-actions {
+  display: none;
+}
+
 @media (max-width: 640px) {
   .head {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0.55rem;
-    padding: 0.65rem 0.75rem;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.35rem 0.55rem;
+    min-height: 2.75rem;
+  }
+
+  .left {
+    align-items: center;
+    gap: 0.35rem;
+  }
+
+  .back {
+    min-width: var(--ap-touch);
+    min-height: var(--ap-touch);
+    padding-inline: 0.45rem;
   }
 
   h2 {
-    font-size: 1.02rem;
+    font-size: 0.82rem;
     flex: 1 1 auto;
     min-width: 0;
   }
 
   .title-row {
     flex-wrap: nowrap;
-    gap: 0.35rem;
+    gap: 0.3rem;
+    min-width: 0;
   }
 
   .badges {
     flex-shrink: 1;
     overflow: hidden;
+    gap: 0.2rem;
   }
 
-  .path {
+  .role-chip {
+    display: none;
+  }
+
+  .desktop-actions {
+    display: none;
+  }
+
+  .inline-actions {
+    display: inline-flex;
+    flex-wrap: nowrap;
+    gap: 0.25rem;
+    margin-left: auto;
+  }
+
+  .archive-btn {
+    min-height: var(--ap-touch);
+    min-width: var(--ap-touch);
+    padding: 0.25rem 0.55rem;
+    font-size: 0.72rem;
+    flex: 0 0 auto;
+  }
+
+  .archive-btn:active {
+    background: rgba(239, 68, 68, 0.28);
+  }
+
+  .cancel-btn {
+    min-height: var(--ap-touch);
+    padding: 0.25rem 0.45rem;
     font-size: 0.72rem;
   }
 
+  .path-row {
+    margin-top: 0.2rem;
+    gap: 0.25rem;
+  }
+
+  .path {
+    font-size: 0.68rem;
+  }
+
   .copy-btn {
-    min-height: 2rem;
-    padding-inline: 0.65rem;
+    display: none;
   }
 
-  .actions {
-    justify-content: stretch;
-  }
-
-  .actions .ap-btn {
-    flex: 1 1 auto;
-    min-width: 0;
+  .note {
+    display: none;
   }
 }

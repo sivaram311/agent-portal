@@ -4,7 +4,7 @@
       <h3>Guidance</h3>
       <p class="sub">Choose which global packs apply to this session. Changes take effect on the next prompt.</p>
     </div>
-    <button type="button" class="ap-btn ap-btn-primary" (click)="save()" [disabled]="saving || loading">
+    <button type="button" class="ap-btn ap-btn-primary" (click)="save()" [disabled]="saving || loading || !!loadError">
       {{ saving ? 'Saving…' : 'Save' }}
     </button>
   </header>
@@ -19,7 +19,16 @@
   }
 
   @if (loading) {
-    <p class="muted">Loading…</p>
+    <div class="ap-empty compact">
+      <h3>Loading workspace data…</h3>
+      <p>Fetching guidance packs for this session.</p>
+    </div>
+  } @else if (loadError) {
+    <div class="ap-empty compact">
+      <h3>Can’t load guidance</h3>
+      <p>{{ loadError }}</p>
+      <button type="button" class="ap-btn ap-btn-ghost" (click)="reload()">Retry</button>
+    </div>
   } @else {
     <section class="section">
       <h4>Library packs</h4>
@@ -50,7 +59,7 @@
       <textarea
         [(ngModel)]="sessionNote"
         name="sessionNote"
-        rows="4"
+        rows="3"
         placeholder="Optional instructions for this session only…"
       ></textarea>
     </section>

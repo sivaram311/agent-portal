@@ -9,7 +9,7 @@ header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.55rem;
 }
 
 h3 {
@@ -22,39 +22,64 @@ ul {
   margin: 0;
   padding: 0;
   display: grid;
-  gap: 0.65rem;
+  gap: 0;
+  border: 1px solid var(--ap-border);
+  border-radius: var(--ap-radius);
+  overflow: hidden;
 }
 
 li {
-  padding: 0.55rem 0.65rem;
-  border: 1px solid var(--ap-border);
-  border-radius: 0.55rem;
+  padding: 0.45rem 0.55rem;
   background: rgba(15, 23, 42, 0.35);
+}
+
+li + li {
+  border-top: 1px solid var(--ap-border);
 }
 
 .row {
   display: flex;
   justify-content: space-between;
   gap: 0.5rem;
-  font-size: 0.82rem;
+  font-size: 0.78rem;
 }
 
 .meta {
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   color: var(--ap-text-muted);
-  margin-top: 0.2rem;
+  margin-top: 0.15rem;
 }
 
 .details {
-  margin: 0.35rem 0 0;
-  font-size: 0.75rem;
+  margin: 0.25rem 0 0;
+  font-size: 0.7rem;
   color: var(--ap-text-muted);
+  line-height: 1.35;
 }
 
-.muted {
-  color: var(--ap-text-muted);
+.ap-empty.compact {
+  min-height: 6rem;
+  padding: 0.85rem 0.5rem;
 }
 
-.error {
-  color: #fca5a5;
+@media (max-width: 639px) {
+  .audit {
+    padding: 0.5rem 0.65rem;
+  }
+
+  header {
+    margin-bottom: 0.4rem;
+  }
+
+  h3 {
+    font-size: 0.85rem;
+  }
+
+  li {
+    padding: 0.35rem 0.45rem;
+  }
+
+  .row {
+    font-size: 0.72rem;
+  }
 }

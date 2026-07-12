@@ -40,17 +40,27 @@ textarea:disabled {
 
 @media (max-width: 639px) {
   .bar {
-    grid-template-columns: 1fr;
-    gap: 0.55rem;
-    padding: 0.65rem 0.75rem calc(0.65rem + var(--ap-safe-bottom));
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.45rem;
+    padding: 0.45rem 0.65rem calc(0.45rem + var(--ap-safe-bottom));
+    align-items: end;
   }
 
   .send {
-    width: 100%;
-    min-width: 0;
+    width: auto;
+    min-width: 4.75rem;
+    min-height: var(--ap-touch);
+    padding-inline: 0.85rem;
+    font-size: 0.82rem;
+  }
+
+  .send:active:not(:disabled) {
+    filter: brightness(0.92);
   }
 
   textarea {
-    min-height: 2.75rem;
+    min-height: 2.5rem;
+    padding: 0.55rem 0.65rem;
+    font-size: 0.82rem;
   }
 }

@@ -94,6 +94,7 @@ export class AppComponent implements OnInit, OnDestroy {
   sessionSearch = '';
   activeTab: SessionTabId = 'transcript';
   drawerOpen = false;
+  overflowMenuOpen = false;
   isMobile = false;
   showGuidanceSettings = false;
   showAppHome = false;
@@ -155,6 +156,14 @@ export class AppComponent implements OnInit, OnDestroy {
     this.isMobile = window.innerWidth < 640;
     if (!this.isMobile) {
       this.drawerOpen = false;
+      this.overflowMenuOpen = false;
+    }
+  }
+
+  @HostListener('document:click')
+  closeOverflowMenu(): void {
+    if (this.overflowMenuOpen) {
+      this.overflowMenuOpen = false;
     }
   }
 
@@ -259,14 +268,14 @@ export class AppComponent implements OnInit, OnDestroy {
       events: this.api.events(id),
     }).subscribe({
       next: ({ tools, events }) => {
-        this.tools = tools;
+        this.tools = this.enrichToolNames(tools, events);
         const chunks = events
           .filter((e) => e.type === 'terminal_chunk')
           .map((e) => String(e.payload['text'] ?? ''))
           .filter((text) => !!text);
         this.terminalLines = chunks.length
           ? chunks
-          : tools
+          : this.tools
               .filter((x) => !!x.output)
               .flatMap((x) => [`$ ${x.toolName}`, x.output || '', '']);
       },
@@ -293,6 +302,16 @@ export class AppComponent implements OnInit, OnDestroy {
     this.reloadCollaborators(id);
 
     this.eventSub = this.realtime.watchSession(id).subscribe((event) => this.onEvent(event));
+  }
+
+  onSessionSearch(value: string): void {
+    this.sessionSearch = value;
+  }
+
+  onVisibleSessionIds(ids: string[]): void {
+    if (this.active && !ids.includes(this.active.id)) {
+      this.clearActive();
+    }
   }
 
   reloadCollaborators(id: string): void {
@@ -482,13 +501,16 @@ export class AppComponent implements OnInit, OnDestroy {
         (payload['toolRunId'] && t.id === String(payload['toolRunId']))
     );
     const existing = idx >= 0 ? this.tools[idx] : undefined;
+    const incomingName = String(payload['toolName'] ?? defaults?.toolName ?? '');
     const tool: ToolRun = {
       id: String(payload['toolRunId'] ?? existing?.id ?? Date.now()),
       sessionId: this.active.id,
       toolCallId: toolCallId || existing?.toolCallId,
-      toolName: String(payload['toolName'] ?? existing?.toolName ?? defaults?.toolName ?? 'tool'),
+      toolName: preferToolDisplayName(existing?.toolName, incomingName),
       argsJson:
-        payload['args'] != null ? String(payload['args']) : existing?.argsJson ?? defaults?.argsJson,
+        payload['args'] != null && String(payload['args']).trim() !== '{}'
+          ? String(payload['args'])
+          : existing?.argsJson ?? defaults?.argsJson ?? String(payload['args'] ?? '{}'),
       status: String(payload['status'] ?? existing?.status ?? defaults?.status ?? 'running'),
       kind:
         payload['kind'] != null && String(payload['kind'])
@@ -515,6 +537,42 @@ export class AppComponent implements OnInit, OnDestroy {
     } else {
       this.tools = [...this.tools, tool];
     }
+  }
+
+  /** Recover better labels from event history when DB was overwritten by generic "tool". */
+  private enrichToolNames(tools: ToolRun[], events: { type: string; payload: Record<string, unknown> }[]): ToolRun[] {
+    const best = new Map<string, string>();
+    for (const e of events) {
+      if (e.type !== 'tool_call' && !e.type.startsWith('subagent_')) {
+        continue;
+      }
+      const id = String(e.payload['toolCallId'] ?? e.payload['subagentId'] ?? '');
+      const name = String(e.payload['toolName'] ?? '');
+      if (!id || !name) {
+        continue;
+      }
+      const prev = best.get(id);
+      best.set(id, preferToolDisplayName(prev, name));
+    }
+
+    const taskLabels = events
+      .filter((e) => e.type === 'terminal_chunk')
+      .map((e) => String(e.payload['text'] ?? ''))
+      .map((text) => {
+        const match = text.match(/\[task\]\s*(.+)/i);
+        return match?.[1]?.trim().replace(/\s+$/, '') || '';
+      })
+      .filter((label) => !!label);
+
+    let taskIdx = 0;
+    return tools.map((t) => {
+      const key = t.toolCallId || t.subagentId || '';
+      let name = preferToolDisplayName(t.toolName, key ? best.get(key) : undefined);
+      if ((isGenericToolName(name) || isVagueTaskLabel(name)) && taskIdx < taskLabels.length) {
+        name = taskLabels[taskIdx++];
+      }
+      return { ...t, toolName: name };
+    });
   }
 
   private onEvent(event: AgentEvent): void {
@@ -612,11 +670,64 @@ export class AppComponent implements OnInit, OnDestroy {
           });
         }
         this.api.messages(this.active.id).subscribe({ next: (m) => (this.messages = m) });
-        this.api.tools(this.active.id).subscribe({ next: (t) => (this.tools = t) });
+        const sid = this.active.id;
+        forkJoin({
+          tools: this.api.tools(sid),
+          events: this.api.events(sid),
+        }).subscribe({
+          next: ({ tools, events }) => {
+            this.tools = this.enrichToolNames(tools, events);
+          },
+          error: () => {
+            this.api.tools(sid).subscribe({ next: (t) => (this.tools = t) });
+          },
+        });
         this.refreshSessions();
         break;
       default:
         break;
     }
   }
+}
+
+function isGenericToolName(name?: string | null): boolean {
+  if (!name || !name.trim()) {
+    return true;
+  }
+  const n = name.trim().toLowerCase();
+  return (
+    n === 'tool' ||
+    n === 'task' ||
+    n === 'agent' ||
+    n === 'subagent' ||
+    n === 'function' ||
+    n === 'unknown'
+  );
+}
+
+function isVagueTaskLabel(name?: string | null): boolean {
+  if (!name || !name.trim()) {
+    return true;
+  }
+  const n = name.trim().toLowerCase();
+  return n === 'task: subagent task' || n === 'subagent task' || n === 'task';
+}
+
+/** Prefer a human-readable tool/subagent label over generic ACP placeholders. */
+function preferToolDisplayName(existing?: string | null, incoming?: string | null): string {
+  const a = existing?.trim() || '';
+  const b = incoming?.trim() || '';
+  if (!b) {
+    return a || 'tool';
+  }
+  if (isGenericToolName(b)) {
+    return isGenericToolName(a) ? b || 'tool' : a;
+  }
+  if (isGenericToolName(a) || isVagueTaskLabel(a)) {
+    return b;
+  }
+  if (isVagueTaskLabel(b)) {
+    return a;
+  }
+  return b.length >= a.length ? b : a;
 }

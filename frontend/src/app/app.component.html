@@ -13,7 +13,8 @@
       [activeId]="active?.id"
       [search]="sessionSearch"
       [compact]="isMobile"
-      (searchChange)="sessionSearch = $event"
+      (searchChange)="onSessionSearch($event)"
+      (visibleIdsChange)="onVisibleSessionIds($event)"
       (select)="selectSession($event); drawerOpen = false"
       (create)="openCreate()"
       (archive)="archiveSession($event)"
@@ -54,16 +55,62 @@
           </span>
         }
         @if (signedInAs) {
-          <span class="user-badge" data-testid="user-badge">{{ signedInAs }}</span>
-          <button type="button" class="ap-btn ap-btn-ghost rules-btn" (click)="openAppHome()" data-testid="app-home-btn">
-            Apps
-          </button>
-          <button type="button" class="ap-btn ap-btn-ghost rules-btn" (click)="openGuidanceSettings()" data-testid="guidance-settings-btn">
-            Rules
-          </button>
-          <button type="button" class="ap-btn ap-btn-ghost signout-btn" (click)="logout()" data-testid="logout-btn">
-            Sign out
-          </button>
+          @if (!isMobile) {
+            <span class="user-badge" data-testid="user-badge">{{ signedInAs }}</span>
+            <button type="button" class="ap-btn ap-btn-ghost rules-btn" (click)="openAppHome()" data-testid="app-home-btn">
+              Apps
+            </button>
+            <button
+              type="button"
+              class="ap-btn ap-btn-ghost rules-btn"
+              (click)="openGuidanceSettings()"
+              data-testid="guidance-settings-btn"
+            >
+              Rules
+            </button>
+            <button type="button" class="ap-btn ap-btn-ghost signout-btn" (click)="logout()" data-testid="logout-btn">
+              Sign out
+            </button>
+          } @else {
+            <span class="user-badge mobile-chip" data-testid="user-badge" [title]="signedInAs">{{ signedInAs }}</span>
+            <div class="overflow-menu" [class.open]="overflowMenuOpen">
+              <button
+                type="button"
+                class="ap-btn ap-btn-ghost icon-btn overflow-trigger"
+                (click)="overflowMenuOpen = !overflowMenuOpen; $event.stopPropagation()"
+                [attr.aria-expanded]="overflowMenuOpen"
+                aria-haspopup="menu"
+                aria-label="More actions"
+                data-testid="overflow-menu-btn"
+              >
+                ⋯
+              </button>
+              @if (overflowMenuOpen) {
+                <div class="overflow-panel" role="menu" (click)="$event.stopPropagation()">
+                  <button type="button" role="menuitem" (click)="openAppHome(); overflowMenuOpen = false" data-testid="app-home-btn">
+                    Apps
+                  </button>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    (click)="openGuidanceSettings(); overflowMenuOpen = false"
+                    data-testid="guidance-settings-btn"
+                  >
+                    Rules
+                  </button>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    class="danger"
+                    (click)="logout(); overflowMenuOpen = false"
+                    data-testid="logout-btn"
+                  >
+                    Sign out
+                  </button>
+                </div>
+              }
+            </div>
+          }
         }
         <button type="button" class="ap-btn ap-btn-primary desktop-new" (click)="openCreate()">
           New session
@@ -94,7 +141,8 @@
           [activeId]="active?.id"
           [search]="sessionSearch"
           [compact]="true"
-          (searchChange)="sessionSearch = $event"
+          (searchChange)="onSessionSearch($event)"
+          (visibleIdsChange)="onVisibleSessionIds($event)"
           (select)="selectSession($event)"
           (create)="openCreate()"
           (archive)="archiveSession($event)"

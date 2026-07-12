@@ -5,17 +5,18 @@
   </header>
   @if (loading) {
     <div class="ap-empty">
-      <h3>Scanning workspace…</h3>
+      <h3>Loading workspace data…</h3>
       <p>Looking for file edits since the last prompt baseline.</p>
     </div>
   } @else if (error) {
     <div class="ap-empty">
       <h3>Couldn’t load changes</h3>
       <p>{{ error }}</p>
+      <button type="button" class="ap-btn ap-btn-ghost" (click)="reload()">Retry</button>
     </div>
   } @else if (changes.length === 0) {
     <div class="ap-empty">
-      <h3>No changes yet</h3>
+      <h3>No changes to show yet</h3>
       <p>File edits from agent runs will show up here for Keep / Restore.</p>
     </div>
   } @else {

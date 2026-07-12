@@ -371,6 +371,7 @@ public class AgentBridge implements AutoCloseable {
                     "stream", "task",
                     "text", "[task] " + desc + "\n"
             ));
+            labelRunningToolWithTask(desc);
         }
         if ("cursor/update_todos".equals(method)) {
             emit("todos_updated", Map.of("raw", params.toString()));
@@ -386,12 +387,7 @@ public class AgentBridge implements AutoCloseable {
         if (abandonedToolCallIds.contains(toolCallId)) {
             return;
         }
-        String name = firstNonBlank(
-                update.path("title").asText(null),
-                update.path("name").asText(null),
-                update.path("kind").asText(null),
-                "tool"
-        );
+        String incomingName = resolveToolName(update);
         String status = update.path("status").asText("running");
         String args = update.has("rawInput") ? update.get("rawInput").toString()
                 : update.has("arguments") ? update.get("arguments").toString()
@@ -403,14 +399,18 @@ public class AgentBridge implements AutoCloseable {
                     ToolRun t = new ToolRun();
                     t.setSessionId(portalSessionId);
                     t.setToolCallId(toolCallId);
-                    t.setToolName(name);
+                    t.setToolName(incomingName != null ? incomingName : "tool");
                     t.setArgsJson(args);
                     t.setStatus("running");
                     return toolRunRepository.save(t);
                 });
 
+        String name = preferDescriptiveToolName(run.getToolName(), incomingName);
         run.setToolName(name);
-        run.setArgsJson(args);
+        // Keep useful args; later empty "{}" updates must not wipe earlier metadata.
+        if (!isBlankArgs(args) || isBlankArgs(run.getArgsJson())) {
+            run.setArgsJson(args);
+        }
         run.setStatus(status);
 
         String outputChunk = extractToolOutput(update);
@@ -470,8 +470,142 @@ public class AgentBridge implements AutoCloseable {
     private boolean looksLikeSubagent(String name, JsonNode update) {
         String n = (name == null ? "" : name).toLowerCase(Locale.ROOT);
         String kind = update.path("kind").asText("").toLowerCase(Locale.ROOT);
+        String toolType = update.path("toolName").asText("").toLowerCase(Locale.ROOT);
+        if (update.has("rawInput") && update.get("rawInput").isObject()) {
+            toolType = firstNonBlank(
+                    update.path("rawInput").path("_toolName").asText(null),
+                    update.path("rawInput").path("toolName").asText(null),
+                    toolType
+            );
+            if (toolType != null) {
+                toolType = toolType.toLowerCase(Locale.ROOT);
+            }
+        }
         return n.contains("agent") || n.contains("subagent") || n.contains("task")
-                || kind.contains("agent") || update.has("agentId") || update.has("subagentId");
+                || kind.contains("agent") || kind.contains("task")
+                || "task".equals(toolType)
+                || update.has("agentId") || update.has("subagentId");
+    }
+
+    /**
+     * Cursor often sends a good title on the first tool_call, then later updates with empty
+     * title/name that would otherwise overwrite display name to generic {@code tool}.
+     */
+    private String resolveToolName(JsonNode update) {
+        String fromRaw = null;
+        if (update.has("rawInput") && update.get("rawInput").isObject()) {
+            JsonNode raw = update.get("rawInput");
+            fromRaw = firstNonBlank(
+                    raw.path("description").asText(null),
+                    raw.path("prompt").asText(null),
+                    raw.path("title").asText(null),
+                    raw.path("label").asText(null),
+                    raw.path("name").asText(null),
+                    raw.path("_toolName").asText(null),
+                    raw.path("toolName").asText(null)
+            );
+        }
+        String composed = null;
+        String toolKey = firstNonBlank(
+                update.path("toolName").asText(null),
+                update.has("rawInput") ? update.path("rawInput").path("_toolName").asText(null) : null
+        );
+        String title = update.path("title").asText(null);
+        if (toolKey != null && title != null && !title.toLowerCase(Locale.ROOT).startsWith(toolKey.toLowerCase(Locale.ROOT) + ":")) {
+            composed = Character.toUpperCase(toolKey.charAt(0)) + toolKey.substring(1) + ": " + title;
+        } else if (title != null && !title.isBlank()) {
+            composed = title;
+        }
+        return firstNonBlank(
+                fromRaw,
+                composed,
+                update.path("name").asText(null),
+                update.path("kind").asText(null),
+                toolKey
+        );
+    }
+
+    private void labelRunningToolWithTask(String description) {
+        if (description == null || description.isBlank()) {
+            return;
+        }
+        List<ToolRun> runs = toolRunRepository.findBySessionIdOrderByStartedAtAsc(portalSessionId);
+        for (int i = runs.size() - 1; i >= 0; i--) {
+            ToolRun run = runs.get(i);
+            String status = run.getStatus() == null ? "" : run.getStatus().toLowerCase(Locale.ROOT);
+            if (!("running".equals(status) || "pending".equals(status) || "in_progress".equals(status))) {
+                continue;
+            }
+            if (!isGenericToolName(run.getToolName()) && !isVagueTaskLabel(run.getToolName())) {
+                continue;
+            }
+            String previous = run.getToolName();
+            run.setToolName(description.trim());
+            toolRunRepository.save(run);
+            emit("tool_call", Map.of(
+                    "toolCallId", Objects.toString(run.getToolCallId(), ""),
+                    "toolName", run.getToolName(),
+                    "status", run.getStatus() == null ? "running" : run.getStatus(),
+                    "args", Objects.toString(run.getArgsJson(), "{}"),
+                    "toolRunId", run.getId().toString(),
+                    "kind", run.getKind() == null ? "tool" : run.getKind(),
+                    "subagentId", Objects.toString(run.getSubagentId(), "")
+            ));
+            if ("subagent".equalsIgnoreCase(run.getKind())) {
+                emit("subagent_progress", Map.of(
+                        "subagentId", Objects.toString(run.getSubagentId(), run.getToolCallId()),
+                        "toolCallId", Objects.toString(run.getToolCallId(), ""),
+                        "toolName", run.getToolName(),
+                        "status", run.getStatus() == null ? "running" : run.getStatus(),
+                        "toolRunId", run.getId().toString(),
+                        "kind", "subagent"
+                ));
+            }
+            log.debug("Labeled tool {} '{}' -> '{}'", run.getToolCallId(), previous, run.getToolName());
+            return;
+        }
+    }
+
+    private static String preferDescriptiveToolName(String existing, String incoming) {
+        if (isGenericToolName(incoming)) {
+            return isGenericToolName(existing) ? (incoming != null ? incoming : "tool") : existing;
+        }
+        if (isGenericToolName(existing) || isVagueTaskLabel(existing)) {
+            return incoming;
+        }
+        // Prefer a more specific incoming label (e.g. task description) over a vague title.
+        if (isVagueTaskLabel(incoming)) {
+            return existing;
+        }
+        if (incoming.length() > existing.length()) {
+            return incoming;
+        }
+        return existing;
+    }
+
+    private static boolean isGenericToolName(String name) {
+        if (name == null || name.isBlank()) {
+            return true;
+        }
+        String n = name.trim().toLowerCase(Locale.ROOT);
+        return n.equals("tool") || n.equals("task") || n.equals("agent") || n.equals("subagent")
+                || n.equals("function") || n.equals("unknown");
+    }
+
+    private static boolean isVagueTaskLabel(String name) {
+        if (name == null || name.isBlank()) {
+            return true;
+        }
+        String n = name.trim().toLowerCase(Locale.ROOT);
+        return n.equals("task: subagent task") || n.equals("subagent task") || n.equals("task");
+    }
+
+    private static boolean isBlankArgs(String args) {
+        if (args == null || args.isBlank()) {
+            return true;
+        }
+        String t = args.trim();
+        return t.equals("{}") || t.equals("null") || t.equals("[]");
     }
 
     private String extractToolOutput(JsonNode update) {

@@ -129,6 +129,7 @@ export class AuthService {
   /**
    * Prefer same-origin when CSS is reverse-proxied on this host so HTTPS pages
    * never call http://…/auth (mixed content blocked by the browser).
+   * Keep absolute CSS URL when the port differs (ng serve :4200 vs CSS :9000).
    */
   private authBase(cfg: AuthConfig): string {
     const configured = (cfg.authUrl || '').trim();
@@ -138,7 +139,11 @@ export class AuthService {
     try {
       const parsed = new URL(configured);
       if (parsed.hostname === window.location.hostname) {
-        return window.location.origin;
+        const cfgPort = parsed.port || (parsed.protocol === 'https:' ? '443' : '80');
+        const pagePort = window.location.port || (window.location.protocol === 'https:' ? '443' : '80');
+        if (cfgPort === pagePort) {
+          return window.location.origin;
+        }
       }
     } catch {
       // fall through

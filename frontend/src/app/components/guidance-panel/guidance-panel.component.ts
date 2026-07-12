@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../services/api.service';
 import { ToastService } from '../../services/toast.service';
+import { friendlyHttpError } from '../../core/friendly-error';
 import { GuidancePack, SessionGuidance, SessionGuidanceItem } from '../../models/session.models';
 
 @Component({
@@ -22,6 +23,7 @@ export class GuidancePanelComponent implements OnChanges {
   guidance?: SessionGuidance;
   loading = false;
   saving = false;
+  loadError = '';
   sessionNote = '';
   /** packId -> enabled */
   enabledMap: Record<string, boolean> = {};
@@ -34,6 +36,7 @@ export class GuidancePanelComponent implements OnChanges {
 
   reload(): void {
     this.loading = true;
+    this.loadError = '';
     this.api.listGuidancePacks().subscribe({
       next: (packs) => {
         this.packs = packs;
@@ -59,13 +62,15 @@ export class GuidancePanelComponent implements OnChanges {
           },
           error: (err) => {
             this.loading = false;
-            this.toast.error(err?.error?.error || 'Failed to load session guidance');
+            this.loadError = friendlyHttpError(err, 'Failed to load session guidance');
+            this.toast.error(this.loadError);
           },
         });
       },
       error: (err) => {
         this.loading = false;
-        this.toast.error(err?.error?.error || 'Failed to load packs');
+        this.loadError = friendlyHttpError(err, 'Failed to load packs');
+        this.toast.error(this.loadError);
       },
     });
   }
@@ -114,7 +119,7 @@ export class GuidancePanelComponent implements OnChanges {
       },
       error: (err) => {
         this.saving = false;
-        this.toast.error(err?.error?.error || 'Save failed');
+        this.toast.error(friendlyHttpError(err, 'Save failed'));
       },
     });
   }

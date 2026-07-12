@@ -1,14 +1,41 @@
 <div class="history" data-testid="history-panel">
   <header>
-    <h3>History</h3>
-    <button type="button" class="ap-btn ap-btn-ghost" (click)="reload()">Refresh</button>
+    <div class="titles">
+      <h3>History</h3>
+      @if (collapsedNoiseCount > 0) {
+        <span class="noise-hint">{{ collapsedNoiseCount }} protocol events collapsed</span>
+      }
+    </div>
+    <div class="actions">
+      <button
+        type="button"
+        class="ap-btn ap-btn-ghost"
+        [class.on]="showProtocolNoise"
+        (click)="toggleNoise()"
+        [attr.aria-pressed]="showProtocolNoise"
+        title="Show assistant_delta / thinking_delta / session_update noise"
+      >
+        {{ showProtocolNoise ? 'Hide noise' : 'Show noise' }}
+      </button>
+      <button type="button" class="ap-btn ap-btn-ghost" (click)="reload()">Refresh</button>
+    </div>
   </header>
   @if (loading) {
-    <p class="muted">Loading timeline…</p>
+    <div class="ap-empty compact">
+      <h3>Loading workspace data…</h3>
+      <p>Building the session timeline.</p>
+    </div>
   } @else if (error) {
-    <p class="error">{{ error }}</p>
+    <div class="ap-empty compact">
+      <h3>Couldn’t load history</h3>
+      <p>{{ error }}</p>
+      <button type="button" class="ap-btn ap-btn-ghost" (click)="reload()">Retry</button>
+    </div>
   } @else if (items.length === 0) {
-    <p class="muted">No history yet.</p>
+    <div class="ap-empty compact">
+      <h3>No history yet</h3>
+      <p>Messages, tools, and events will appear here as the session runs.</p>
+    </div>
   } @else {
     <ol>
       @for (item of items; track item.at + item.title + item.kind) {

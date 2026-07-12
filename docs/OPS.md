@@ -1,6 +1,6 @@
 # Operations
 
-## Deployed environments (2026-07-11)
+## Deployed environments (2026-07-12)
 
 Machine standing orders: `E:\MyAgent\workflow\CONSCIOUS.md` (drives, ports, DB schemas, CSS, promote evidence).
 
@@ -12,8 +12,8 @@ Machine standing orders: `E:\MyAgent\workflow\CONSCIOUS.md` (drives, ports, DB s
 
 | Piece | Location |
 |-------|----------|
-| Release package | `H:\releases\agent-portal-0.1.3\` (prior: `0.1.2`, `0.1.1`; older kept on H: until prune confirmed) |
-| Promote evidence | `H:\releases\agent-portal-0.1.3\evidence\` |
+| Release package | `H:\releases\agent-portal-0.1.4\` (PREPROD); PROD still `0.1.3` until Q2 |
+| Promote evidence | `H:\releases\agent-portal-0.1.4\evidence\` (Q1 closed 2026-07-12) |
 | Start script | `F:\` / `G:\apps\agent-portal\start.ps1` |
 | Nginx confs | `E:\Source\Deployment\conf\apps\agent-portal*.delena.buzz.conf` |
 | Machine port registry | `E:\MyAgent\workflow\ports\REGISTRY.md` (source of truth for 4080/5080) |
@@ -62,9 +62,17 @@ Promote gates: `E:\MyAgent\workflow\promote\` (`promote-em` + evidence packs).
 | **Console** | Plain terminal scrollback — same live agent output you would see in PowerShell (`terminal_chunk` WS + event replay) |
 | Code / Preview | Workspace files |
 | Changes | Diff accept/reject |
-| History | Merged timeline |
+| History | Merged timeline (protocol noise like `assistant_delta` collapsed by default; **Show noise** toggle) |
 | Guidance | Rules/skills |
 | Activity | User audit |
+
+### Session list vs detail
+
+If search/filter hides the currently open session, the detail pane clears (avoids master–detail desync).
+
+### Tool / subagent names
+
+Cursor ACP often sends a useful title on the first `tool_call`, then later updates with empty fields that would overwrite the DB name to `tool`. AgentBridge keeps the best label, prefers `cursor/task` descriptions for running subagents, and the UI re-derives display names from event history when opening a session.
 
 ## Docker hybrid deploy (recommended on this Windows host)
 

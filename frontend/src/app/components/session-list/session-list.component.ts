@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Session } from '../../models/session.models';
@@ -13,17 +13,24 @@ export type SessionFilter = 'all' | 'active' | 'failed' | 'archived';
   templateUrl: './session-list.component.html',
   styleUrl: './session-list.component.scss',
 })
-export class SessionListComponent {
+export class SessionListComponent implements OnChanges {
   @Input() sessions: Session[] = [];
   @Input() activeId?: string;
   @Input() search = '';
   @Input() compact = false;
   @Output() searchChange = new EventEmitter<string>();
+  @Output() filterChange = new EventEmitter<SessionFilter>();
+  /** Emits ids currently visible after search/filter — parent clears detail if active is excluded. */
+  @Output() visibleIdsChange = new EventEmitter<string[]>();
   @Output() select = new EventEmitter<string>();
   @Output() create = new EventEmitter<void>();
   @Output() archive = new EventEmitter<string>();
 
   filter: SessionFilter = 'all';
+
+  ngOnChanges(_changes: SimpleChanges): void {
+    this.emitVisibleIds();
+  }
 
   get filtered(): Session[] {
     const q = this.search.trim().toLowerCase();
@@ -61,9 +68,15 @@ export class SessionListComponent {
 
   setFilter(f: SessionFilter): void {
     this.filter = f;
+    this.filterChange.emit(f);
+    this.emitVisibleIds();
   }
 
   onSearch(value: string): void {
     this.searchChange.emit(value);
+  }
+
+  private emitVisibleIds(): void {
+    this.visibleIdsChange.emit(this.filtered.map((s) => s.id));
   }
 }

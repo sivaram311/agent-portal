@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
@@ -7,6 +7,19 @@ const shotDir = path.join(__dirname, '..', 'screenshots', 'realme-p2-pro');
 test.beforeAll(() => {
   fs.mkdirSync(shotDir, { recursive: true });
 });
+
+async function ensureSignedIn(page: Page): Promise<void> {
+  const user = process.env['CSS_USER'] || 'admin';
+  const pass = process.env['CSS_PASSWORD'] || 'admin123';
+  const login = page.getByTestId('login-overlay');
+  if (!(await login.isVisible().catch(() => false))) {
+    return;
+  }
+  await page.getByTestId('login-username').fill(user);
+  await page.getByTestId('login-password').fill(pass);
+  await page.getByTestId('login-submit').click();
+  await expect(page.getByTestId('user-badge')).toBeVisible({ timeout: 20_000 });
+}
 
 test.describe('Realme P2 Pro mobile UI', () => {
   test('viewport matches Realme P2 Pro CSS size and has no horizontal overflow', async ({ page }) => {
@@ -36,6 +49,7 @@ test.describe('Realme P2 Pro mobile UI', () => {
   test('shows Agent Portal chrome and reachable New Session FAB', async ({ page }) => {
     await page.goto('/');
     await page.waitForLoadState('domcontentloaded');
+    await ensureSignedIn(page);
 
     await expect(page.locator('.brand-inline strong')).toBeVisible();
     await expect(page.getByTestId('fab-new-session')).toBeVisible();
@@ -55,6 +69,7 @@ test.describe('Realme P2 Pro mobile UI', () => {
   test('create-session dialog is usable on narrow screen', async ({ page }) => {
     await page.goto('/');
     await page.waitForLoadState('domcontentloaded');
+    await ensureSignedIn(page);
 
     await page.getByTestId('fab-new-session').click();
     const dialog = page.getByTestId('create-session-dialog');
@@ -84,6 +99,7 @@ test.describe('Realme P2 Pro mobile UI', () => {
   test('session list filters and search are touch-friendly', async ({ page }) => {
     await page.goto('/');
     await page.waitForLoadState('domcontentloaded');
+    await ensureSignedIn(page);
 
     const list = page.getByTestId('mobile-session-list');
     await expect(list).toBeVisible();
@@ -107,6 +123,7 @@ test.describe('Realme P2 Pro mobile UI', () => {
   test('opening a session shows detail with tabs and bottom input', async ({ page }) => {
     await page.goto('/');
     await page.waitForLoadState('domcontentloaded');
+    await ensureSignedIn(page);
 
     const list = page.getByTestId('mobile-session-list');
     await expect(list).toBeVisible();
@@ -152,7 +169,9 @@ test.describe('Realme P2 Pro mobile UI', () => {
 
     await detail.getByRole('tab', { name: 'Code' }).click();
     await expect(detail.getByTestId('code-viewer')).toBeVisible();
-    await expect(detail.getByText(/No files yet|Nothing to preview|workspace/i).first()).toBeVisible();
+    await expect(
+      detail.getByText(/No files yet|Nothing to preview|workspace|Select a file|Loading/i).first()
+    ).toBeVisible();
     await page.screenshot({ path: path.join(shotDir, '07-code-tab.png'), fullPage: true });
   });
 });

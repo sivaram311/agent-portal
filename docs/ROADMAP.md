@@ -14,10 +14,10 @@ Prioritized improvements and the Cursor skills (subagents) that own each track.
 | P1 | Session isolation | `ap-isolation` | Owner + collaborators |
 | P1 | WebSocket auth | `ap-ws-auth` | SockJS token + STOMP ACL |
 | P2 | Templates / presets | `ap-templates` | `GET /api/presets` + create dialog |
-| P2 | History / replay | `ap-history-replay` | Events API + History tab |
+| P2 | History / replay | `ap-history-replay` | Events API + History tab; protocol noise collapsed by default |
 | P2 | Sharing | `ap-sharing` | Collaborator API + share bar |
 | P2 | Audit UI | `ap-audit-ui` | Activity tab |
-| P2 | UX polish | `ap-ux-polish` | Toasts + capability badges |
+| P2 | UX polish | `ap-ux-polish` | Toasts + capability badges; filter clears detail; tool label recovery |
 | P2 | E2E | `ap-e2e` | Device projects + auth.spec |
 | P2 | System E2E loop | `ap-system-e2e-loop` | **Shipped 0.1.2** — [SYSTEM-E2E-LOOP.md](platform/SYSTEM-E2E-LOOP.md); session auto-invoke |
 | P2b | Session Console tab | frontend `console-panel` | **Shipped 0.1.3** — plain `terminal_chunk` scrollback (PowerShell-like) |

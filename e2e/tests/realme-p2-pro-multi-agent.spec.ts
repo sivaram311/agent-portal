@@ -70,7 +70,11 @@ test.describe('Realme P2 Pro - Full E2E with Multi-Agent & Changes', () => {
       page.locator('.brand-inline strong').or(page.getByText('Agent Portal', { exact: false })).first()
     ).toBeVisible({ timeout: 20_000 });
     await expect(
-      page.locator('button:has-text("Sign out"), button:has-text("Log out")').first()
+      page
+        .getByTestId('user-badge')
+        .or(page.getByTestId('overflow-menu-btn'))
+        .or(page.locator('button:has-text("Sign out"), button:has-text("Log out")'))
+        .first()
     ).toBeVisible({ timeout: 15_000 });
 
     await page.screenshot({ path: path.join(shotDir, '01-after-login.png'), fullPage: true });
@@ -176,10 +180,15 @@ test.describe('Realme P2 Pro - Full E2E with Multi-Agent & Changes', () => {
       await page.waitForTimeout(2500);
     }
 
-    // App Home smoke (platform Org / Apps)
+    // App Home smoke (platform Org / Apps) — on mobile Apps lives in ⋯ menu
+    const overflow = page.getByTestId('overflow-menu-btn');
+    if (await overflow.isVisible().catch(() => false)) {
+      await overflow.click();
+      await page.waitForTimeout(200);
+    }
     const appsBtn = page.getByTestId('app-home-btn');
     if (await appsBtn.isVisible().catch(() => false)) {
-      await appsBtn.click();
+      await appsBtn.click({ force: true });
       await expect(page.getByTestId('app-home')).toBeVisible();
       await page.screenshot({ path: path.join(shotDir, '07-app-home.png'), fullPage: true });
       await page.locator('[data-testid="app-home"] button:has-text("Close")').click();

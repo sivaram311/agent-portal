@@ -1,6 +1,7 @@
 import { Component, Input, OnChanges, SimpleChanges, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ApiService } from '../../services/api.service';
+import { friendlyHttpError } from '../../core/friendly-error';
 import { FileChange } from '../../models/session.models';
 
 @Component({
@@ -41,7 +42,7 @@ export class ChangesPanelComponent implements OnChanges {
       },
       error: (err) => {
         this.loading = false;
-        this.error = err?.error?.error || 'Failed to load changes';
+        this.error = friendlyHttpError(err, 'Failed to load changes');
       },
     });
   }
@@ -52,7 +53,7 @@ export class ChangesPanelComponent implements OnChanges {
     }
     this.api.diffChange(this.sessionId, change.path).subscribe({
       next: (diff) => (this.selected = diff),
-      error: (err) => (this.error = err?.error?.error || 'Failed to load diff'),
+      error: (err) => (this.error = friendlyHttpError(err, 'Failed to load diff')),
     });
   }
 
@@ -65,7 +66,7 @@ export class ChangesPanelComponent implements OnChanges {
         this.selected = undefined;
         this.reload();
       },
-      error: (err) => (this.error = err?.error?.error || 'Accept failed'),
+      error: (err) => (this.error = friendlyHttpError(err, 'Accept failed')),
     });
   }
 
@@ -78,7 +79,7 @@ export class ChangesPanelComponent implements OnChanges {
         this.selected = undefined;
         this.reload();
       },
-      error: (err) => (this.error = err?.error?.error || 'Reject failed'),
+      error: (err) => (this.error = friendlyHttpError(err, 'Reject failed')),
     });
   }
 }

@@ -6,8 +6,14 @@
     </div>
   } @else if (loading && entries.length === 0 && !fileContent) {
     <div class="ap-empty">
-      <h3>Loading files…</h3>
+      <h3>Loading workspace data…</h3>
       <p>Reading the workspace tree.</p>
+    </div>
+  } @else if (loadError && entries.length === 0 && !fileContent) {
+    <div class="ap-empty">
+      <h3>Couldn’t open files</h3>
+      <p>{{ loadError }}</p>
+      <button type="button" class="ap-btn ap-btn-ghost" (click)="loadDirectory(currentPath)">Retry</button>
     </div>
   } @else if (entries.length === 0 && !selectedPath && !loadError) {
     <div class="ap-empty">
@@ -61,13 +67,18 @@
 
       <section class="content">
         @if (loadError) {
-          <p class="error">{{ loadError }}</p>
+          <div class="ap-empty inline">
+            <p>{{ loadError }}</p>
+            <button type="button" class="ap-btn ap-btn-ghost" (click)="loadDirectory(currentPath)">Retry</button>
+          </div>
         } @else if (!selectedPath) {
           <div class="ap-empty inline">
             <p>Select a file to view its contents.</p>
           </div>
         } @else if (loading && !fileContent) {
-          <p class="muted">Loading…</p>
+          <div class="ap-empty inline">
+            <p>Loading file…</p>
+          </div>
         } @else if (fileContent) {
           <header class="file-head">
             <code>{{ fileContent.path }}</code>

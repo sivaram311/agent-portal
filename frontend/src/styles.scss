@@ -67,6 +67,10 @@ a {
   background: var(--ap-accent-hover);
 }
 
+.ap-btn-primary:active:not(:disabled) {
+  filter: brightness(0.92);
+}
+
 .ap-btn-ghost {
   background: transparent;
   border: 1px solid var(--ap-border);
@@ -77,10 +81,18 @@ a {
   background: rgba(148, 163, 184, 0.08);
 }
 
+.ap-btn-ghost:active:not(:disabled) {
+  background: rgba(148, 163, 184, 0.16);
+}
+
 .ap-btn-danger {
   background: rgba(239, 68, 68, 0.15);
   color: #fecaca;
   border: 1px solid rgba(239, 68, 68, 0.35);
+}
+
+.ap-btn-danger:active:not(:disabled) {
+  background: rgba(239, 68, 68, 0.28);
 }
 
 .ap-empty {
@@ -110,9 +122,23 @@ a {
   font-size: 0.9rem;
 }
 
+.ap-empty .ap-btn {
+  margin-top: 0.35rem;
+  justify-self: center;
+}
+
 @media (max-width: 639px) {
   .ap-empty {
-    min-height: 9rem;
-    padding: 1.5rem 1rem;
+    min-height: 7.5rem;
+    padding: 1.1rem 0.85rem;
+    gap: 0.35rem;
+  }
+
+  .ap-empty h3 {
+    font-size: 0.92rem;
+  }
+
+  .ap-empty p {
+    font-size: 0.78rem;
   }
 }

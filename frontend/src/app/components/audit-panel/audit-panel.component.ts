@@ -1,6 +1,7 @@
 import { Component, Input, OnChanges, SimpleChanges, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ApiService } from '../../services/api.service';
+import { friendlyHttpError } from '../../core/friendly-error';
 import { AuditEvent } from '../../models/session.models';
 
 @Component({
@@ -35,7 +36,7 @@ export class AuditPanelComponent implements OnChanges {
       },
       error: (err) => {
         this.loading = false;
-        this.error = err?.error?.error || 'Failed to load audit';
+        this.error = friendlyHttpError(err, 'Failed to load audit');
         this.events = [];
       },
     });

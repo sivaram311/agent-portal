@@ -4,11 +4,21 @@
     <button type="button" class="ap-btn ap-btn-ghost" (click)="reload()">Refresh</button>
   </header>
   @if (loading) {
-    <p class="muted">Loading…</p>
+    <div class="ap-empty compact">
+      <h3>Loading workspace data…</h3>
+      <p>Fetching recent audit events.</p>
+    </div>
   } @else if (error) {
-    <p class="error">{{ error }}</p>
+    <div class="ap-empty compact">
+      <h3>Couldn’t load activity</h3>
+      <p>{{ error }}</p>
+      <button type="button" class="ap-btn ap-btn-ghost" (click)="reload()">Retry</button>
+    </div>
   } @else if (events.length === 0) {
-    <p class="muted">No audit events yet.</p>
+    <div class="ap-empty compact">
+      <h3>No activity yet</h3>
+      <p>Audit events for this session will appear here.</p>
+    </div>
   } @else {
     <ul>
       @for (e of events; track e.id) {
