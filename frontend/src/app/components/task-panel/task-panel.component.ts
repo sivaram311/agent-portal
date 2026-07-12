@@ -30,6 +30,13 @@ export class TaskPanelComponent implements OnChanges, AfterViewChecked {
 
   private pendingScroll = false;
 
+  /** Tool runs list excludes subagents — those live only in the Sub-agents panel. */
+  get nonSubagentTools(): ToolRun[] {
+    return this.tools.filter(
+      (t) => t.kind !== 'subagent' && !/agent|task/i.test(t.toolName || '')
+    );
+  }
+
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['terminalLines'] || changes['tools']) {
       this.pendingScroll = true;

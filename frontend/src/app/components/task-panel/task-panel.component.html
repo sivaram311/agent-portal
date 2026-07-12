@@ -3,19 +3,19 @@
 
   <div class="tools">
     <h3>Tool runs</h3>
-    @if (tools.length === 0) {
+    @if (nonSubagentTools.length === 0) {
       <div class="ap-empty compact">
         <h3>No tool runs yet</h3>
-        <p>Shell, file, and other tool activity will appear here while the agent works.</p>
+        <p>Shell, file, and other non-subagent tool activity will appear here. Sub-agents are listed above.</p>
       </div>
     }
-    @for (t of tools; track t.id) {
+    @for (t of nonSubagentTools; track t.id) {
       <article class="tool">
         <div class="tool-head">
           <strong>{{ t.toolName }}</strong>
           <span class="pill">{{ t.status }}</span>
         </div>
-        @if (t.argsJson) {
+        @if (t.argsJson && t.argsJson.trim() !== '{}') {
           <pre class="args">{{ t.argsJson }}</pre>
         }
       </article>

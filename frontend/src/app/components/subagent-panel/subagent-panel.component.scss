@@ -1,16 +1,64 @@
+:host {
+  display: block;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
 .subagent-panel {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
   border: 1px solid var(--ap-border);
   border-radius: var(--ap-radius);
-  padding: 0.65rem 0.75rem;
+  padding: 0.55rem 0.65rem;
   background: var(--ap-surface);
+  overflow: hidden;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex: 0 0 auto;
+  margin-bottom: 0.4rem;
 }
 
 .subagent-panel h3 {
-  margin: 0 0 0.5rem;
+  margin: 0;
   font-size: 0.82rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--ap-text-muted);
+}
+
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: 1px solid var(--ap-border);
+  background: rgba(148, 163, 184, 0.08);
+  color: var(--ap-text-muted);
+  font-size: 0.68rem;
+  font-weight: 600;
+  min-height: 1.75rem;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.toggle .count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.1rem;
+  height: 1.1rem;
+  padding: 0 0.25rem;
+  border-radius: 999px;
+  background: var(--ap-accent-soft);
+  color: #5eead4;
+  font-size: 0.62rem;
 }
 
 .muted {
@@ -25,7 +73,11 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.45rem;
+  gap: 0.4rem;
+  min-height: 0;
+  overflow: auto;
+  flex: 1 1 auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .subagent-row {
@@ -33,20 +85,25 @@
   align-items: center;
   justify-content: space-between;
   gap: 0.65rem;
-  padding: 0.45rem 0.5rem;
+  padding: 0.4rem 0.5rem;
   border-radius: calc(var(--ap-radius) - 2px);
   background: rgba(148, 163, 184, 0.06);
+  flex: 0 0 auto;
+}
+
+.subagent-row.finished {
+  opacity: 0.72;
 }
 
 .subagent-info {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.2rem;
   min-width: 0;
 }
 
 .subagent-info strong {
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -56,5 +113,20 @@
   flex-shrink: 0;
   min-height: var(--ap-touch);
   min-width: var(--ap-touch);
-  padding-inline: 0.85rem;
+  padding-inline: 0.75rem;
+  font-size: 0.75rem;
+}
+
+@media (max-width: 639px) {
+  .subagent-panel {
+    padding: 0.4rem 0.5rem;
+  }
+
+  .subagent-panel h3 {
+    font-size: 0.72rem;
+  }
+
+  .subagent-info strong {
+    font-size: 0.78rem;
+  }
 }

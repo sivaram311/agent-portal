@@ -1,11 +1,33 @@
 <section class="subagent-panel" data-testid="subagent-panel">
-  <h3>Sub-agents</h3>
+  <div class="head">
+    <h3>Sub-agents</h3>
+    @if (finishedSubagents.length) {
+      <button
+        type="button"
+        class="toggle"
+        (click)="showFinished = !showFinished"
+        [attr.aria-expanded]="showFinished"
+        data-testid="subagent-finished-toggle"
+      >
+        {{ showFinished ? 'Hide finished' : 'Show finished' }}
+        <span class="count">{{ finishedSubagents.length }}</span>
+      </button>
+    }
+  </div>
+
   @if (subagentTools.length === 0) {
     <p class="muted">No sub-agents running.</p>
+  } @else if (visibleSubagents.length === 0) {
+    <p class="muted">
+      No active sub-agents.
+      @if (finishedSubagents.length) {
+        {{ finishedSubagents.length }} finished — use Show finished.
+      }
+    </p>
   } @else {
     <ul class="subagent-list">
-      @for (t of subagentTools; track t.id) {
-        <li class="subagent-row">
+      @for (t of visibleSubagents; track t.id) {
+        <li class="subagent-row" [class.finished]="!isActive(t)">
           <div class="subagent-info">
             <strong>{{ t.toolName }}</strong>
             <app-status-pill [status]="t.status" />

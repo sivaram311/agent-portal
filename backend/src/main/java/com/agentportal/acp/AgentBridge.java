@@ -238,14 +238,55 @@ public class AgentBridge implements AutoCloseable {
 
     public synchronized void cancel() {
         if (client == null || !client.isAlive()) {
+            markOpenToolsCancelled("cancelled");
+            setStatus(SessionStatus.CANCELLED);
+            emit("run_cancelled", Map.of());
             return;
         }
         try {
             client.sessionCancel(cursorSessionId);
+            markOpenToolsCancelled("cancelled");
             setStatus(SessionStatus.CANCELLED);
             emit("run_cancelled", Map.of());
         } catch (IOException e) {
             log.warn("Cancel failed: {}", e.getMessage());
+            markOpenToolsCancelled("cancelled");
+            setStatus(SessionStatus.CANCELLED);
+            emit("run_cancelled", Map.of("error", e.getMessage() == null ? "" : e.getMessage()));
+        }
+    }
+
+    /** Leave no ghost in_progress/pending subagents after cancel. */
+    private void markOpenToolsCancelled(String status) {
+        Instant now = Instant.now();
+        for (ToolRun run : toolRunRepository.findBySessionIdOrderByStartedAtAsc(portalSessionId)) {
+            String s = run.getStatus() == null ? "" : run.getStatus().toLowerCase(Locale.ROOT);
+            if (!(s.equals("running") || s.equals("pending") || s.equals("in_progress") || s.equals("in-progress"))) {
+                continue;
+            }
+            run.setStatus(status);
+            run.setFinishedAt(now);
+            toolRunRepository.save(run);
+            String toolCallId = Objects.toString(run.getToolCallId(), "");
+            emit("tool_call", Map.of(
+                    "toolCallId", toolCallId,
+                    "toolName", Objects.toString(run.getToolName(), "tool"),
+                    "status", status,
+                    "args", Objects.toString(run.getArgsJson(), "{}"),
+                    "toolRunId", run.getId().toString(),
+                    "kind", run.getKind() == null ? "tool" : run.getKind(),
+                    "subagentId", Objects.toString(run.getSubagentId(), "")
+            ));
+            if ("subagent".equalsIgnoreCase(run.getKind())) {
+                emit("subagent_finished", Map.of(
+                        "subagentId", Objects.toString(run.getSubagentId(), toolCallId),
+                        "toolCallId", toolCallId,
+                        "toolName", Objects.toString(run.getToolName(), "tool"),
+                        "status", status,
+                        "toolRunId", run.getId().toString(),
+                        "kind", "subagent"
+                ));
+            }
         }
     }
 

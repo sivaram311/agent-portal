@@ -78,6 +78,8 @@ See [MOBILE-QA.md](MOBILE-QA.md). On phones: share collapsed, Preview folded int
 
 Cursor ACP often sends a useful title on the first `tool_call`, then later updates with empty fields that would overwrite the DB name to `tool`. AgentBridge keeps the best label, prefers `cursor/task` descriptions for running subagents, and the UI re-derives display names from event history when opening a session.
 
+**Logs tab:** Sub-agents only appear in the Sub-agents panel (finished collapsed by default; **Show finished**). Tool runs excludes `kind=subagent` so rows are not doubled. Cancel marks open tool/subagent rows `cancelled` so they do not stick as `in_progress`. Sub-agents / tools / terminal each scroll inside a capped grid so Tool runs stays reachable.
+
 ## Docker hybrid deploy (recommended on this Windows host)
 
 **Requires [Docker Desktop](https://www.docker.com/products/docker-desktop/) for Windows** (`docker` on PATH).
