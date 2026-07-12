@@ -3,7 +3,6 @@ package com.agentportal.service;
 import com.agentportal.acp.AgentProcessManager;
 import com.agentportal.acp.CursorSessionRuntime;
 import com.agentportal.acp.SessionAgentRuntime;
-import com.agentportal.config.AgentProperties;
 import com.agentportal.config.CssProperties;
 import com.agentportal.domain.*;
 import com.agentportal.dto.*;
@@ -35,7 +34,7 @@ public class SessionService {
     private final AgentEventRepository eventRepository;
     private final SessionCollaboratorRepository collaboratorRepository;
     private final AgentProcessManager processManager;
-    private final AgentProperties agentProperties;
+    private final WorkspacePathResolver workspacePathResolver;
     private final WorkspaceFileService workspaceFileService;
     private final WorkspaceChangeService workspaceChangeService;
     private final WorkspaceQuotaService workspaceQuotaService;
@@ -54,7 +53,7 @@ public class SessionService {
             AgentEventRepository eventRepository,
             SessionCollaboratorRepository collaboratorRepository,
             AgentProcessManager processManager,
-            AgentProperties agentProperties,
+            WorkspacePathResolver workspacePathResolver,
             WorkspaceFileService workspaceFileService,
             WorkspaceChangeService workspaceChangeService,
             WorkspaceQuotaService workspaceQuotaService,
@@ -72,7 +71,7 @@ public class SessionService {
         this.eventRepository = eventRepository;
         this.collaboratorRepository = collaboratorRepository;
         this.processManager = processManager;
-        this.agentProperties = agentProperties;
+        this.workspacePathResolver = workspacePathResolver;
         this.workspaceFileService = workspaceFileService;
         this.workspaceChangeService = workspaceChangeService;
         this.workspaceQuotaService = workspaceQuotaService;
@@ -86,7 +85,7 @@ public class SessionService {
 
     @Transactional
     public SessionDto create(CreateSessionRequest request) throws Exception {
-        Path workspace = resolveWorkspace(request.workspacePath());
+        Path workspace = workspacePathResolver.resolve(request.workspacePath());
         workspaceQuotaService.assertWithinQuota(workspace);
         try {
             Files.createDirectories(workspace);
@@ -550,30 +549,5 @@ public class SessionService {
 
     private int nextSequence(UUID sessionId) {
         return (int) (messageRepository.maxSequence(sessionId) + 1);
-    }
-
-    private Path resolveWorkspace(String requested) {
-        Path root = Path.of(agentProperties.getWorkspace().getRoot()).toAbsolutePath().normalize();
-        if (requested == null || requested.isBlank()) {
-            throw new IllegalArgumentException("workspacePath is required");
-        }
-        String trimmed = requested.trim();
-        Path candidate;
-        if (trimmed.contains("..")) {
-            throw new SecurityException("workspacePath must not contain '..'");
-        }
-        boolean absolute = Path.of(trimmed).isAbsolute()
-                || trimmed.contains(":")
-                || trimmed.startsWith("/")
-                || trimmed.startsWith("\\");
-        if (absolute) {
-            candidate = Path.of(trimmed).toAbsolutePath().normalize();
-        } else {
-            candidate = root.resolve(trimmed).toAbsolutePath().normalize();
-        }
-        if (!candidate.startsWith(root)) {
-            throw new SecurityException("workspacePath must stay under " + root);
-        }
-        return candidate;
     }
 }

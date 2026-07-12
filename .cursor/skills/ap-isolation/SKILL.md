@@ -13,9 +13,9 @@ Users only see/act on their own sessions; workspaces cannot escape the configure
 ## Build plan
 1. Persist `ownerUsername` on `AgentSession`; set from SecurityContext on create.
 2. Filter list/get/mutate by owner when CSS (or any auth) is active; local/dev may use `anonymous`.
-3. Harden `resolveWorkspace` — relative paths only under `agent.workspace.root`; reject absolute escapes unless explicitly allowlisted.
+3. Harden `resolveWorkspace` via `WorkspacePathResolver` — relative paths under `agent.workspace.root`; reject absolute escapes unless listed in `agent.workspace.allowed-roots` / `AGENT_WORKSPACE_ALLOWED_ROOTS`.
 4. Harden `WorkspaceFileService.resolveSafe` with `toRealPath()` when possible.
-5. Document multi-user model in OPS.md / README.
+5. Document multi-user model + allowlist in OPS.md / README.
 
 ## Constraints
 - Do not break local unauthenticated mode (`css.enabled=false`)

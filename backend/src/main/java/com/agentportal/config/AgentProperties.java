@@ -2,6 +2,9 @@ package com.agentportal.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @ConfigurationProperties(prefix = "agent")
 public class AgentProperties {
 
@@ -152,6 +155,12 @@ public class AgentProperties {
 
     public static class Workspace {
         private String root = "./workspaces";
+        /**
+         * Extra absolute roots where {@code workspacePath} may live outside {@link #root}.
+         * Empty = sandbox-only. Bound from {@code agent.workspace.allowed-roots} /
+         * {@code AGENT_WORKSPACE_ALLOWED_ROOTS} (comma-separated).
+         */
+        private List<String> allowedRoots = new ArrayList<>();
         /** 0 = unlimited. */
         private long quotaBytesPerUser = 0;
 
@@ -161,6 +170,28 @@ public class AgentProperties {
 
         public void setRoot(String root) {
             this.root = root;
+        }
+
+        public List<String> getAllowedRoots() {
+            return allowedRoots;
+        }
+
+        public void setAllowedRoots(List<String> allowedRoots) {
+            this.allowedRoots = new ArrayList<>();
+            if (allowedRoots == null) {
+                return;
+            }
+            for (String entry : allowedRoots) {
+                if (entry == null) {
+                    continue;
+                }
+                for (String part : entry.split(",")) {
+                    String trimmed = part.trim();
+                    if (!trimmed.isEmpty()) {
+                        this.allowedRoots.add(trimmed);
+                    }
+                }
+            }
         }
 
         public long getQuotaBytesPerUser() {

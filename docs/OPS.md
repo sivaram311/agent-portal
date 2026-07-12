@@ -277,9 +277,18 @@ Use these for TLS / tunnel cutover (e.g. pointing `delena.buzz` at the host) —
 ## Workspace sandbox
 
 - Relative `workspacePath` values resolve under `agent.workspace.root` / `AGENT_WORKSPACE_ROOT`
-- Absolute paths are rejected unless they stay under that root
+- Absolute paths outside that root are **not allowed** unless they stay under an entry in `agent.workspace.allowed-roots` / `AGENT_WORKSPACE_ALLOWED_ROOTS` (comma-separated absolute prefixes)
 - `..` segments are rejected; file browser skips symlinks and uses `toRealPath` checks
 - If the backend is started with cwd `backend/` and no `AGENT_WORKSPACE_ROOT`, `./workspaces` resolves to `backend\workspaces` and existing sessions under `agent-portal\workspaces\…` will fail create/prompt validation
+
+Example (DEV — allow control-plane and Source trees outside the sandbox):
+
+```env
+AGENT_WORKSPACE_ROOT=E:\MyWorkspace\sandbox
+AGENT_WORKSPACE_ALLOWED_ROOTS=E:\MyWorkspace,E:\Source,G:\apps\agent-portal\workspaces
+```
+
+PREPROD/PROD keep an empty allowlist by default (sandbox-only). Set `AGENT_WORKSPACE_ALLOWED_ROOTS` only when Ops intentionally permits extra trees.
 
 Tracked samples under `workspaces/` (see [workspaces/README.md](../workspaces/README.md)):
 
@@ -302,7 +311,7 @@ Realme P2 Pro checklist, audit screenshots, and Playwright commands: [MOBILE-QA.
 | Symptom | Likely cause | Fix |
 |---------|--------------|-----|
 | Prompt 500 / hang after resume | Stale `cursorSessionId`; `session/load` wedges stdio | Fixed in `AgentBridge` (15s timeout → close → `session/new`). Rebuild/restart backend. |
-| `workspacePath must stay under …\backend\workspaces` | Missing `AGENT_WORKSPACE_ROOT` | Set to `E:\MyWorkspace\agent-portal\workspaces` (or use `run-host-stack.ps1`) |
+| `workspacePath is not allowed` / `must stay under …` | Path outside sandbox and allowlist, or missing `AGENT_WORKSPACE_ROOT` | Point at a path under the root, or add a prefix to `AGENT_WORKSPACE_ALLOWED_ROOTS`; set root via `run-host-stack.ps1` |
 | Permissions stuck | Auto-approve off + pending dialog | Set `AGENT_DEFAULT_AUTO_APPROVE=true` or decide in UI |
 | Orphan `cursor-agent` after backend kill | ACP child left behind | Kill only the child whose parent was the dead portal Java PID — never mass-kill by process name |
 

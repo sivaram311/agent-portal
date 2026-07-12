@@ -1,6 +1,5 @@
 package com.agentportal.service;
 
-import com.agentportal.config.AgentProperties;
 import com.agentportal.domain.AgentSession;
 import com.agentportal.domain.PlatformAgentMessage;
 import com.agentportal.domain.PlatformApp;
@@ -157,7 +156,7 @@ public class PlatformRegistryService {
     private final PlatformMemoryRepository platformMemoryRepository;
     private final PlatformAgentMessageRepository platformAgentMessageRepository;
     private final AgentSessionRepository agentSessionRepository;
-    private final AgentProperties agentProperties;
+    private final WorkspacePathResolver workspacePathResolver;
     private final SessionService sessionService;
 
     public PlatformRegistryService(
@@ -167,7 +166,7 @@ public class PlatformRegistryService {
             PlatformMemoryRepository platformMemoryRepository,
             PlatformAgentMessageRepository platformAgentMessageRepository,
             AgentSessionRepository agentSessionRepository,
-            AgentProperties agentProperties,
+            WorkspacePathResolver workspacePathResolver,
             @Lazy SessionService sessionService
     ) {
         this.portLeaseRepository = portLeaseRepository;
@@ -176,7 +175,7 @@ public class PlatformRegistryService {
         this.platformMemoryRepository = platformMemoryRepository;
         this.platformAgentMessageRepository = platformAgentMessageRepository;
         this.agentSessionRepository = agentSessionRepository;
-        this.agentProperties = agentProperties;
+        this.workspacePathResolver = workspacePathResolver;
         this.sessionService = sessionService;
     }
 
@@ -1187,12 +1186,15 @@ public class PlatformRegistryService {
     }
 
     private String sessionWorkspaceFor(PlatformTask task) {
-        Path root = Path.of(agentProperties.getWorkspace().getRoot()).toAbsolutePath().normalize();
+        Path root = workspacePathResolver.root();
         String wp = task.getWorkspacePath();
         if (wp != null && !wp.isBlank()) {
             Path p = Path.of(wp).toAbsolutePath().normalize();
-            if (p.startsWith(root)) {
+            if (WorkspacePathResolver.isUnder(p, root)) {
                 return root.relativize(p).toString().replace('\\', '/');
+            }
+            if (workspacePathResolver.isAllowed(p)) {
+                return p.toString();
             }
         }
         return "agent-api";
@@ -1252,25 +1254,18 @@ public class PlatformRegistryService {
     }
 
     private String resolveWorkspacePath(String requested, UUID taskId) {
-        Path root = Path.of(agentProperties.getWorkspace().getRoot()).toAbsolutePath().normalize();
         if (requested == null || requested.isBlank()) {
-            return root.resolve("platform-tasks").resolve(taskId.toString()).normalize().toString();
+            return workspacePathResolver.root()
+                    .resolve("platform-tasks")
+                    .resolve(taskId.toString())
+                    .normalize()
+                    .toString();
         }
-        String trimmed = requested.trim();
-        if (trimmed.contains("..")) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "workspacePath must not contain '..'");
+        try {
+            return workspacePathResolver.resolve(requested).toString();
+        } catch (IllegalArgumentException | SecurityException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
-        boolean absolute = Path.of(trimmed).isAbsolute()
-                || trimmed.contains(":")
-                || trimmed.startsWith("/")
-                || trimmed.startsWith("\\");
-        Path candidate = absolute
-                ? Path.of(trimmed).toAbsolutePath().normalize()
-                : root.resolve(trimmed).toAbsolutePath().normalize();
-        if (!candidate.startsWith(root)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "workspacePath must stay under " + root);
-        }
-        return candidate.toString();
     }
 
     private String normalizeOptionalRole(String role) {
