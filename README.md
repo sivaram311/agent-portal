@@ -70,7 +70,7 @@ Mobile checklist and audit frames: [docs/MOBILE-QA.md](docs/MOBILE-QA.md). Sampl
 | PREPROD | https://agent-portal-staging.delena.buzz | `:4080` on `F:\apps\agent-portal` |
 | PROD | https://agent-portal.delena.buzz | `:5080` on `G:\apps\agent-portal` |
 
-PREPROD/PROD auth → **prod CSS** (`https://css.delena.buzz`, `clientId=agent-portal`). Release + evidence: `H:\releases\agent-portal-0.1.3\`. Ops detail: [docs/OPS.md](docs/OPS.md#deployed-environments-2026-07-11). System E2E loop: [docs/platform/SYSTEM-E2E-LOOP.md](docs/platform/SYSTEM-E2E-LOOP.md). Session **Console** tab streams plain agent terminal output. History collapses noisy ACP deltas by default; session filter clears detail when the open session is hidden; tool/subagent labels prefer ACP titles / task descriptions over generic `tool`.
+PREPROD/PROD auth → **prod CSS** (`https://css.delena.buzz`, `clientId=agent-portal`). Release + evidence: `H:\releases\agent-portal-0.1.5\` (PREPROD). Ops detail: [docs/OPS.md](docs/OPS.md#deployed-environments-2026-07-11). System E2E loop: [docs/platform/SYSTEM-E2E-LOOP.md](docs/platform/SYSTEM-E2E-LOOP.md). Session **Console** tab streams plain agent terminal output. History collapses noisy ACP deltas by default; session filter clears detail when the open session is hidden; tool/subagent labels prefer ACP titles / task descriptions over generic `tool`.
 
 ## Quick start (Windows host stack)
 
