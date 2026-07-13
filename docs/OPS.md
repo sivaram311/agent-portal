@@ -13,10 +13,12 @@ Machine standing orders: `E:\MyAgent\workflow\CONSCIOUS.md` (drives, ports, DB s
 | Piece | Location |
 |-------|----------|
 | Release package | `H:\releases\agent-portal-0.1.7\` (PREPROD); PROD still prior until Q2 |
-| Promote evidence | `H:\releases\agent-portal-0.1.7\evidence\` (Q1 closed 2026-07-13) |
+| Promote evidence | `H:\releases\agent-portal-0.1.7\evidence\` (Q1 closed 2026-07-13; UI flat-pack hotfix same day) |
 | Start script | `F:\` / `G:\apps\agent-portal\start.ps1` |
 | Nginx confs | `E:\Source\Deployment\conf\apps\agent-portal*.delena.buzz.conf` |
 | Machine port registry | `E:\MyAgent\workflow\ports\REGISTRY.md` (source of truth for 4080/5080) |
+
+**UI pack rule:** Angular `:application` output is `frontend/dist/frontend/browser/`. Release `ui/` must be a **flat** copy of `browser/*` (`scripts/pack-release-ui.ps1`). Copying `dist/frontend/*` nests `browser/` and nginx returns **403** on `/` (`directory index forbidden` / `index.html` redirect cycle). Always smoke public `GET /` plus hashed JS/CSS from `index.html`, not only `/api/health`.
 
 ### Auth (PREPROD + PROD)
 
