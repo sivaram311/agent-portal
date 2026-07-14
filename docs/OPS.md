@@ -36,6 +36,10 @@ Unauthenticated `/api/**` → **403** is expected. Use a CSS JWT (`Authorization
 
 DEV CSS remains `:9000` / `https://delena.buzz/auth/` (seeded `admin` / `admin123`). Prod admin password lives in `G:\apps\css\.env` (`CSS_ADMIN_PASSWORD`) — never commit it.
 
+### ProdDeck OS events (DEV)
+
+`POST /api/os-events` accepts ProdDeck OS event envelopes (`permitAll`). Audits as `os.event.<type>`; returns `{ "ok": true }`. Contract: ProdDeck `docs/os/portal-events.md`. Do **not** enable on F:/G: cutovers without an explicit promote.
+
 ### Postgres text columns (do not use `@Lob` / CLOB)
 
 On PostgreSQL, JPA `@Lob` / `columnDefinition = "CLOB"` maps to large objects (`oid`) and causes:

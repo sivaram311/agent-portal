@@ -63,6 +63,7 @@ public class SecurityConfig {
                             "/api/auth/config",
                             "/api/presets",
                             "/api/agent/actions",
+                            "/api/os-events",
                             "/h2-console/**"
                     ).permitAll();
                     auth.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll();
@@ -130,6 +131,7 @@ public class SecurityConfig {
                 if (path.startsWith("/api/health") || path.startsWith("/api/auth/config")
                         || path.startsWith("/api/presets")
                         || path.startsWith("/api/agent/actions")
+                        || path.startsWith("/api/os-events")
                         || path.startsWith("/ws") || "OPTIONS".equalsIgnoreCase(request.getMethod())) {
                     filterChain.doFilter(request, response);
                     return;
