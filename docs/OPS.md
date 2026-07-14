@@ -40,6 +40,8 @@ DEV CSS remains `:9000` / `https://delena.buzz/auth/` (seeded `admin` / `admin12
 
 `POST /api/os-events` accepts ProdDeck OS event envelopes (`permitAll`). Audits as `os.event.<type>`; returns `{ "ok": true }`. Contract: ProdDeck `docs/os/portal-events.md`. Do **not** enable on F:/G: cutovers without an explicit promote.
 
+**F/G cutover scaffold (pending EM):** `H:\releases\proddeck-0.6.1\evidence\portal-os-events-cutover-scaffold.md`
+
 ### Postgres text columns (do not use `@Lob` / CLOB)
 
 On PostgreSQL, JPA `@Lob` / `columnDefinition = "CLOB"` maps to large objects (`oid`) and causes:
