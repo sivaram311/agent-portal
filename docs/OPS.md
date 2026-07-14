@@ -40,7 +40,7 @@ DEV CSS remains `:9000` / `https://delena.buzz/auth/` (seeded `admin` / `admin12
 
 `POST /api/os-events` accepts ProdDeck OS event envelopes (`permitAll`). Audits as `os.event.<type>`; returns `{ "ok": true }`. Contract: ProdDeck `docs/os/portal-events.md`. Do **not** enable on F:/G: cutovers without an explicit promote.
 
-**F/G cutover scaffold (pending EM):** `H:\releases\proddeck-0.6.1\evidence\portal-os-events-cutover-scaffold.md`
+**F/G cutover:** Live as Portal **0.1.8** on `:4080` / `:5080` (2026-07-15). ProdDeck F/G sets `OS_EVENTS_FORWARD=1` + matching `PLATFORM_APPS_URL`. Scaffold: `H:\releases\proddeck-0.6.1\evidence\portal-os-events-cutover-scaffold.md` · release `H:\releases\agent-portal-0.1.8`.
 
 ### Postgres text columns (do not use `@Lob` / CLOB)
 
