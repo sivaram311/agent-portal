@@ -12,8 +12,9 @@ Machine standing orders: `E:\MyAgent\workflow\CONSCIOUS.md` (drives, ports, DB s
 
 | Piece | Location |
 |-------|----------|
-| Release package | `H:\releases\agent-portal-0.1.7\` (PREPROD); PROD still prior until Q2 |
-| Promote evidence | `H:\releases\agent-portal-0.1.7\evidence\` (Q1 closed 2026-07-13; UI flat-pack hotfix same day) |
+| Release package | **0.1.8** live F/G · `H:\releases\agent-portal-0.1.8\` |
+| Promote evidence | `H:\releases\agent-portal-0.1.8\evidence\` (os-events cutover 2026-07-15) |
+| Consumed by | ProdDeck ≥ **0.6.2** (`OS_EVENTS_FORWARD`) · AV classic ≥ **0.3.16** sessions |
 | Start script | `F:\` / `G:\apps\agent-portal\start.ps1` |
 | Nginx confs | `E:\Source\Deployment\conf\apps\agent-portal*.delena.buzz.conf` |
 | Machine port registry | `E:\MyAgent\workflow\ports\REGISTRY.md` (source of truth for 4080/5080) |
