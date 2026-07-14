@@ -56,9 +56,9 @@ Any human or AI **must** read this before binding a port. After claiming, update
 | 3312 | agentverse-upgrade | agentverse-upgrade | host | 0.0.0.0 | active | DEV feature/upgradation-functionality; npm -p 3312 |
 | 4312 | agentverse-upgrade | agentverse-upgrade | staging | 0.0.0.0 | active | PREPROD `F:\apps\agentverse-upgrade`; agentverse-upgrade-staging.delena.buzz |
 | 5312 | agentverse-upgrade | agentverse-upgrade | prod | 0.0.0.0 | active | PROD `G:\apps\agentverse-upgrade`; agentverse-upgrade.delena.buzz |
-| 3330 | library | library | host | 0.0.0.0 | reserved | DEV `E:\MyWorkspace\sandbox\library`; phone-first docs Library |
-| 4330 | library | library | staging | 0.0.0.0 | reserved | PREPROD planned `F:\apps\library` |
-| 5330 | library | library | prod | 0.0.0.0 | reserved | PROD planned `G:\apps\library` |
+| 3330 | library | library | host | 0.0.0.0 | reserved | DEV `E:\MyWorkspace\sandbox\library`; https://library-dev.delena.buzz |
+| 4330 | library | library | staging | 0.0.0.0 | reserved | PREPROD `F:\apps\library`; https://library-staging.delena.buzz |
+| 5330 | library | library | prod | 0.0.0.0 | reserved | PROD `G:\apps\library`; https://library.delena.buzz |
 
 ## Available ranges (prefer these for new apps)
 
@@ -90,6 +90,9 @@ Any human or AI **must** read this before binding a port. After claiming, update
 | `https://agentverse-v2.delena.buzz/` | `127.0.0.1:5311` (stable-v2 0.4.0) |
 | `https://agentverse-upgrade-staging.delena.buzz/` | `127.0.0.1:4312` (upgradation 0.3.0) |
 | `https://agentverse-upgrade.delena.buzz/` | `127.0.0.1:5312` (upgradation 0.3.0) |
+| `https://library-dev.delena.buzz/` | `127.0.0.1:3330` (Library DEV) |
+| `https://library-staging.delena.buzz/` | `127.0.0.1:4330` (Library PREPROD — app TBD) |
+| `https://library.delena.buzz/` | `127.0.0.1:5330` (Library PROD — app TBD) |
 
 Future app subdomains: see [CLOUDFLARE-DNS-PROXY.md](CLOUDFLARE-DNS-PROXY.md).
 
