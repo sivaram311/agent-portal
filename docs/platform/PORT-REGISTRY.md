@@ -35,11 +35,13 @@ Any human or AI **must** read this before binding a port. After claiming, update
 | 4010 | h-drive-server | h-drive-server | staging | 0.0.0.0 | active | PREPROD `F:\apps\h-drive-server` |
 | 4080 | agent-portal-api | agent-portal | staging | 0.0.0.0 | active | PREPROD `F:\apps\agent-portal`; agent-portal-staging.delena.buzz |
 | 4200 | agent-portal-ui | agent-portal | host | 0.0.0.0 | active | DEV `ng serve` / delena.buzz / |
-| 4900 | css-auth | css | staging | 0.0.0.0 | active | Preprod CSS IdP |
+| 4900 | css-auth | css | staging | 0.0.0.0 | active | Classic Preprod CSS IdP — keep |
+| 4910 | css-auth-next | css-next | staging | 0.0.0.0 | active | Side-fleet PREPROD; css-next-staging.delena.buzz → :4910 |
 | 5010 | h-drive-server | h-drive-server | prod | 0.0.0.0 | active | PROD `G:\apps\h-drive-server`; https://hdrive.delena.buzz |
 | 5080 | agent-portal-api | agent-portal | prod | 0.0.0.0 | active | PROD `G:\apps\agent-portal`; agent-portal.delena.buzz |
 | 5432 | postgres | docker/local | host | — | active | Shared; schemas per app |
-| 5900 | css-auth | css | prod | 0.0.0.0 | active | Prod CSS; css.delena.buzz |
+| 5900 | css-auth | css | prod | 0.0.0.0 | active | Classic Prod CSS; css.delena.buzz — keep |
+| 5910 | css-auth-next | css-next | prod | 0.0.0.0 | active | Side-fleet PROD; css-next.delena.buzz → :5910 |
 | 8080 | agent-portal-api | agent-portal | host | 0.0.0.0 | active | DEV Spring Boot JAR |
 | 8081 | legacy-grok-or-other | grok_dev / misc | host | — | active | Confirm before reuse |
 | 8082 | filebridge | agent-portal/workspaces/FileBridge | host | 0.0.0.0 | active | Sample app |
@@ -51,6 +53,12 @@ Any human or AI **must** read this before binding a port. After claiming, update
 | 3311 | agentverse-v2 | agentverse-v2 | host | 0.0.0.0 | active | DEV feature/stable-v2; npm -p 3311 (SoT MyAgent ports) |
 | 4311 | agentverse-v2 | agentverse-v2 | staging | 0.0.0.0 | active | PREPROD `F:\apps\agentverse-v2`; agentverse-v2-staging.delena.buzz |
 | 5311 | agentverse-v2 | agentverse-v2 | prod | 0.0.0.0 | active | PROD side `G:\apps\agentverse-v2`; agentverse-v2.delena.buzz |
+| 3312 | agentverse-upgrade | agentverse-upgrade | host | 0.0.0.0 | active | DEV feature/upgradation-functionality; npm -p 3312 |
+| 4312 | agentverse-upgrade | agentverse-upgrade | staging | 0.0.0.0 | active | PREPROD `F:\apps\agentverse-upgrade`; agentverse-upgrade-staging.delena.buzz |
+| 5312 | agentverse-upgrade | agentverse-upgrade | prod | 0.0.0.0 | active | PROD `G:\apps\agentverse-upgrade`; agentverse-upgrade.delena.buzz |
+| 3330 | library | library | host | 0.0.0.0 | reserved | DEV `E:\MyWorkspace\sandbox\library`; phone-first docs Library |
+| 4330 | library | library | staging | 0.0.0.0 | reserved | PREPROD planned `F:\apps\library` |
+| 5330 | library | library | prod | 0.0.0.0 | reserved | PROD planned `G:\apps\library` |
 
 ## Available ranges (prefer these for new apps)
 
@@ -80,6 +88,8 @@ Any human or AI **must** read this before binding a port. After claiming, update
 | `https://agentverse.delena.buzz/` | `127.0.0.1:5310` (classic) |
 | `https://agentverse-v2-staging.delena.buzz/` | `127.0.0.1:4311` (stable-v2 0.4.0) |
 | `https://agentverse-v2.delena.buzz/` | `127.0.0.1:5311` (stable-v2 0.4.0) |
+| `https://agentverse-upgrade-staging.delena.buzz/` | `127.0.0.1:4312` (upgradation 0.3.0) |
+| `https://agentverse-upgrade.delena.buzz/` | `127.0.0.1:5312` (upgradation 0.3.0) |
 
 Future app subdomains: see [CLOUDFLARE-DNS-PROXY.md](CLOUDFLARE-DNS-PROXY.md).
 
