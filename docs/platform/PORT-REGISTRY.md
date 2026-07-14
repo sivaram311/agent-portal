@@ -45,6 +45,12 @@ Any human or AI **must** read this before binding a port. After claiming, update
 | 8082 | filebridge | agent-portal/workspaces/FileBridge | host | 0.0.0.0 | active | Sample app |
 | 8091 | stack-pilot | stack-pilot | host | — | active | Remote/ops tooling |
 | 9000 | css-auth | centralized-security-system | host | 0.0.0.0 | active | DEV SSO + JWKS |
+| 3320 | proddeck | proddeck | host | 0.0.0.0 | active | DEV `E:\wt\proddeck-integrate`; Cloud OS **0.6.1** |
+| 4320 | proddeck | proddeck | staging | 0.0.0.0 | active | PREPROD `F:\apps\proddeck`; https://home-staging.delena.buzz **0.6.1** |
+| 5320 | proddeck | proddeck | prod | 0.0.0.0 | active | PROD `G:\apps\proddeck`; https://home.delena.buzz **0.6.1** |
+| 3311 | agentverse-v2 | agentverse-v2 | host | 0.0.0.0 | active | DEV feature/stable-v2; npm -p 3311 (SoT MyAgent ports) |
+| 4311 | agentverse-v2 | agentverse-v2 | staging | 0.0.0.0 | active | PREPROD `F:\apps\agentverse-v2`; agentverse-v2-staging.delena.buzz |
+| 5311 | agentverse-v2 | agentverse-v2 | prod | 0.0.0.0 | active | PROD side `G:\apps\agentverse-v2`; agentverse-v2.delena.buzz |
 
 ## Available ranges (prefer these for new apps)
 
@@ -68,6 +74,12 @@ Any human or AI **must** read this before binding a port. After claiming, update
 | `https://agent-portal.delena.buzz/` | static `G:\apps\agent-portal\ui` + API `:5080`; `/auth` → `:5900` |
 | `https://hdrive.delena.buzz/` | `127.0.0.1:5010` (H: file expose) |
 | `https://css.delena.buzz/` | `127.0.0.1:5900` |
+| `https://home-staging.delena.buzz/` | `127.0.0.1:4320` (ProdDeck **0.6.1**) |
+| `https://home.delena.buzz/` | `127.0.0.1:5320` (ProdDeck **0.6.1**) |
+| `https://agentverse-staging.delena.buzz/` | `127.0.0.1:4310` (classic) |
+| `https://agentverse.delena.buzz/` | `127.0.0.1:5310` (classic) |
+| `https://agentverse-v2-staging.delena.buzz/` | `127.0.0.1:4311` (stable-v2 0.4.0) |
+| `https://agentverse-v2.delena.buzz/` | `127.0.0.1:5311` (stable-v2 0.4.0) |
 
 Future app subdomains: see [CLOUDFLARE-DNS-PROXY.md](CLOUDFLARE-DNS-PROXY.md).
 
