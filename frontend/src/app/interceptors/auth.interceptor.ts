@@ -6,9 +6,14 @@ import { AuthService } from '../services/auth.service';
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const auth = inject(AuthService);
   const token = auth.getAccessToken();
+  const skipAuth =
+    req.url.includes('/auth/login') ||
+    req.url.includes('/auth/refresh') ||
+    req.url.includes('/oauth/token') ||
+    req.url.includes('/oauth/authorize');
 
   const cloned =
-    token && !req.headers.has('Authorization')
+    token && !skipAuth && !req.headers.has('Authorization')
       ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } })
       : req;
 
@@ -18,7 +23,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
         return throwError(() => err);
       }
       const cfg = auth.config();
-      if (!cfg?.cssEnabled || req.url.includes('/auth/')) {
+      if (!cfg?.cssEnabled || skipAuth || req.url.includes('/auth/')) {
         return throwError(() => err);
       }
       return from(auth.tryRefresh()).pipe(

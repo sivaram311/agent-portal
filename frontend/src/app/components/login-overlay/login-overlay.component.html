@@ -8,34 +8,53 @@
       </div>
     </div>
 
-    <label>
-      Username
-      <input
-        name="username"
-        [(ngModel)]="username"
-        autocomplete="username"
-        required
-        data-testid="login-username"
-      />
-    </label>
-    <label>
-      Password
-      <input
-        type="password"
-        name="password"
-        [(ngModel)]="password"
-        autocomplete="current-password"
-        required
-        data-testid="login-password"
-      />
-    </label>
+    @if (showPassword()) {
+      <label>
+        Username
+        <input
+          name="username"
+          [(ngModel)]="username"
+          autocomplete="username"
+          required
+          data-testid="login-username"
+        />
+      </label>
+      <label>
+        Password
+        <input
+          type="password"
+          name="password"
+          [(ngModel)]="password"
+          autocomplete="current-password"
+          required
+          data-testid="login-password"
+        />
+      </label>
+    }
 
     @if (error) {
       <p class="error" data-testid="login-error">{{ error }}</p>
     }
 
-    <button type="submit" class="ap-btn ap-btn-primary" [disabled]="busy()" data-testid="login-submit">
-      {{ busy() ? 'Signing in…' : 'Sign in' }}
-    </button>
+    @if (showPassword()) {
+      <button type="submit" class="ap-btn ap-btn-primary" [disabled]="busy()" data-testid="login-submit">
+        {{ busy() ? 'Signing in…' : 'Sign in' }}
+      </button>
+    }
+
+    @if (showSso()) {
+      <button
+        type="button"
+        class="ap-btn ap-btn-ghost sso-btn"
+        [disabled]="busy()"
+        (click)="startSso()"
+        data-testid="login-sso"
+      >
+        {{ busy() && !showPassword() ? 'Redirecting…' : 'Continue with CSS SSO' }}
+      </button>
+      <p class="hint">
+        SSO uses css-next OAuth + PKCE (redirect). Password lane stays on same-origin /auth.
+      </p>
+    }
   </form>
 </div>

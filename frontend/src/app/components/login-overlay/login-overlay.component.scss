@@ -79,3 +79,14 @@ input {
 button {
   margin-top: 0.25rem;
 }
+
+.sso-btn {
+  width: 100%;
+}
+
+.hint {
+  margin: 0;
+  font-size: 0.72rem;
+  line-height: 1.35;
+  color: var(--ap-text-muted);
+}

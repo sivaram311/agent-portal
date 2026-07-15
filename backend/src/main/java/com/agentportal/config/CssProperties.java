@@ -14,6 +14,13 @@ public class CssProperties {
     private String issuer = "http://localhost:9000";
     private String clientId = "agent-portal";
     private long jwksCacheSeconds = 3600;
+    /**
+     * password = form only; hybrid/oauth = form + CSS SSO (authorize / PKCE).
+     * Env: CSS_AUTH_MODE.
+     */
+    private String authMode = "hybrid";
+    /** Browser callback path (must NOT be under nginx /auth/ → IdP). */
+    private String oauthRedirectPath = "/oauth/callback";
 
     public boolean isEnabled() {
         return enabled;
@@ -61,5 +68,21 @@ public class CssProperties {
 
     public void setJwksCacheSeconds(long jwksCacheSeconds) {
         this.jwksCacheSeconds = jwksCacheSeconds;
+    }
+
+    public String getAuthMode() {
+        return authMode;
+    }
+
+    public void setAuthMode(String authMode) {
+        this.authMode = authMode;
+    }
+
+    public String getOauthRedirectPath() {
+        return oauthRedirectPath;
+    }
+
+    public void setOauthRedirectPath(String oauthRedirectPath) {
+        this.oauthRedirectPath = oauthRedirectPath;
     }
 }

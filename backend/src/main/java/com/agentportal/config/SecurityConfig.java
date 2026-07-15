@@ -61,6 +61,7 @@ public class SecurityConfig {
                     auth.requestMatchers(
                             "/api/health",
                             "/api/auth/config",
+                            "/api/auth/oauth/token",
                             "/api/presets",
                             "/api/agent/actions",
                             "/api/os-events",

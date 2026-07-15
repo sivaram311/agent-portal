@@ -12,8 +12,8 @@ Machine standing orders: `E:\MyAgent\workflow\CONSCIOUS.md` (drives, ports, DB s
 
 | Piece | Location |
 |-------|----------|
-| Release package | **0.1.9** live F/G · `H:\releases\agent-portal-0.1.9\` (Wave 3 css-next IdP) |
-| Promote evidence | `H:\releases\agent-portal-0.1.9\evidence\` |
+| Release package | **0.1.10** · `H:\releases\agent-portal-0.1.10\` (hybrid OAuth/PKCE + password) · F/G may still show 0.1.9 until promote |
+| Promote evidence | `H:\releases\agent-portal-0.1.10\evidence\` (oauth) · prior Wave 3 IdP: `0.1.9` |
 | Consumed by | ProdDeck ≥ **0.6.2** (`OS_EVENTS_FORWARD`) · AV classic ≥ **0.3.16** sessions |
 | Start script | `F:\` / `G:\apps\agent-portal\start.ps1` |
 | Nginx confs | `E:\Source\Deployment\conf\apps\agent-portal*.delena.buzz.conf` |
@@ -21,15 +21,18 @@ Machine standing orders: `E:\MyAgent\workflow\CONSCIOUS.md` (drives, ports, DB s
 
 **UI pack rule:** Angular `:application` output is `frontend/dist/frontend/browser/`. Release `ui/` must be a **flat** copy of `browser/*` (`scripts/pack-release-ui.ps1`). Copying `dist/frontend/*` nests `browser/` and nginx returns **403** on `/` (`directory index forbidden` / `index.html` redirect cycle). Always smoke public `GET /` plus hashed JS/CSS from `index.html`, not only `/api/health`.
 
-### Auth (DEV + PREPROD + PROD) — css-next (Wave 3)
+### Auth (DEV + PREPROD + PROD) — css-next (Wave 3 + OAuth hybrid)
 
-Portal password lane pins **css-next** (classic `:5900` / `css.delena.buzz` left for other apps):
+Portal pins **css-next** (classic `:5900` / `css.delena.buzz` left for other apps). **Hybrid** = password form + CSS SSO (OAuth/PKCE).
 
 | Setting | Value |
 |---------|--------|
 | IdP | `https://css-next.delena.buzz` / local `:5910` |
 | `clientId` | `agent-portal` |
-| Browser login | Same-origin `/auth/*` (nginx → `:5910`); empty `CSS_AUTH_URL` is OK |
+| Auth mode | `CSS_AUTH_MODE=hybrid` (or `password` / `oauth`) |
+| Password lane | Same-origin `POST /auth/login` (nginx → `:5910`); empty `CSS_AUTH_URL` is OK |
+| SSO lane | Browser → `{CSS_ISSUER}/oauth/authorize` → `/oauth/login` → code → Portal BFF `POST /api/auth/oauth/token` → issuer (PKCE S256) |
+| OAuth callback | `{origin}/oauth/callback` — **not** under `/auth/` (nginx proxies `/auth/` to IdP) |
 | JWKS | `http://127.0.0.1:5910/.well-known/jwks.json` |
 | Issuer | `https://css-next.delena.buzz` |
 
@@ -38,6 +41,8 @@ Portal password lane pins **css-next** (classic `:5900` / `css.delena.buzz` left
 | `delena.buzz` | `:5910` (strips `Origin` — apex not matched by css-next `https://*.delena.buzz` CORS) |
 | `agent-portal-staging.delena.buzz` | `:5910` |
 | `agent-portal.delena.buzz` | `:5910` |
+
+Redirect allow-list (css-next): `http(s)://localhost|127.0.0.1…` and `https://delena.buzz` / `https://*.delena.buzz` — covers Portal callbacks. No css-next config change required for those hosts.
 
 Unauthenticated `/api/**` → **403** is expected. Use a css-next JWT (`Authorization: Bearer …`).
 

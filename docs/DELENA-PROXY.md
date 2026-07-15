@@ -14,9 +14,14 @@ Browser (HTTPS)
   → Origin 103.118.183.185:80 (Windows Firewall: allow TCP 80)
   → NGINX (C:\nginx-1.30.3)
        ├─ /api/*, /ws     → 127.0.0.1:8080  Agent Portal (DEV)
-       ├─ /auth/*, /.well-known/* → 127.0.0.1:5910  css-next (Portal Wave 3)
+       ├─ /auth/*, /.well-known/* → 127.0.0.1:5910  css-next (password + JWKS)
        └─ /*              → 127.0.0.1:4200  Angular (ng serve)
+            including /oauth/callback (SPA — never under /auth/)
 ```
+
+OAuth authorize / token / login HTML: authorize + login HTML go **directly** to issuer `https://css-next.delena.buzz` (full browser navigation). Token exchange uses Portal BFF `POST /api/auth/oauth/token` → issuer (avoids apex CORS: `https://delena.buzz` is not matched by IdP pattern `https://*.delena.buzz`). Password form stays same-origin `/auth/login`.
+
+**css-next CORS:** Prefer including explicit `https://delena.buzz` in `CSS_CORS_ORIGINS` and restart css-next after env changes. Subdomain consumers (`agent-portal*.delena.buzz`) already match `https://*.delena.buzz`.
 
 ### PREPROD / PROD subdomains (versioned release)
 
@@ -27,7 +32,7 @@ Browser (HTTPS)
 | `css-next.delena.buzz` | — | `:5910` | css-next IdP (Portal Wave 3) |
 | `css.delena.buzz` | — | `:5900` | Classic CSS IdP (other apps) |
 
-Confs: `E:\Source\Deployment\conf\apps\agent-portal-staging.delena.buzz.conf`, `agent-portal.delena.buzz.conf`.
+Confs: `E:\Source\Deployment\conf\apps\agent-portal-staging.delena.buzz.conf`, `agent-portal.delena.buzz.conf`. Static UI uses `try_files … /index.html` so `/oauth/callback` lands on the SPA.
 
 ## Required host env (`.env`, not committed)
 
@@ -36,6 +41,8 @@ CSS_ENABLED=true
 CSS_AUTH_URL=https://delena.buzz
 CSS_JWKS_URI=http://127.0.0.1:5910/.well-known/jwks.json
 CSS_ISSUER=https://css-next.delena.buzz
+CSS_AUTH_MODE=hybrid
+CSS_OAUTH_REDIRECT_PATH=/oauth/callback
 APP_CORS_ORIGINS=https://delena.buzz,https://www.delena.buzz,http://delena.buzz,http://www.delena.buzz,http://localhost:4200,http://127.0.0.1:4200
 AGENT_WORKSPACE_ROOT=E:\MyWorkspace\agent-portal\workspaces
 ```
