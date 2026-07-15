@@ -1,0 +1,10 @@
+---
+description: Prefer non-destructive commands; ask before rm/format/push --force.
+alwaysApply: true
+---
+
+# Safe shell
+
+724862
+
+<!-- agent-portal-managed -->
