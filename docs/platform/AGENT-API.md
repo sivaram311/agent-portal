@@ -17,9 +17,9 @@ Workspace: [`workspaces/agent-api/`](../../workspaces/agent-api/).
 
 | Env | UI | API | CSS |
 |-----|----|-----|-----|
-| **DEV (default client)** | `https://delena.buzz` | `https://delena.buzz/api` | `https://delena.buzz/auth` → `:9000` |
-| **PREPROD** | `https://agent-portal-staging.delena.buzz` | same-origin `/api` (`:4080`) | same-origin `/auth` → CSS prod `:5900` |
-| **PROD** | `https://agent-portal.delena.buzz` | same-origin `/api` (`:5080`) | same-origin `/auth` → CSS prod `:5900` |
+| **DEV (default client)** | `https://delena.buzz` | `https://delena.buzz/api` | `https://delena.buzz/auth` → css-next `:5910` |
+| **PREPROD** | `https://agent-portal-staging.delena.buzz` | same-origin `/api` (`:4080`) | same-origin `/auth` → css-next `:5910` |
+| **PROD** | `https://agent-portal.delena.buzz` | same-origin `/api` (`:5080`) | same-origin `/auth` → css-next `:5910` |
 | Local host | `http://127.0.0.1:4200` | `http://127.0.0.1:8080/api` | `http://127.0.0.1:9000` |
 
 Use **`delena.buzz` hostnames**, not the public IP and not `delena.com` (unrelated domain). PREPROD/PROD login against **prod CSS** (`clientId=agent-portal`). Unauthenticated `/api/**` → **403** is expected.

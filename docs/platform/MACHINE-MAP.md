@@ -44,16 +44,17 @@ Internet → Cloudflare (delena.buzz)
         → NGINX :80
            ├─ /          → :4200 Agent Portal UI (ng serve)
            ├─ /api /ws   → :8080 Agent Portal API
-           └─ /auth      → :9000 CSS (DEV)
+           └─ /auth      → :5910 css-next (Portal Wave 3)
 ```
 
 ### PREPROD / PROD
 
 | Host | UI | API | Auth |
 |------|----|-----|------|
-| `agent-portal-staging.delena.buzz` | `F:\apps\agent-portal\ui` | `:4080` | CSS prod `:5900` |
-| `agent-portal.delena.buzz` | `G:\apps\agent-portal\ui` | `:5080` | CSS prod `:5900` |
-| `css.delena.buzz` | — | `:5900` | Prod CSS IdP |
+| `agent-portal-staging.delena.buzz` | `F:\apps\agent-portal\ui` | `:4080` | css-next `:5910` |
+| `agent-portal.delena.buzz` | `G:\apps\agent-portal\ui` | `:5080` | css-next `:5910` |
+| `css-next.delena.buzz` | — | `:5910` | css-next IdP |
+| `css.delena.buzz` | — | `:5900` | Classic CSS IdP |
 
 Release packages: `H:\releases\`. Standing orders: `E:\MyAgent\workflow\`. Details: [../OPS.md](../OPS.md#deployed-environments-2026-07-11).
 

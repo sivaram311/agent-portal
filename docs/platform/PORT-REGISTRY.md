@@ -76,10 +76,10 @@ Any human or AI **must** read this before binding a port. After claiming, update
 | `https://delena.buzz/` | `127.0.0.1:4200` |
 | `https://delena.buzz/api/` | `127.0.0.1:8080` |
 | `https://delena.buzz/ws/` | `127.0.0.1:8080` |
-| `https://delena.buzz/auth/` | `127.0.0.1:9000` |
-| `https://delena.buzz/.well-known/` | `127.0.0.1:9000` |
-| `https://agent-portal-staging.delena.buzz/` | static `F:\apps\agent-portal\ui` + API `:4080`; `/auth` → `:5900` |
-| `https://agent-portal.delena.buzz/` | static `G:\apps\agent-portal\ui` + API `:5080`; `/auth` → `:5900` |
+| `https://delena.buzz/auth/` | `127.0.0.1:5910` (css-next; Portal Wave 3) |
+| `https://delena.buzz/.well-known/` | `127.0.0.1:5910` |
+| `https://agent-portal-staging.delena.buzz/` | static `F:\apps\agent-portal\ui` + API `:4080`; `/auth` → `:5910` |
+| `https://agent-portal.delena.buzz/` | static `G:\apps\agent-portal\ui` + API `:5080`; `/auth` → `:5910` |
 | `https://hdrive.delena.buzz/` | `127.0.0.1:5010` (H: file expose) |
 | `https://css.delena.buzz/` | `127.0.0.1:5900` |
 | `https://home-staging.delena.buzz/` | `127.0.0.1:4320` (ProdDeck **0.6.1**) |

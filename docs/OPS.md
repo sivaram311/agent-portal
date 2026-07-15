@@ -12,8 +12,8 @@ Machine standing orders: `E:\MyAgent\workflow\CONSCIOUS.md` (drives, ports, DB s
 
 | Piece | Location |
 |-------|----------|
-| Release package | **0.1.8** live F/G · `H:\releases\agent-portal-0.1.8\` |
-| Promote evidence | `H:\releases\agent-portal-0.1.8\evidence\` (os-events cutover 2026-07-15) |
+| Release package | **0.1.9** live F/G · `H:\releases\agent-portal-0.1.9\` (Wave 3 css-next IdP) |
+| Promote evidence | `H:\releases\agent-portal-0.1.9\evidence\` |
 | Consumed by | ProdDeck ≥ **0.6.2** (`OS_EVENTS_FORWARD`) · AV classic ≥ **0.3.16** sessions |
 | Start script | `F:\` / `G:\apps\agent-portal\start.ps1` |
 | Nginx confs | `E:\Source\Deployment\conf\apps\agent-portal*.delena.buzz.conf` |
@@ -21,27 +21,33 @@ Machine standing orders: `E:\MyAgent\workflow\CONSCIOUS.md` (drives, ports, DB s
 
 **UI pack rule:** Angular `:application` output is `frontend/dist/frontend/browser/`. Release `ui/` must be a **flat** copy of `browser/*` (`scripts/pack-release-ui.ps1`). Copying `dist/frontend/*` nests `browser/` and nginx returns **403** on `/` (`directory index forbidden` / `index.html` redirect cycle). Always smoke public `GET /` plus hashed JS/CSS from `index.html`, not only `/api/health`.
 
-### Auth (PREPROD + PROD)
+### Auth (DEV + PREPROD + PROD) — css-next (Wave 3)
 
-Both use **prod CSS** (user-directed):
+Portal password lane pins **css-next** (classic `:5900` / `css.delena.buzz` left for other apps):
 
 | Setting | Value |
 |---------|--------|
-| IdP | `https://css.delena.buzz` / local `:5900` |
+| IdP | `https://css-next.delena.buzz` / local `:5910` |
 | `clientId` | `agent-portal` |
-| Browser login | Same-origin `/auth/*` (nginx → `:5900`); empty `CSS_AUTH_URL` is OK |
-| JWKS | `http://127.0.0.1:5900/.well-known/jwks.json` |
-| Issuer | `https://css.delena.buzz` |
+| Browser login | Same-origin `/auth/*` (nginx → `:5910`); empty `CSS_AUTH_URL` is OK |
+| JWKS | `http://127.0.0.1:5910/.well-known/jwks.json` |
+| Issuer | `https://css-next.delena.buzz` |
 
-Unauthenticated `/api/**` → **403** is expected. Use a CSS JWT (`Authorization: Bearer …`).
+| Host | nginx `/auth` upstream |
+|------|------------------------|
+| `delena.buzz` | `:5910` (strips `Origin` — apex not matched by css-next `https://*.delena.buzz` CORS) |
+| `agent-portal-staging.delena.buzz` | `:5910` |
+| `agent-portal.delena.buzz` | `:5910` |
 
-DEV CSS remains `:9000` / `https://delena.buzz/auth/` (seeded `admin` / `admin123`). Prod admin password lives in `G:\apps\css\.env` (`CSS_ADMIN_PASSWORD`) — never commit it.
+Unauthenticated `/api/**` → **403** is expected. Use a css-next JWT (`Authorization: Bearer …`).
+
+Admin password: `CSS_ADMIN_PASSWORD` in `G:\apps\css-next\.env` (prod schema) — never commit it. README `admin`/`admin123` is DEV classic seed only.
 
 ### ProdDeck OS events (DEV)
 
 `POST /api/os-events` accepts ProdDeck OS event envelopes (`permitAll`). Audits as `os.event.<type>`; returns `{ "ok": true }`. Contract: ProdDeck `docs/os/portal-events.md`. Do **not** enable on F:/G: cutovers without an explicit promote.
 
-**F/G cutover:** Live as Portal **0.1.8** on `:4080` / `:5080` (2026-07-15). ProdDeck F/G sets `OS_EVENTS_FORWARD=1` + matching `PLATFORM_APPS_URL`. Scaffold: `H:\releases\proddeck-0.6.1\evidence\portal-os-events-cutover-scaffold.md` · release `H:\releases\agent-portal-0.1.8`.
+**F/G cutover:** Live as Portal **0.1.9** on `:4080` / `:5080` (2026-07-15 Wave 3 css-next IdP). ProdDeck F/G sets `OS_EVENTS_FORWARD=1` + matching `PLATFORM_APPS_URL`. Scaffold: `H:\releases\proddeck-0.6.1\evidence\portal-os-events-cutover-scaffold.md` · release `H:\releases\agent-portal-0.1.8`.
 
 ### Postgres text columns (do not use `@Lob` / CLOB)
 
@@ -384,7 +390,7 @@ When CSS is enabled, owners can `POST /api/sessions/{id}/collaborators` with `{ 
 
 `RateLimitFilter` keys by **authenticated principal + client IP** when possible. When the direct peer is loopback/private (Next.js `/api/portal` proxy on `:4312`/`:5312` → Portal `:4080`/`:5080`), honor `X-Forwarded-For` / `X-Real-IP` / `CF-Connecting-IP` so all AV users are not merged into one `127.0.0.1` bucket. CSS JWT filter runs **before** rate limit so `sub` is available.
 
-Live preprod/prod: `app.rate-limit.per-minute=180`. Hotfix JAR swapped to F/G `agent-portal.jar` 2026-07-15 (still VERSION **0.1.8**).
+Live preprod/prod: `app.rate-limit.per-minute=180`. Hotfix JAR swapped to F/G `agent-portal.jar` 2026-07-15 (VERSION **0.1.9** IdP env + nginx; jar body still 0.1.8 artifact until next bake).
 
 ## Audit
 

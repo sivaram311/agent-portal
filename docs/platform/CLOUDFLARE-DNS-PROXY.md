@@ -4,7 +4,7 @@
 
 - Zone: `delena.buzz`
 - Cloudflare → origin NGINX `:80` (Flexible SSL until origin TLS)
-- **DEV** apex routes: `/` UI `:4200`, `/api`+`/ws` `:8080`, `/auth` CSS `:9000`  
+- **DEV** apex routes: `/` UI `:4200`, `/api`+`/ws` `:8080`, `/auth` css-next `:5910`  
 - **PREPROD/PROD** app hosts + `css.delena.buzz` are live (see table below)  
   Details: [DELENA-PROXY.md](../DELENA-PROXY.md), [../OPS.md](../OPS.md#deployed-environments-2026-07-11).
 
@@ -25,8 +25,8 @@ cd E:\MyWorkspace\agent-portal
 | `delena.buzz` | Portal DEV / home | `:4200` + `:8080` + CSS `:9000` |
 | `css.delena.buzz` | CSS prod IdP | `:5900` |
 | `control.delena.buzz` | Stack Pilot **PROD** | nginx → `:5091` (`G:\apps\stack-pilot`); DNS via `cloudflare-dns.ps1` (wrapper reserves name `control`). Static CSS/JS edge TTL **4h** (`max-age=14400`) — hard-refresh or purge after UI promotes. |
-| `agent-portal.delena.buzz` | Agent Portal **PROD** | UI static `G:\…\ui` + API `:5080`; `/auth` → `:5900` |
-| `agent-portal-staging.delena.buzz` | Agent Portal **PREPROD** | UI static `F:\…\ui` + API `:4080`; `/auth` → `:5900` |
+| `agent-portal.delena.buzz` | Agent Portal **PROD** | UI static `G:\…\ui` + API `:5080`; `/auth` → css-next `:5910` |
+| `agent-portal-staging.delena.buzz` | Agent Portal **PREPROD** | UI static `F:\…\ui` + API `:4080`; `/auth` → css-next `:5910` |
 | `auth.delena.buzz` | CSS (optional split) | `:9000` / `:5900` |
 | `<app>.delena.buzz` | Production app | claimed port |
 | `<app>-sandbox.delena.buzz` | Sandbox / preview | claimed port |

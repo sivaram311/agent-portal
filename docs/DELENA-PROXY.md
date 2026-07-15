@@ -14,7 +14,7 @@ Browser (HTTPS)
   → Origin 103.118.183.185:80 (Windows Firewall: allow TCP 80)
   → NGINX (C:\nginx-1.30.3)
        ├─ /api/*, /ws     → 127.0.0.1:8080  Agent Portal (DEV)
-       ├─ /auth/*, /.well-known/* → 127.0.0.1:9000  CSS (DEV)
+       ├─ /auth/*, /.well-known/* → 127.0.0.1:5910  css-next (Portal Wave 3)
        └─ /*              → 127.0.0.1:4200  Angular (ng serve)
 ```
 
@@ -22,9 +22,10 @@ Browser (HTTPS)
 
 | Host | UI | API | Auth / JWKS |
 |------|----|-----|-------------|
-| `agent-portal-staging.delena.buzz` | static `F:\apps\agent-portal\ui` | `:4080` | nginx → CSS **prod** `:5900` |
-| `agent-portal.delena.buzz` | static `G:\apps\agent-portal\ui` | `:5080` | nginx → CSS **prod** `:5900` |
-| `css.delena.buzz` | — | `:5900` | Prod CSS IdP |
+| `agent-portal-staging.delena.buzz` | static `F:\apps\agent-portal\ui` | `:4080` | nginx → **css-next** `:5910` |
+| `agent-portal.delena.buzz` | static `G:\apps\agent-portal\ui` | `:5080` | nginx → **css-next** `:5910` |
+| `css-next.delena.buzz` | — | `:5910` | css-next IdP (Portal Wave 3) |
+| `css.delena.buzz` | — | `:5900` | Classic CSS IdP (other apps) |
 
 Confs: `E:\Source\Deployment\conf\apps\agent-portal-staging.delena.buzz.conf`, `agent-portal.delena.buzz.conf`.
 
@@ -33,11 +34,13 @@ Confs: `E:\Source\Deployment\conf\apps\agent-portal-staging.delena.buzz.conf`, `
 ```
 CSS_ENABLED=true
 CSS_AUTH_URL=https://delena.buzz
-CSS_JWKS_URI=http://localhost:9000/.well-known/jwks.json
-CSS_ISSUER=http://localhost:9000
+CSS_JWKS_URI=http://127.0.0.1:5910/.well-known/jwks.json
+CSS_ISSUER=https://css-next.delena.buzz
 APP_CORS_ORIGINS=https://delena.buzz,https://www.delena.buzz,http://delena.buzz,http://www.delena.buzz,http://localhost:4200,http://127.0.0.1:4200
 AGENT_WORKSPACE_ROOT=E:\MyWorkspace\agent-portal\workspaces
 ```
+
+Admin password: `G:\apps\css-next\.env` (`CSS_ADMIN_PASSWORD`) — not README `admin123`.
 
 ## Cloudflare checklist
 

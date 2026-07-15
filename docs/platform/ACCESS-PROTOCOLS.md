@@ -12,7 +12,7 @@
 | Edge configs | `E:\Source\Deployment` |
 | Public zone | `delena.buzz` (Cloudflare → NGINX → host) |
 | SSO DEV | Centralized Security System `:9000` |
-| SSO PREPROD/PROD | CSS prod `:5900` / `https://css.delena.buzz` |
+| SSO PREPROD/PROD | css-next `:5910` / `https://css-next.delena.buzz` (Portal Wave 3) |
 
 ## Hard rules
 
