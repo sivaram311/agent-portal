@@ -297,7 +297,13 @@ AGENT_WORKSPACE_ROOT=E:\MyWorkspace\sandbox
 AGENT_WORKSPACE_ALLOWED_ROOTS=E:\MyWorkspace,E:\Source,G:\apps\agent-portal\workspaces
 ```
 
-PREPROD/PROD keep an empty allowlist by default (sandbox-only). Set `AGENT_WORKSPACE_ALLOWED_ROOTS` only when Ops intentionally permits extra trees.
+PREPROD/PROD: set `AGENT_WORKSPACE_ALLOWED_ROOTS` when AgentVerse / Dispatch need absolute app trees (intentional Ops flex for work-plane sessions):
+
+```env
+AGENT_WORKSPACE_ALLOWED_ROOTS=E:\MyWorkspace,E:\Source,E:\wt,F:\apps,G:\apps
+```
+
+Sandbox root remains `AGENT_WORKSPACE_ROOT` (F/G `…\agent-portal\workspaces`). Empty allowlist = sandbox-only.
 
 Tracked samples under `workspaces/` (see [workspaces/README.md](../workspaces/README.md)):
 
