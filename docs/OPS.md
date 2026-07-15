@@ -376,9 +376,15 @@ When CSS is enabled, owners can `POST /api/sessions/{id}/collaborators` with `{ 
 - [ ] `spring.h2.console.enabled=false`
 - [ ] Secrets only via env (`CURSOR_API_KEY`, `CLOUDFLARE_API_TOKEN`, DB password, never commit)
 - [ ] Cloudflare zone vars set when using DNS/tunnel (`CLOUDFLARE_ZONE_ID`, `CLOUDFLARE_ZONE_NAME`, `CLOUDFLARE_ACCOUNT_ID`)
-- [ ] Rate limit tuned (`app.rate-limit.per-minute`)
+- [x] Rate limit tuned (`app.rate-limit.per-minute` — **180** on preprod/prod as of 2026-07-15 hotfix)
 - [ ] Confirm `/api/health` capabilities badges match expected matrix
 - [ ] Backup schedule for Postgres (or H2 file copy)
+
+## Rate limit (loopback / AgentVerse proxy)
+
+`RateLimitFilter` keys by **authenticated principal + client IP** when possible. When the direct peer is loopback/private (Next.js `/api/portal` proxy on `:4312`/`:5312` → Portal `:4080`/`:5080`), honor `X-Forwarded-For` / `X-Real-IP` / `CF-Connecting-IP` so all AV users are not merged into one `127.0.0.1` bucket. CSS JWT filter runs **before** rate limit so `sub` is available.
+
+Live preprod/prod: `app.rate-limit.per-minute=180`. Hotfix JAR swapped to F/G `agent-portal.jar` 2026-07-15 (still VERSION **0.1.8**).
 
 ## Audit
 

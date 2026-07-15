@@ -84,7 +84,8 @@ public class SecurityConfig {
         http.addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class);
         CssJwtAuthenticationFilter cssFilter = cssJwtAuthenticationFilter.getIfAvailable();
         if (cssFilter != null) {
-            http.addFilterBefore(cssFilter, UsernamePasswordAuthenticationFilter.class);
+            // JWT first so RateLimitFilter can key by authenticated principal when present.
+            http.addFilterBefore(cssFilter, RateLimitFilter.class);
         }
 
         if (appProperties.getSecurity().isEnabled()) {
