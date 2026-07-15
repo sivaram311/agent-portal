@@ -242,7 +242,7 @@ SockJS expects Node-style `global` in the browser. The portal polyfills it in tw
 | `agent.antigravity.print-timeout` | `agy --print-timeout` (default `5m`) |
 | `agent.antigravity.poll-interval-ms` | Brain artifact poll interval |
 | `agent.workspace.root` | Root for relative workspace paths (`AGENT_WORKSPACE_ROOT`) |
-| `agent.workspace.allowed-roots` | Extra absolute roots for `workspacePath` (`AGENT_WORKSPACE_ALLOWED_ROOTS`) |
+| `agent.workspace.allowed-roots` | Extra absolute roots for `workspacePath` (`AGENT_WORKSPACE_ALLOWED_ROOTS`). **Live F/G:** `E:\MyWorkspace,E:\Source,E:\wt,F:\apps,G:\apps` (AV app sessions / Dispatch work plane). See [docs/OPS.md](docs/OPS.md#workspace-sandbox). |
 | `agent.default-auto-approve` | Cursor auto-allow tool permissions (`AGENT_DEFAULT_AUTO_APPROVE`, default `false`) |
 | `app.cors.allowed-origins` | Allowed Angular origins |
 

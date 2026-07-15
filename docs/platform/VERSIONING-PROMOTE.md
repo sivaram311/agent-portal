@@ -41,11 +41,21 @@ sandbox work
 
 A version is:
 
-- Git tag `vX.Y.Z` (or release branch)
+- Git tag `vX.Y.Z` (or release branch / commit SHA if untagged — must still be recorded)
 - Changelog of **functionality** (not only commits)
 - Artifact (JAR/docker image/static `dist`)
 - Known port + subdomain mapping
 - CSS client + CORS verified
+- **Dependency record:** CSS (and other upstreams) **version + git tag** in `H:\releases\<app>-<ver>\DEPENDENCIES.md` + machine matrix `E:\MyAgent\workflow\deps/`
+
+## Promote gates (dependency bar)
+
+Every Q1/Q2 SUMMARY and ACTIVITY-LOG entry must name:
+
+1. This app’s **git tag** (or commit)
+2. Each dependent service’s **version + git tag** (CSS required for auth apps)
+
+Missing → **NO-GO**. See `E:\MyAgent\workflow\deps/README.md` and CONSCIOUS rule **13**.
 
 ## Agent Portal Changes tab
 
@@ -56,3 +66,4 @@ Use Keep/Restore + human review as the **inner** gate for workspace file edits. 
 - Hot-editing prod static files in place without a version
 - Pointing prod DNS at a developer `ng serve`
 - Reusing sandbox DB data as prod without migration plan
+- Promoting without recording git tag + dependency versions/tags

@@ -38,6 +38,8 @@
 ### 4. Auth
 
 - New apps integrate with **CSS** (`clientId`, JWKS, CORS origins).
+- Do not invent a second IdP.
+- On every promote: record **CSS version + git tag** (and other upstream deps) — see `E:\MyAgent\workflow\deps/` and CONSCIOUS **#13**. `clientId` alone is not enough.
 - Browser apps on HTTPS must use their HTTPS origin for auth (same-origin `/auth/*` preferred) to avoid mixed content.
 - PREPROD and PROD Agent Portal use **prod CSS** (`clientId=agent-portal`, issuer `https://css.delena.buzz`).
 
@@ -51,6 +53,7 @@
 
 - Sandbox and local `ng serve` (DEV `delena.buzz`) are **not** production.
 - Production changes follow [VERSIONING-PROMOTE.md](VERSIONING-PROMOTE.md) and `E:\MyAgent\workflow\promote\`.
+- Every promote must record **app git tag** + **dependency versions/tags** (`E:\MyAgent\workflow\deps/`) — CONSCIOUS **#13**.
 
 ### 7. Documentation
 

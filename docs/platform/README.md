@@ -17,7 +17,7 @@ Live Agent Portal URLs: DEV `https://delena.buzz`, PREPROD `https://agent-portal
 | [AGENT-API.md](AGENT-API.md) | How any AI talks to Agent Portal + CSS |
 | [CSS-APP-HOME.md](CSS-APP-HOME.md) | Post-login app launcher (planned) |
 | [CLOUDFLARE-DNS-PROXY.md](CLOUDFLARE-DNS-PROXY.md) | Subdomains → NGINX → host services |
-| [VERSIONING-PROMOTE.md](VERSIONING-PROMOTE.md) | Sandbox → version → staging → prod |
+| [VERSIONING-PROMOTE.md](VERSIONING-PROMOTE.md) | Sandbox → version → staging → prod (+ dependency git tags; machine SoT `E:\MyAgent\workflow\deps\`) |
 | [VIRTUALDEV-CO.md](VIRTUALDEV-CO.md) | Multi-agent virtual company vision |
 | [SYSTEM-E2E-LOOP.md](SYSTEM-E2E-LOOP.md) | Category System Agent — Playwright QA→fix→docs→review loop |
 | [SUBAGENTS-ROADMAP.md](SUBAGENTS-ROADMAP.md) | Deploy / Postgres / Git-review / QA agents |
