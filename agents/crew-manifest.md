@@ -11,15 +11,14 @@
 
 | Lane | Persona id | Name | Skill | Blocking | Status |
 |------|------------|------|-------|----------|--------|
-| Security | `sec-reviewer` | Security Reviewer | `ap-security` | Yes | hired |
-| Review | `platform-reviewer` | Platform Reviewer | `ap-platform-review` | Yes | hired |
-| QA | `qa-reviewer` | Platform QA | `ap-platform-qa` | Yes | hired |
-| Ops | `ops-reviewer` | Platform Ops | `ap-platform-ops` | Advisory | hired |
+| Security | `sec-reviewer` | Security Reviewer | `ap-security` | Yes | **APPROVE** (r2) |
+| Review | `platform-reviewer` | Platform Reviewer | `ap-platform-review` | Yes | **APPROVE** (r2) |
+| QA | `qa-reviewer` | Platform QA | `ap-platform-qa` | Yes | **PASS** (r2) |
+| Ops | `ops-reviewer` | Platform Ops | `ap-platform-ops` | Advisory | **APPROVE** (r1) |
 
 ## Gate
 
-Merge to `main` only when blocking Sign-Offs are **APPROVE** and APPROVE checklist complete.  
-Promote remains separate (EM GO later).
+**CLOSED** — PR #1 merged to `main` @ `6c648d0` (2026-07-16). Promote remains separate.
 
 ## Hire note
 
