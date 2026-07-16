@@ -11,6 +11,14 @@
 
 Optional header: `X-Machine-Max-Mode: observe|advise|act|ops` (cannot raise above `app.machine-gateway.max-mode`).
 
+## Transport model (v0)
+
+- **Gateway surface is REST only** (`GET /api/machine/context`, `POST /api/machine/chat`).
+- **No gRPC** and no dedicated Machine Gateway websocket endpoint in v0.
+- `GET /context` returns a point-in-time JSON snapshot. Use `ttlSeconds` as a poll hint.
+- `POST /chat` accepts the prompt into an Agent Portal session and returns `status=accepted`; the agent run continues asynchronously.
+- For live token/event updates, use the existing Agent Portal session channels (`/ws`, `/api/sessions/{id}/messages`, `/api/sessions/{id}/events`).
+
 ### Chat body
 
 ```json
