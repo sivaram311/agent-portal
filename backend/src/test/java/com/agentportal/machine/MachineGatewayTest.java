@@ -77,6 +77,24 @@ class MachineToolGuardTest {
     }
 
     @Test
+    void rejectsEditThroughSymlinkParentForNonExistentFile() throws Exception {
+        java.nio.file.Files.createDirectories(workspace);
+        Path externalDir = temp.resolve("external");
+        java.nio.file.Files.createDirectories(externalDir);
+        Path symlink = workspace.resolve("symlink");
+        try {
+            java.nio.file.Files.createSymbolicLink(symlink, externalDir);
+            ObjectNode params = mapper.createObjectNode();
+            params.put("path", workspace.resolve("symlink/newfile.txt").toString());
+            SecurityException ex = assertThrows(SecurityException.class,
+                    () -> guard.assertEditPaths(workspace.toString(), params));
+            assertTrue(ex.getMessage().contains("outside"));
+        } catch (UnsupportedOperationException | java.io.IOException e) {
+            // Windows OS privilege restrictions on symlinks in some environments: skip
+        }
+    }
+
+    @Test
     void allowsStopProcessById() throws Exception {
         ObjectNode params = mapper.createObjectNode();
         params.put("command", "Stop-Process -Id 4242");

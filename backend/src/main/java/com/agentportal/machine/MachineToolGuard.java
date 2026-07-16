@@ -138,24 +138,16 @@ public class MachineToolGuard {
         if (!p.isAbsolute()) {
             p = workspace.resolve(trimmed);
         }
-        p = p.toAbsolutePath().normalize();
-        try {
-            if (java.nio.file.Files.exists(p)) {
-                p = p.toRealPath();
-            }
-        } catch (Exception e) {
-            throw new SecurityException("GATEWAY path guard: cannot resolve real path: " + p);
-        }
-        return p;
+        return resolveRealPath(p);
     }
 
     private boolean isUnderAllowed(Path candidate, Path workspace, Path sandbox) {
-        Path ws = realIfExists(workspace);
+        Path ws = resolveRealPath(workspace);
         if (WorkspacePathResolver.isUnder(candidate, ws)) {
             return true;
         }
         if (sandbox != null) {
-            Path sb = realIfExists(sandbox);
+            Path sb = resolveRealPath(sandbox);
             if (WorkspacePathResolver.isUnder(candidate, sb)) {
                 return true;
             }
@@ -163,15 +155,25 @@ public class MachineToolGuard {
         return workspacePathResolver.isAllowed(candidate);
     }
 
-    private static Path realIfExists(Path p) {
-        try {
-            if (java.nio.file.Files.exists(p)) {
-                return p.toRealPath();
-            }
-        } catch (Exception ignored) {
-            // fall through
+    private static Path resolveRealPath(Path p) {
+        if (p == null) {
+            return null;
         }
-        return p.toAbsolutePath().normalize();
+        Path normalized = p.toAbsolutePath().normalize();
+        Path existing = normalized;
+        while (existing != null && !java.nio.file.Files.exists(existing)) {
+            existing = existing.getParent();
+        }
+        if (existing != null) {
+            try {
+                Path realExisting = existing.toRealPath();
+                Path relative = existing.relativize(normalized);
+                return realExisting.resolve(relative).toAbsolutePath().normalize();
+            } catch (Exception e) {
+                throw new SecurityException("GATEWAY path guard: cannot resolve real path: " + p);
+            }
+        }
+        return normalized;
     }
 
     static List<String> extractPaths(JsonNode params) {
