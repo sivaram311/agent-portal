@@ -12,8 +12,8 @@ Machine standing orders: `E:\MyAgent\workflow\CONSCIOUS.md` (drives, ports, DB s
 
 | Piece | Location |
 |-------|----------|
-| Release package | **0.1.12** · `H:\releases\agent-portal-0.1.12\` (Machine Gateway GATEWAY role fix) · PREPROD F live; PROD G may lag |
-| Promote evidence | `H:\releases\agent-portal-0.1.12\evidence\q1\` · prior: `0.1.11` Machine Gateway ship |
+| Release package | **0.1.13** · `H:\releases\agent-portal-0.1.13\` (canonical POST /api/machine) · PREPROD F live; PROD G may lag |
+| Promote evidence | `H:\releases\agent-portal-0.1.13\evidence\q1\` · prior: `0.1.12` GATEWAY role fix |
 | Consumed by | ProdDeck â‰¥ **0.6.2** (`OS_EVENTS_FORWARD`) Â· AV classic â‰¥ **0.3.16** sessions |
 | Start script | `F:\` / `G:\apps\agent-portal\start.ps1` |
 | Nginx confs | `E:\Source\Deployment\conf\apps\agent-portal*.delena.buzz.conf` |
