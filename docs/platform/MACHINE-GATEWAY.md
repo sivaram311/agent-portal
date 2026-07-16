@@ -1,6 +1,8 @@
 # Machine Gateway — Host Consciousness API
 
-**Status:** Implemented on Agent Portal (`feature/machine-gateway-v0`). Idea SoT: [`machine-gateway`](https://github.com/sivaram311/machine-gateway).
+**Status:** Implemented on Agent Portal (`main`, PREPROD from `v0.1.12+`). Idea SoT: [`machine-gateway`](https://github.com/sivaram311/machine-gateway).
+
+**Note (0.1.12):** `PlatformRegistryService.getRole` resolves `GATEWAY_*` from the full role catalog (`ROLE_DTOS`), not the VirtualDev task-role allowlist — required for `POST /api/machine/chat` session ACL.
 
 ## Endpoints
 
