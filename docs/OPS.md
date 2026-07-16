@@ -1,4 +1,4 @@
-# Operations
+﻿# Operations
 
 ## Deployed environments (2026-07-12)
 
@@ -12,16 +12,16 @@ Machine standing orders: `E:\MyAgent\workflow\CONSCIOUS.md` (drives, ports, DB s
 
 | Piece | Location |
 |-------|----------|
-| Release package | **0.1.10** · `H:\releases\agent-portal-0.1.10\` (hybrid OAuth/PKCE + password) · F/G may still show 0.1.9 until promote |
-| Promote evidence | `H:\releases\agent-portal-0.1.10\evidence\` (oauth) · prior Wave 3 IdP: `0.1.9` |
-| Consumed by | ProdDeck ≥ **0.6.2** (`OS_EVENTS_FORWARD`) · AV classic ≥ **0.3.16** sessions |
+| Release package | **0.1.11** Â· `H:\releases\agent-portal-0.1.11\` (hybrid OAuth/PKCE + password) Â· F/G may still show 0.1.9 until promote |
+| Promote evidence | `H:\releases\agent-portal-0.1.11\evidence\` (oauth) Â· prior Wave 3 IdP: `0.1.9` |
+| Consumed by | ProdDeck â‰¥ **0.6.2** (`OS_EVENTS_FORWARD`) Â· AV classic â‰¥ **0.3.16** sessions |
 | Start script | `F:\` / `G:\apps\agent-portal\start.ps1` |
 | Nginx confs | `E:\Source\Deployment\conf\apps\agent-portal*.delena.buzz.conf` |
 | Machine port registry | `E:\MyAgent\workflow\ports\REGISTRY.md` (source of truth for 4080/5080) |
 
 **UI pack rule:** Angular `:application` output is `frontend/dist/frontend/browser/`. Release `ui/` must be a **flat** copy of `browser/*` (`scripts/pack-release-ui.ps1`). Copying `dist/frontend/*` nests `browser/` and nginx returns **403** on `/` (`directory index forbidden` / `index.html` redirect cycle). Always smoke public `GET /` plus hashed JS/CSS from `index.html`, not only `/api/health`.
 
-### Auth (DEV + PREPROD + PROD) — css-next (Wave 3 + OAuth hybrid)
+### Auth (DEV + PREPROD + PROD) â€” css-next (Wave 3 + OAuth hybrid)
 
 Portal pins **css-next** (classic `:5900` / `css.delena.buzz` left for other apps). **Hybrid** = password form + CSS SSO (OAuth/PKCE).
 
@@ -30,35 +30,35 @@ Portal pins **css-next** (classic `:5900` / `css.delena.buzz` left for other app
 | IdP | `https://css-next.delena.buzz` / local `:5910` |
 | `clientId` | `agent-portal` |
 | Auth mode | `CSS_AUTH_MODE=hybrid` (or `password` / `oauth`) |
-| Password lane | Same-origin `POST /auth/login` (nginx → `:5910`); empty `CSS_AUTH_URL` is OK |
-| SSO lane | Browser → `{CSS_ISSUER}/oauth/authorize` → `/oauth/login` → code → Portal BFF `POST /api/auth/oauth/token` → issuer (PKCE S256) |
-| OAuth callback | `{origin}/oauth/callback` — **not** under `/auth/` (nginx proxies `/auth/` to IdP) |
+| Password lane | Same-origin `POST /auth/login` (nginx â†’ `:5910`); empty `CSS_AUTH_URL` is OK |
+| SSO lane | Browser â†’ `{CSS_ISSUER}/oauth/authorize` â†’ `/oauth/login` â†’ code â†’ Portal BFF `POST /api/auth/oauth/token` â†’ issuer (PKCE S256) |
+| OAuth callback | `{origin}/oauth/callback` â€” **not** under `/auth/` (nginx proxies `/auth/` to IdP) |
 | JWKS | `http://127.0.0.1:5910/.well-known/jwks.json` |
 | Issuer | `https://css-next.delena.buzz` |
 
 | Host | nginx `/auth` upstream |
 |------|------------------------|
-| `delena.buzz` | `:5910` (strips `Origin` — apex not matched by css-next `https://*.delena.buzz` CORS) |
+| `delena.buzz` | `:5910` (strips `Origin` â€” apex not matched by css-next `https://*.delena.buzz` CORS) |
 | `agent-portal-staging.delena.buzz` | `:5910` |
 | `agent-portal.delena.buzz` | `:5910` |
 
-Redirect allow-list (css-next): `http(s)://localhost|127.0.0.1…` and `https://delena.buzz` / `https://*.delena.buzz` — covers Portal callbacks. No css-next config change required for those hosts.
+Redirect allow-list (css-next): `http(s)://localhost|127.0.0.1â€¦` and `https://delena.buzz` / `https://*.delena.buzz` â€” covers Portal callbacks. No css-next config change required for those hosts.
 
-Unauthenticated `/api/**` → **403** is expected. Use a css-next JWT (`Authorization: Bearer …`).
+Unauthenticated `/api/**` â†’ **403** is expected. Use a css-next JWT (`Authorization: Bearer â€¦`).
 
-Admin password: `CSS_ADMIN_PASSWORD` in `G:\apps\css-next\.env` (prod schema) — never commit it. README `admin`/`admin123` is DEV classic seed only.
+Admin password: `CSS_ADMIN_PASSWORD` in `G:\apps\css-next\.env` (prod schema) â€” never commit it. README `admin`/`admin123` is DEV classic seed only.
 
 ### ProdDeck OS events (DEV)
 
 `POST /api/os-events` accepts ProdDeck OS event envelopes (`permitAll`). Audits as `os.event.<type>`; returns `{ "ok": true }`. Contract: ProdDeck `docs/os/portal-events.md`. Do **not** enable on F:/G: cutovers without an explicit promote.
 
-**F/G cutover:** Live as Portal **0.1.9** on `:4080` / `:5080` (2026-07-15 Wave 3 css-next IdP). ProdDeck F/G sets `OS_EVENTS_FORWARD=1` + matching `PLATFORM_APPS_URL`. Scaffold: `H:\releases\proddeck-0.6.1\evidence\portal-os-events-cutover-scaffold.md` · release `H:\releases\agent-portal-0.1.8`.
+**F/G cutover:** Live as Portal **0.1.9** on `:4080` / `:5080` (2026-07-15 Wave 3 css-next IdP). ProdDeck F/G sets `OS_EVENTS_FORWARD=1` + matching `PLATFORM_APPS_URL`. Scaffold: `H:\releases\proddeck-0.6.1\evidence\portal-os-events-cutover-scaffold.md` Â· release `H:\releases\agent-portal-0.1.8`.
 
 ### Postgres text columns (do not use `@Lob` / CLOB)
 
 On PostgreSQL, JPA `@Lob` / `columnDefinition = "CLOB"` maps to large objects (`oid`) and causes:
 
-- `ERROR: type "clob" does not exist` (DDL skip → missing tables)
+- `ERROR: type "clob" does not exist` (DDL skip â†’ missing tables)
 - `Unable to access lob stream` / `Large Objects may not be used in auto-commit mode`
 
 **Rule:** map long strings with `@JdbcTypeCode(SqlTypes.LONGVARCHAR)` + `columnDefinition = "TEXT"`. Evidence: `H:\releases\agent-portal-0.1.0\evidence\jdbc-fix.md`, `e2e-sanity-prod.md`.
@@ -68,7 +68,7 @@ On PostgreSQL, JPA `@Lob` / `columnDefinition = "CLOB"` maps to large objects (`
 After deploy, with a CSS token against `:5080` (or Host `agent-portal.delena.buzz`):
 
 1. `GET /api/health`, `GET /api/auth/config`
-2. Login → `GET /api/sessions` → `POST /api/sessions`
+2. Login â†’ `GET /api/sessions` â†’ `POST /api/sessions`
 3. Session messages / events / `GET /api/guidance/packs`
 
 Promote gates: `E:\MyAgent\workflow\promote\` (`promote-em` + evidence packs).
@@ -79,16 +79,16 @@ Promote gates: `E:\MyAgent\workflow\promote\` (`promote-em` + evidence packs).
 |-----|---------|
 | Transcript | Chat (markdown) |
 | Logs | Subagents + tool runs + **collapsible** embedded terminal (same `terminal_chunk` stream as Console) |
-| **Console** | Plain terminal scrollback — same live agent output you would see in PowerShell (`terminal_chunk` WS + event replay) |
+| **Console** | Plain terminal scrollback â€” same live agent output you would see in PowerShell (`terminal_chunk` WS + event replay) |
 | Code / Preview | Workspace files |
 | Changes | Diff accept/reject |
-| History | Merged timeline, **newest first**; event payloads parsed to human lines (Cursor + Antigravity); protocol noise collapsed by default; scroll ↑/↓ FABs |
+| History | Merged timeline, **newest first**; event payloads parsed to human lines (Cursor + Antigravity); protocol noise collapsed by default; scroll â†‘/â†“ FABs |
 | Guidance | Rules/skills |
 | Activity | User audit |
 
 ### Session list vs detail
 
-If search/filter hides the currently open session, the detail pane clears (avoids master–detail desync).
+If search/filter hides the currently open session, the detail pane clears (avoids masterâ€“detail desync).
 
 ### Mobile
 
@@ -100,9 +100,9 @@ Cursor ACP often sends a useful title on the first `tool_call`, then later updat
 
 **Logs tab:** Sub-agents only appear in the Sub-agents panel (finished collapsed by default; **Show finished**). Tool runs excludes `kind=subagent` so rows are not doubled. Cancel marks open tool/subagent rows `cancelled` so they do not stick as `in_progress`. Embedded terminal is collapsed until chunks arrive (or the user expands it); full scrollback stays on **Console**. Works for both **Cursor** and **Antigravity** (`terminal_chunk` from each bridge).
 
-**History tab:** Events are formatted via a provider-agnostic parser (no raw JSON dump for known types). List is newest-first so auto-refresh keeps the latest activity at the top; use the floating ↑/↓ buttons to jump.
+**History tab:** Events are formatted via a provider-agnostic parser (no raw JSON dump for known types). List is newest-first so auto-refresh keeps the latest activity at the top; use the floating â†‘/â†“ buttons to jump.
 
-**Env configs:** Keep Cursor/Antigravity and CSS settings in `application.properties` (DEV), `application-preprod.properties`, and `application-prod.properties` separately — do not copy port/DB/CORS values across profiles.
+**Env configs:** Keep Cursor/Antigravity and CSS settings in `application.properties` (DEV), `application-preprod.properties`, and `application-prod.properties` separately â€” do not copy port/DB/CORS values across profiles.
 
 ## Docker hybrid deploy (recommended on this Windows host)
 
@@ -121,7 +121,7 @@ Docker runs **Postgres + CSS + static frontend**. The portal **backend stays on 
 
 ```powershell
 cd E:\MyWorkspace\agent-portal
-copy .env.docker.example .env   # once — set PUBLIC_HOST to your LAN/public IP
+copy .env.docker.example .env   # once â€” set PUBLIC_HOST to your LAN/public IP
 .\scripts\run-backend-docker-deps.ps1
 ```
 
@@ -145,7 +145,7 @@ java -jar target\backend-0.0.1-SNAPSHOT.jar
 
 | Service | URL |
 |---------|-----|
-| UI | `http://<PUBLIC_HOST>:4200` or [https://delena.buzz/](https://delena.buzz/) via Cloudflare → NGINX |
+| UI | `http://<PUBLIC_HOST>:4200` or [https://delena.buzz/](https://delena.buzz/) via Cloudflare â†’ NGINX |
 | API | `http://<PUBLIC_HOST>:8080` (also `https://delena.buzz/api/` via NGINX) |
 | CSS | `http://<PUBLIC_HOST>:9000` (also `https://delena.buzz/auth/` via NGINX) |
 
@@ -162,7 +162,7 @@ Full runbook: [DELENA-PROXY.md](DELENA-PROXY.md). Source configs: `E:\Source\Dep
 | `APP_CORS_ORIGINS` | Include `https://delena.buzz` and `https://www.delena.buzz` |
 | CSS CORS | `https://delena.buzz` in CSS `allowed-origin-patterns` + CSS JAR restarted |
 
-Mixed content (HTTPS page → HTTP `/auth/login`) is blocked by browsers; the portal client matches auth calls to the page origin/protocol.
+Mixed content (HTTPS page â†’ HTTP `/auth/login`) is blocked by browsers; the portal client matches auth calls to the page origin/protocol.
 
 If login returns **403 Invalid CORS request**, restart CSS after ensuring `https://delena.buzz` is in `centralized-security-system` `css.cors.allowed-origin-patterns`.
 
@@ -211,7 +211,7 @@ docker compose exec -T postgres psql -U agent agentportal < backup.sql
 
 ## CORS (Agent API)
 
-Default `APP_CORS_ORIGINS=*` — any browser/AI origin may call `/api/**`. **Authentication is unchanged** (CSS JWT or `X-API-Key`). Discovery: `GET /api/agent/actions` (public). Contract: [platform/AGENT-API.md](platform/AGENT-API.md) and `workspaces/agent-api/`.
+Default `APP_CORS_ORIGINS=*` â€” any browser/AI origin may call `/api/**`. **Authentication is unchanged** (CSS JWT or `X-API-Key`). Discovery: `GET /api/agent/actions` (public). Contract: [platform/AGENT-API.md](platform/AGENT-API.md) and `workspaces/agent-api/`.
 
 
 Set `AGENT_PORTAL_API_KEY` or `app.security.api-key`. Clients must send `X-API-Key`. `/api/health` and `/api/auth/config` stay open.
@@ -224,7 +224,7 @@ Agent Portal is a CSS **resource server** (`clientId: agent-portal`).
 
 1. Run CSS on `:9000` (Docker service `css`, or `mvn spring-boot:run` in the CSS repo)
 2. Enable portal auth: `CSS_ENABLED=true` (or `css.enabled=true` / `application-prod.properties`)
-3. Open the portal — login overlay posts to `POST {css.auth-url}/auth/login` with `clientId=agent-portal`
+3. Open the portal â€” login overlay posts to `POST {css.auth-url}/auth/login` with `clientId=agent-portal`
 4. API calls send `Authorization: Bearer <accessToken>`; SockJS passes `access_token` on `/ws/**`
 5. Sessions are owned by the JWT subject (`ownerUsername`); admins can list all
 6. STOMP subscriptions to `/topic/sessions/{id}` are ACL-checked when CSS is on
@@ -251,7 +251,7 @@ Important env (from `.env` or process):
 | Variable | Purpose |
 |----------|---------|
 | `PUBLIC_HOST` | LAN/public IP used in CORS / CSS auth URL hints |
-| `AGENT_WORKSPACE_ROOT` | Absolute workspace sandbox (script sets `…\agent-portal\workspaces`) |
+| `AGENT_WORKSPACE_ROOT` | Absolute workspace sandbox (script sets `â€¦\agent-portal\workspaces`) |
 | `AGENT_DEFAULT_AUTO_APPROVE` | Cursor ACP: `true` = **allow-always** (no per-tool clicks), including role gates. PREPROD/PROD: `true` |
 | `AGENT_ANTIGRAVITY_SKIP_PERMISSIONS` | Antigravity `--dangerously-skip-permissions`. PREPROD/PROD: `true` |
 | `CURSOR_AGENT_CMD` | Absolute path to `agent.cmd` (required on Windows for CreateProcess) |
@@ -262,7 +262,7 @@ Important env (from `.env` or process):
 | `CLOUDFLARE_ZONE_NAME` | Zone hostname (e.g. `delena.buzz`) |
 | `CLOUDFLARE_ACCOUNT_ID` | Cloudflare account ID |
 
-When restarting only the API, stop the Java process listening on the **target env port** — DEV **8080**, PREPROD **4080**, PROD **5080** (or matching JAR on that drive). Do **not** `Stop-Process` by broad name match on `cursor` / `node` / `agent` — those include the Cursor IDE agent and will kill your editing session.
+When restarting only the API, stop the Java process listening on the **target env port** â€” DEV **8080**, PREPROD **4080**, PROD **5080** (or matching JAR on that drive). Do **not** `Stop-Process` by broad name match on `cursor` / `node` / `agent` â€” those include the Cursor IDE agent and will kill your editing session.
 
 ## Cloudflare DNS / zone
 
@@ -292,16 +292,16 @@ curl.exe -sS -H "Authorization: Bearer $token" -H "Content-Type: application/jso
   "https://api.cloudflare.com/client/v4/zones/$zoneId/dns_records"
 ```
 
-Use these for TLS / tunnel cutover (e.g. pointing `delena.buzz` at the host) — keep secrets out of git and rotate the token if it was ever pasted into chat or logs.
+Use these for TLS / tunnel cutover (e.g. pointing `delena.buzz` at the host) â€” keep secrets out of git and rotate the token if it was ever pasted into chat or logs.
 
 ## Workspace sandbox
 
 - Relative `workspacePath` values resolve under `agent.workspace.root` / `AGENT_WORKSPACE_ROOT`
 - Absolute paths outside that root are **not allowed** unless they stay under an entry in `agent.workspace.allowed-roots` / `AGENT_WORKSPACE_ALLOWED_ROOTS` (comma-separated absolute prefixes)
 - `..` segments are rejected; file browser skips symlinks and uses `toRealPath` checks
-- If the backend is started with cwd `backend/` and no `AGENT_WORKSPACE_ROOT`, `./workspaces` resolves to `backend\workspaces` and existing sessions under `agent-portal\workspaces\…` will fail create/prompt validation
+- If the backend is started with cwd `backend/` and no `AGENT_WORKSPACE_ROOT`, `./workspaces` resolves to `backend\workspaces` and existing sessions under `agent-portal\workspaces\â€¦` will fail create/prompt validation
 
-Example (DEV — allow control-plane and Source trees outside the sandbox):
+Example (DEV â€” allow control-plane and Source trees outside the sandbox):
 
 ```env
 AGENT_WORKSPACE_ROOT=E:\MyWorkspace\sandbox
@@ -314,7 +314,7 @@ PREPROD/PROD: set `AGENT_WORKSPACE_ALLOWED_ROOTS` when AgentVerse / Dispatch nee
 AGENT_WORKSPACE_ALLOWED_ROOTS=E:\MyWorkspace,E:\Source,E:\wt,F:\apps,G:\apps
 ```
 
-Sandbox root remains `AGENT_WORKSPACE_ROOT` (F/G `…\agent-portal\workspaces`). Empty allowlist = sandbox-only.
+Sandbox root remains `AGENT_WORKSPACE_ROOT` (F/G `â€¦\agent-portal\workspaces`). Empty allowlist = sandbox-only.
 
 Tracked samples under `workspaces/` (see [workspaces/README.md](../workspaces/README.md)):
 
@@ -336,14 +336,14 @@ Realme P2 Pro checklist, audit screenshots, and Playwright commands: [MOBILE-QA.
 
 | Symptom | Likely cause | Fix |
 |---------|--------------|-----|
-| Prompt 500 / hang after resume | Stale `cursorSessionId`; `session/load` wedges stdio | Fixed in `AgentBridge` (15s timeout → close → `session/new`). Rebuild/restart backend. |
-| `workspacePath is not allowed` / `must stay under …` | Path outside sandbox and allowlist, or missing `AGENT_WORKSPACE_ROOT` | Point at a path under the root, or add a prefix to `AGENT_WORKSPACE_ALLOWED_ROOTS`; set root via `run-host-stack.ps1` |
+| Prompt 500 / hang after resume | Stale `cursorSessionId`; `session/load` wedges stdio | Fixed in `AgentBridge` (15s timeout â†’ close â†’ `session/new`). Rebuild/restart backend. |
+| `workspacePath is not allowed` / `must stay under â€¦` | Path outside sandbox and allowlist, or missing `AGENT_WORKSPACE_ROOT` | Point at a path under the root, or add a prefix to `AGENT_WORKSPACE_ALLOWED_ROOTS`; set root via `run-host-stack.ps1` |
 | Permissions stuck | Auto-approve off + pending dialog | Set `AGENT_DEFAULT_AUTO_APPROVE=true` or decide in UI |
-| Orphan `cursor-agent` after backend kill | ACP child left behind | Kill only the child whose parent was the dead portal Java PID — never mass-kill by process name |
+| Orphan `cursor-agent` after backend kill | ACP child left behind | Kill only the child whose parent was the dead portal Java PID â€” never mass-kill by process name |
 
 ## Sessions API extras
 
-- `POST /api/sessions/{id}/unarchive` — restore an `ARCHIVED` session to `IDLE`
+- `POST /api/sessions/{id}/unarchive` â€” restore an `ARCHIVED` session to `IDLE`
 - List includes archived sessions so the UI filter can show them
 
 ## Rules & Skills (guidance)
@@ -352,7 +352,7 @@ Per-user library + per-session overrides.
 
 | Scope | Where | Behavior |
 |-------|--------|----------|
-| Global | Top-bar **Rules** → Rules & Skills sheet | CRUD packs; **Default** toggle = enabled for new sessions |
+| Global | Top-bar **Rules** â†’ Rules & Skills sheet | CRUD packs; **Default** toggle = enabled for new sessions |
 | Session | **Guidance** tab | Checklist of library packs + optional session-only note; **Effective** chips |
 
 **Precedence:** session checklist wins. Create dialog option **Use my Rules & Skills defaults** (on by default) copies enabled packs onto the new session.
@@ -364,7 +364,7 @@ Per-user library + per-session overrides.
   - `.cursor/skills/<slug>/SKILL.md`
   - `AGENTS.md` index  
   Files include `<!-- agent-portal-managed -->` and are rewritten on guidance save / each prompt.
-- **Antigravity (and Cursor fallback):** compact instruction **prefix** prepended to the agent prompt (rules full text + skill summaries). Chat history stores only the user’s raw message.
+- **Antigravity (and Cursor fallback):** compact instruction **prefix** prepended to the agent prompt (rules full text + skill summaries). Chat history stores only the userâ€™s raw message.
 
 APIs:
 
@@ -387,28 +387,28 @@ When CSS is enabled, owners can `POST /api/sessions/{id}/collaborators` with `{ 
 - [ ] `spring.h2.console.enabled=false`
 - [ ] Secrets only via env (`CURSOR_API_KEY`, `CLOUDFLARE_API_TOKEN`, DB password, never commit)
 - [ ] Cloudflare zone vars set when using DNS/tunnel (`CLOUDFLARE_ZONE_ID`, `CLOUDFLARE_ZONE_NAME`, `CLOUDFLARE_ACCOUNT_ID`)
-- [x] Rate limit tuned (`app.rate-limit.per-minute` — **180** on preprod/prod as of 2026-07-15 hotfix)
+- [x] Rate limit tuned (`app.rate-limit.per-minute` â€” **180** on preprod/prod as of 2026-07-15 hotfix)
 - [ ] Confirm `/api/health` capabilities badges match expected matrix
 - [ ] Backup schedule for Postgres (or H2 file copy)
 
 ## Rate limit (loopback / AgentVerse proxy)
 
-`RateLimitFilter` keys by **authenticated principal + client IP** when possible. When the direct peer is loopback/private (Next.js `/api/portal` proxy on `:4312`/`:5312` → Portal `:4080`/`:5080`), honor `X-Forwarded-For` / `X-Real-IP` / `CF-Connecting-IP` so all AV users are not merged into one `127.0.0.1` bucket. CSS JWT filter runs **before** rate limit so `sub` is available.
+`RateLimitFilter` keys by **authenticated principal + client IP** when possible. When the direct peer is loopback/private (Next.js `/api/portal` proxy on `:4312`/`:5312` â†’ Portal `:4080`/`:5080`), honor `X-Forwarded-For` / `X-Real-IP` / `CF-Connecting-IP` so all AV users are not merged into one `127.0.0.1` bucket. CSS JWT filter runs **before** rate limit so `sub` is available.
 
 Live preprod/prod: `app.rate-limit.per-minute=180`. Hotfix JAR swapped to F/G `agent-portal.jar` 2026-07-15 (VERSION **0.1.9** IdP env + nginx; jar body still 0.1.8 artifact until next bake).
 
 ## Audit
 
-`GET /api/audit?limit=50` — own events for normal users; all events for `ROLE_ADMIN`.  
+`GET /api/audit?limit=50` â€” own events for normal users; all events for `ROLE_ADMIN`.  
 Optional `?sessionId=` filter. UI: session **Activity** tab.
 
 ## Changes / history
 
-- `GET /api/sessions/{id}/changes` — git porcelain when `.git` exists, else snapshot vs last prompt baseline
-- `GET /api/sessions/{id}/changes/diff?path=` — unified diff for text files
-- `POST /api/sessions/{id}/changes/accept` `{ "path" }` — keep current file
-- `POST /api/sessions/{id}/changes/reject` `{ "path" }` — restore from `.agent-portal/baseline/...` or `git checkout`
-- `GET /api/sessions/{id}/events` — persisted agent events for History tab
+- `GET /api/sessions/{id}/changes` â€” git porcelain when `.git` exists, else snapshot vs last prompt baseline
+- `GET /api/sessions/{id}/changes/diff?path=` â€” unified diff for text files
+- `POST /api/sessions/{id}/changes/accept` `{ "path" }` â€” keep current file
+- `POST /api/sessions/{id}/changes/reject` `{ "path" }` â€” restore from `.agent-portal/baseline/...` or `git checkout`
+- `GET /api/sessions/{id}/events` â€” persisted agent events for History tab
 
 ## Presets
 
@@ -424,3 +424,4 @@ agent.antigravity.model=
 ```
 
 Webhooks fire on `run_completed`, `run_failed`, `input_required`, `run_cancelled`.
+
