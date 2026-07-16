@@ -8,49 +8,24 @@ One REST entry for external AIs to read live host/control-plane context and opti
 |-----|----------|
 | DEV | `https://delena.buzz/api` (or `http://127.0.0.1:8080/api`) |
 | PREPROD | `https://agent-portal-staging.delena.buzz/api` |
-| PREPROD bare public IP | `http://103.118.183.185/api` (NGINX `:80` default → staging; no Host header required) |
-| PREPROD public-IP alt port | `http://103.118.183.185:4081/api` (dedicated edge; optional) |
 | PROD | `https://agent-portal.delena.buzz/api` |
 
 Canonical path: **`POST /api/machine`**.
 
-Prefer the staging **hostname** when reachable. For locked sandboxes, use the **bare public IP on port 80** (no special Host header). Named hosts (`delena.buzz`, `agent-portal.delena.buzz`, …) are unchanged.
-
-### PREPROD bare public IP (port 80)
-
-| Purpose | URL |
-|---------|-----|
-| API | `http://103.118.183.185/api` |
-| Login | `http://103.118.183.185/auth/login` |
-| Canonical | `POST http://103.118.183.185/api/machine` |
-
-NGINX `default_server` on `:80` for `103.118.183.185` / unmatched Host → PREPROD `:4080` + `/auth` → `:5910`. Hostname `https://agent-portal-staging.delena.buzz` still works.
+Use **hostname URLs only**. Bare public-IP edges (`http://103.118.183.185` / `:4081`) are **disabled**.
 
 ## Auth
 
-**PREPROD open-access (default):** when `app.security.open-access=true` (PREPROD profile), **no login is required**. Call the API directly:
-
-```http
-POST http://103.118.183.185/api/machine
-Content-Type: application/json
-
-{}
-```
-
-Check: `GET /api/auth/config` → `"openAccess": true`, `"authRequired": false`.
-
-**When open-access is false** (DEV default / PROD always):
+CSS JWT is required (PREPROD and PROD). `app.security.open-access` defaults to **false**.
 
 1. Login once:
 
 ```http
-POST {CSS}/auth/login
+POST https://agent-portal-staging.delena.buzz/auth/login
 Content-Type: application/json
 
 { "username": "admin", "password": "<secret>", "clientId": "agent-portal" }
 ```
-
-On PREPROD/PROD, CSS is same-origin: `POST https://agent-portal-staging.delena.buzz/auth/login` (or the prod host).
 
 2. Call the gateway with:
 
@@ -59,6 +34,8 @@ Authorization: Bearer <accessToken>
 ```
 
 Or `X-API-Key` when the portal has `AGENT_PORTAL_API_KEY` configured. Never commit tokens or passwords.
+
+Check: `GET /api/auth/config` → `"openAccess": false`, `"authRequired": true` (when CSS enabled).
 
 ## Canonical call — `POST /api/machine`
 
