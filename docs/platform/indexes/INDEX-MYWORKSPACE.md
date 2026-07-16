@@ -27,6 +27,7 @@
 
 | Project | Doc roots |
 |---------|-----------|
+| machine-gateway | `machine-gateway/README.md`, `docs/` ([GitHub](https://github.com/sivaram311/machine-gateway)) |
 | persistent-agent-platform | `persistent-agent-platform/README.md`, `docs/` |
 | mt5-dev | `mt5-dev/README.md`, `docs/` |
 | MT5_Docs | `MT5_Docs/README.md` |
