@@ -8,22 +8,23 @@ One REST entry for external AIs to read live host/control-plane context and opti
 |-----|----------|
 | DEV | `https://delena.buzz/api` (or `http://127.0.0.1:8080/api`) |
 | PREPROD | `https://agent-portal-staging.delena.buzz/api` |
-| PREPROD public-IP (sandbox escape hatch) | `http://103.118.183.185:4081/api` |
+| PREPROD bare public IP | `http://103.118.183.185/api` (NGINX `:80` default → staging; no Host header required) |
+| PREPROD public-IP alt port | `http://103.118.183.185:4081/api` (dedicated edge; optional) |
 | PROD | `https://agent-portal.delena.buzz/api` |
 
 Canonical path: **`POST /api/machine`**.
 
-Prefer the staging **hostname** when reachable. Use the **public-IP edge** only when a sandbox cannot reach Cloudflare DNS/HTTPS.
+Prefer the staging **hostname** when reachable. For locked sandboxes, use the **bare public IP on port 80** (no special Host header). Named hosts (`delena.buzz`, `agent-portal.delena.buzz`, …) are unchanged.
 
-### PREPROD public-IP bases
+### PREPROD bare public IP (port 80)
 
 | Purpose | URL |
 |---------|-----|
-| API | `http://103.118.183.185:4081/api` |
-| Login | `http://103.118.183.185:4081/auth/login` |
-| Canonical | `POST http://103.118.183.185:4081/api/machine` |
+| API | `http://103.118.183.185/api` |
+| Login | `http://103.118.183.185/auth/login` |
+| Canonical | `POST http://103.118.183.185/api/machine` |
 
-NGINX listens on TCP **4081** (claimed) and proxies `/api`+`/ws` → `:4080`, `/auth` → css-next `:5910`. HTTP only (no TLS on this escape hatch).
+NGINX `default_server` on `:80` for `103.118.183.185` / unmatched Host → PREPROD `:4080` + `/auth` → `:5910`. Hostname `https://agent-portal-staging.delena.buzz` still works.
 
 ## Auth
 

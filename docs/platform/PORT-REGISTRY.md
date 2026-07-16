@@ -81,7 +81,8 @@ Any human or AI **must** read this before binding a port. After claiming, update
 | `https://delena.buzz/auth/` | `127.0.0.1:5910` (css-next; Portal Wave 3) |
 | `https://delena.buzz/.well-known/` | `127.0.0.1:5910` |
 | `https://agent-portal-staging.delena.buzz/` | static `F:\apps\agent-portal\ui` + API `:4080`; `/auth` → `:5910` |
-| `http://103.118.183.185:4081/` | PREPROD public-IP escape hatch (NGINX `:4081` → API `:4080` + `/auth` → `:5910`); prefer staging hostname when reachable |
+| `http://103.118.183.185/` (bare IP / unmatched Host on `:80`) | PREPROD default_server → same as staging (`:4080` + `/auth` `:5910`); named hosts unchanged |
+| `http://103.118.183.185:4081/` | PREPROD dedicated public-IP edge (NGINX `:4081` → same upstreams) |
 | `https://agent-portal.delena.buzz/` | static `G:\apps\agent-portal\ui` + API `:5080`; `/auth` → `:5910` |
 | `https://hdrive.delena.buzz/` | `127.0.0.1:5010` (H: file expose) |
 | `https://css.delena.buzz/` | `127.0.0.1:5900` |
