@@ -8,9 +8,22 @@ One REST entry for external AIs to read live host/control-plane context and opti
 |-----|----------|
 | DEV | `https://delena.buzz/api` (or `http://127.0.0.1:8080/api`) |
 | PREPROD | `https://agent-portal-staging.delena.buzz/api` |
+| PREPROD public-IP (sandbox escape hatch) | `http://103.118.183.185:4081/api` |
 | PROD | `https://agent-portal.delena.buzz/api` |
 
 Canonical path: **`POST /api/machine`**.
+
+Prefer the staging **hostname** when reachable. Use the **public-IP edge** only when a sandbox cannot reach Cloudflare DNS/HTTPS.
+
+### PREPROD public-IP bases
+
+| Purpose | URL |
+|---------|-----|
+| API | `http://103.118.183.185:4081/api` |
+| Login | `http://103.118.183.185:4081/auth/login` |
+| Canonical | `POST http://103.118.183.185:4081/api/machine` |
+
+NGINX listens on TCP **4081** (claimed) and proxies `/api`+`/ws` → `:4080`, `/auth` → css-next `:5910`. HTTP only (no TLS on this escape hatch).
 
 ## Auth
 

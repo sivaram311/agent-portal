@@ -34,6 +34,7 @@ Any human or AI **must** read this before binding a port. After claiming, update
 | 3010 | h-drive-server | h-drive-server | host | 0.0.0.0 | active | Exposes H:\ over HTTP; open CORS |
 | 4010 | h-drive-server | h-drive-server | staging | 0.0.0.0 | active | PREPROD `F:\apps\h-drive-server` |
 | 4080 | agent-portal-api | agent-portal | staging | 0.0.0.0 | active | PREPROD `F:\apps\agent-portal`; agent-portal-staging.delena.buzz; Machine Gateway same `/api/machine/*` after promote |
+| 4081 | agent-portal-public-edge | agent-portal | staging | 0.0.0.0 | active | PREPROD public-IP NGINX edge only; `http://103.118.183.185:4081` → `:4080` + `/auth` → `:5910`; no new CF DNS |
 | 4200 | agent-portal-ui | agent-portal | host | 0.0.0.0 | active | DEV `ng serve` / delena.buzz / |
 | 4900 | css-auth | css | staging | 0.0.0.0 | active | Classic Preprod CSS IdP — keep |
 | 4910 | css-auth-next | css-next | staging | 0.0.0.0 | active | Side-fleet PREPROD; css-next-staging.delena.buzz → :4910 |
@@ -80,6 +81,7 @@ Any human or AI **must** read this before binding a port. After claiming, update
 | `https://delena.buzz/auth/` | `127.0.0.1:5910` (css-next; Portal Wave 3) |
 | `https://delena.buzz/.well-known/` | `127.0.0.1:5910` |
 | `https://agent-portal-staging.delena.buzz/` | static `F:\apps\agent-portal\ui` + API `:4080`; `/auth` → `:5910` |
+| `http://103.118.183.185:4081/` | PREPROD public-IP escape hatch (NGINX `:4081` → API `:4080` + `/auth` → `:5910`); prefer staging hostname when reachable |
 | `https://agent-portal.delena.buzz/` | static `G:\apps\agent-portal\ui` + API `:5080`; `/auth` → `:5910` |
 | `https://hdrive.delena.buzz/` | `127.0.0.1:5010` (H: file expose) |
 | `https://css.delena.buzz/` | `127.0.0.1:5900` |
@@ -101,7 +103,7 @@ Future app subdomains: see [CLOUDFLARE-DNS-PROXY.md](CLOUDFLARE-DNS-PROXY.md).
 
 | Decision | Value |
 |----------|-------|
-| New TCP port? | **No** — reuses agent-portal `:8080` / `:4080` / `:5080` |
+| New TCP port? | **No for Machine Gateway itself** — reuses agent-portal `:8080` / `:4080` / `:5080`. PREPROD public-IP sandbox edge is separate NGINX `:4081` (see PORT-REGISTRY). |
 | New Cloudflare DNS / subdomain? | **No** — paths under existing hosts (`/api/machine/*`) |
 | New NGINX server block? | **No** — existing `/api` proxy is enough |
 | New CSS `clientId`? | **No** — `clientId=agent-portal` |
