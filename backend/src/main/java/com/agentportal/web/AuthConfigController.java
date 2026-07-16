@@ -33,6 +33,8 @@ public class AuthConfigController {
         body.put("authMode", normalizeAuthMode(cssProperties.getAuthMode()));
         body.put("oauthRedirectPath", normalizeRedirectPath(cssProperties.getOauthRedirectPath()));
         body.put("apiKeyFallbackEnabled", appProperties.getSecurity().isEnabled());
+        body.put("openAccess", appProperties.getSecurity().isOpenAccess());
+        body.put("authRequired", !appProperties.getSecurity().isOpenAccess() && cssProperties.isEnabled());
         return body;
     }
 

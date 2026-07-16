@@ -52,7 +52,9 @@ public class SecurityConfig {
     @Bean
     @Order(1)
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        boolean requireAuth = cssProperties.isEnabled() || appProperties.getSecurity().isEnabled();
+        boolean openAccess = appProperties.getSecurity().isOpenAccess();
+        boolean requireAuth = !openAccess
+                && (cssProperties.isEnabled() || appProperties.getSecurity().isEnabled());
 
         http.csrf(csrf -> csrf.disable())
                 .cors(Customizer.withDefaults())
@@ -83,13 +85,15 @@ public class SecurityConfig {
                 .headers(h -> h.frameOptions(f -> f.sameOrigin()));
 
         http.addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class);
-        CssJwtAuthenticationFilter cssFilter = cssJwtAuthenticationFilter.getIfAvailable();
-        if (cssFilter != null) {
-            // JWT first so RateLimitFilter can key by authenticated principal when present.
-            http.addFilterBefore(cssFilter, RateLimitFilter.class);
+        // When open-access, skip JWT filter so missing/invalid tokens never block sandbox callers.
+        if (!openAccess) {
+            CssJwtAuthenticationFilter cssFilter = cssJwtAuthenticationFilter.getIfAvailable();
+            if (cssFilter != null) {
+                http.addFilterBefore(cssFilter, RateLimitFilter.class);
+            }
         }
 
-        if (appProperties.getSecurity().isEnabled()) {
+        if (!openAccess && appProperties.getSecurity().isEnabled()) {
             http.addFilterBefore(apiKeyFilter(), UsernamePasswordAuthenticationFilter.class);
         }
         return http.build();
@@ -98,16 +102,17 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
+        boolean openAccess = appProperties.getSecurity().isOpenAccess();
         List<String> origins = appProperties.getCors().getAllowedOrigins();
-        if (origins == null || origins.isEmpty()) {
+        if (openAccess || origins == null || origins.isEmpty()) {
             origins = List.of("*");
         }
         config.setAllowedOriginPatterns(origins);
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setExposedHeaders(List.of("Authorization", "X-API-Key"));
-        // Bearer/API-key auth does not require cookies; keep credentials for SockJS edge cases.
-        config.setAllowCredentials(true);
+        // Open-access sandboxes: no cookies required; credentials+wildcard is problematic.
+        config.setAllowCredentials(!openAccess);
         config.setMaxAge(3600L);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/api/**", config);

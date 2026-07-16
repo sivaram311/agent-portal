@@ -42,6 +42,11 @@ public class AppProperties {
 
     public static class Security {
         private String apiKey = "";
+        /**
+         * When true, /api/** and /ws/** are permitAll (no JWT/API-key required).
+         * Intended for PREPROD sandbox escape hatch only — never enable on prod.
+         */
+        private boolean openAccess = false;
 
         public String getApiKey() {
             return apiKey;
@@ -53,6 +58,14 @@ public class AppProperties {
 
         public boolean isEnabled() {
             return apiKey != null && !apiKey.isBlank();
+        }
+
+        public boolean isOpenAccess() {
+            return openAccess;
+        }
+
+        public void setOpenAccess(boolean openAccess) {
+            this.openAccess = openAccess;
         }
     }
 

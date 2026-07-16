@@ -28,6 +28,19 @@ NGINX `default_server` on `:80` for `103.118.183.185` / unmatched Host → PREPR
 
 ## Auth
 
+**PREPROD open-access (default):** when `app.security.open-access=true` (PREPROD profile), **no login is required**. Call the API directly:
+
+```http
+POST http://103.118.183.185/api/machine
+Content-Type: application/json
+
+{}
+```
+
+Check: `GET /api/auth/config` → `"openAccess": true`, `"authRequired": false`.
+
+**When open-access is false** (DEV default / PROD always):
+
 1. Login once:
 
 ```http

@@ -1,10 +1,10 @@
 package com.agentportal.security;
 
+import com.agentportal.config.AppProperties;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -31,10 +31,15 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class RateLimitFilter extends OncePerRequestFilter {
 
     private final int limitPerMinute;
+    private final AppProperties appProperties;
     private final Map<String, Window> windows = new ConcurrentHashMap<>();
 
-    public RateLimitFilter(@Value("${app.rate-limit.per-minute:120}") int limitPerMinute) {
+    public RateLimitFilter(
+            @org.springframework.beans.factory.annotation.Value("${app.rate-limit.per-minute:120}") int limitPerMinute,
+            AppProperties appProperties
+    ) {
         this.limitPerMinute = Math.max(10, limitPerMinute);
+        this.appProperties = appProperties;
     }
 
     @Override
@@ -43,6 +48,10 @@ public class RateLimitFilter extends OncePerRequestFilter {
             HttpServletResponse response,
             FilterChain filterChain
     ) throws ServletException, IOException {
+        if (appProperties.getSecurity().isOpenAccess()) {
+            filterChain.doFilter(request, response);
+            return;
+        }
         String path = request.getRequestURI();
         if (!path.startsWith("/api/") || path.startsWith("/api/health") || path.startsWith("/api/auth/config")
                 || path.startsWith("/api/auth/oauth/token")) {
