@@ -89,8 +89,9 @@ public class AgentApiController {
                         action("linkTaskSession", "POST", "/api/platform/tasks/{id}/session", "Link task to portal session"),
                         action("invokeTaskSession", "POST", "/api/platform/tasks/{id}/invoke", "Spawn role session + prompt for task"),
                         action("platformHome", "GET", "/api/platform/home", "App Home payload"),
-                        action("machineContext", "GET", "/api/machine/context", "Machine Gateway live host context"),
-                        action("machineChat", "POST", "/api/machine/chat", "Machine Gateway chat (Auto + injected context)")
+                        action("machine", "POST", "/api/machine", "Machine Gateway canonical (context + optional chat)"),
+                        action("machineContext", "GET", "/api/machine/context", "Machine Gateway live host context (alias)"),
+                        action("machineChat", "POST", "/api/machine/chat", "Machine Gateway chat only (alias)")
                 )
         );
     }

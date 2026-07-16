@@ -8,20 +8,31 @@
 
 | Method | Path | Auth | Purpose |
 |--------|------|------|---------|
-| GET | `/api/machine/context` | CSS JWT or `X-API-Key` | Live redacted host/control-plane snapshot |
-| POST | `/api/machine/chat` | CSS JWT or `X-API-Key` | Chat via AgentBridge (Cursor Auto) with injected context |
+| **POST** | `/api/machine` | CSS JWT or `X-API-Key` | **Canonical** — redacted context; if `message` present, also starts chat (`status=accepted`) |
+| GET | `/api/machine/context` | CSS JWT or `X-API-Key` | Context snapshot only (alias) |
+| POST | `/api/machine/chat` | CSS JWT or `X-API-Key` | Chat accept only; `message` required (alias) |
 
 Optional header: `X-Machine-Max-Mode: observe|advise|act|ops` (cannot raise above `app.machine-gateway.max-mode`).
 
+**Usage guide:** [MACHINE-GATEWAY-USAGE.md](MACHINE-GATEWAY-USAGE.md) (auth, examples, poll/ws — no CORS section).
+
 ## Transport model (v0)
 
-- **Gateway surface is REST only** (`GET /api/machine/context`, `POST /api/machine/chat`).
+- **Gateway surface is REST only.** Canonical: `POST /api/machine`. Aliases: `GET /api/machine/context`, `POST /api/machine/chat`.
 - **No gRPC** and no dedicated Machine Gateway websocket endpoint in v0.
-- `GET /context` returns a point-in-time JSON snapshot. Use `ttlSeconds` as a poll hint.
-- `POST /chat` accepts the prompt into an Agent Portal session and returns `status=accepted`; the agent run continues asynchronously.
+- Context is a point-in-time JSON snapshot. Use `ttlSeconds` as a poll hint.
+- Chat returns `status=accepted`; the agent run continues asynchronously.
 - For live token/event updates, use the existing Agent Portal session channels (`/ws`, `/api/sessions/{id}/messages`, `/api/sessions/{id}/events`).
 
-### Chat body
+### Unified body (`POST /api/machine`)
+
+```json
+{ "message": "What ports are leased?", "mode": "observe", "provider": "cursor", "sessionId": null }
+```
+
+Omit or blank `message` for context-only (`chat: null`).
+
+### Chat-only body (`POST /api/machine/chat`)
 
 ```json
 { "message": "What ports are leased?", "mode": "observe", "provider": "cursor", "sessionId": null }
@@ -63,5 +74,6 @@ Cursor↔Agy loop: `E:\MyWorkspace\machine-gateway\docs\collab\2026-07-16-build-
 ## Related
 
 - [AGENT-API.md](AGENT-API.md)
+- [MACHINE-GATEWAY-USAGE.md](MACHINE-GATEWAY-USAGE.md)
 - [ACCESS-PROTOCOLS.md](ACCESS-PROTOCOLS.md)
-- Discovery: `GET /api/agent/actions` → `machineContext`, `machineChat`
+- Discovery: `GET /api/agent/actions` → `machine`, `machineContext`, `machineChat`

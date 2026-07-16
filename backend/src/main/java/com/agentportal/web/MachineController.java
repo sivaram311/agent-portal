@@ -3,6 +3,8 @@ package com.agentportal.web;
 import com.agentportal.config.AppProperties;
 import com.agentportal.dto.MachineChatRequest;
 import com.agentportal.dto.MachineChatResponse;
+import com.agentportal.dto.MachineGatewayRequest;
+import com.agentportal.dto.MachineGatewayResponse;
 import com.agentportal.machine.MachineChatService;
 import com.agentportal.machine.MachineContextService;
 import jakarta.validation.Valid;
@@ -33,6 +35,33 @@ public class MachineController {
         this.appProperties = appProperties;
         this.contextService = contextService;
         this.chatService = chatService;
+    }
+
+    /**
+     * Canonical Machine Gateway entry: always returns redacted context;
+     * if {@code message} is present, also starts chat (status=accepted).
+     */
+    @PostMapping
+    public MachineGatewayResponse gateway(
+            @RequestBody(required = false) MachineGatewayRequest request,
+            @RequestHeader(value = "X-Machine-Max-Mode", required = false) String maxMode
+    ) throws Exception {
+        assertEnabled();
+        Map<String, Object> context = contextService.buildContext();
+        if (request == null || request.message() == null || request.message().isBlank()) {
+            return new MachineGatewayResponse(context, null);
+        }
+        MachineChatResponse chat = chatService.chat(
+                new MachineChatRequest(
+                        request.message(),
+                        request.mode(),
+                        request.role(),
+                        request.provider(),
+                        request.sessionId()
+                ),
+                maxMode
+        );
+        return new MachineGatewayResponse(context, chat);
     }
 
     @GetMapping("/context")
