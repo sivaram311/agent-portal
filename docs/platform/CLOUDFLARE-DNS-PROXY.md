@@ -47,6 +47,7 @@ cd E:\MyWorkspace\agent-portal
 - Prefer subdomain over public IP in all docs and app configs.
 - Sandbox and prod **never** share the same hostname.
 - DNS changes are Ops-owned; Builders request via workflow, do not freestyle.
+- **Machine Gateway (2026-07-16):** no new Cloudflare record — use existing `delena.buzz` / `agent-portal[-staging].delena.buzz` `/api/machine/*` → portal API ports. See [PORT-REGISTRY.md](PORT-REGISTRY.md#machine-gateway-host-consciousness-api--edge-contract).
 
 ## Docker note
 

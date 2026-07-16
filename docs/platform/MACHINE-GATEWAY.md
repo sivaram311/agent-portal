@@ -26,6 +26,16 @@ Modes map to roles: `GATEWAY_OBSERVE` · `GATEWAY_ADVISE` · `GATEWAY_ACT` · `G
 - **MachineToolGuard**: edit paths must stay under gateway workspace ∪ sandbox; shell process kills must match allowlisted port→PID / `-Id` shapes
 - **Mode ceiling**: requesting above max → `403`
 
+## Edge / ports / Cloudflare (binding)
+
+| Item | Decision |
+|------|----------|
+| TCP ports | Reuses portal **8080 / 4080 / 5080** — no new claim |
+| Cloudflare DNS | **No new subdomain** |
+| NGINX | Existing `/api` upstream |
+| CSS | Existing `clientId=agent-portal` |
+| Registry | Documented in [PORT-REGISTRY.md](PORT-REGISTRY.md#machine-gateway-host-consciousness-api--edge-contract) |
+
 ## Config
 
 ```properties
