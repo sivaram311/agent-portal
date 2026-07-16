@@ -88,7 +88,9 @@ public class AgentApiController {
                         action("e2eLoopProgress", "GET", "/api/platform/pipelines/runs/{runId}", "SYSTEM_E2E_LOOP progress timeline"),
                         action("linkTaskSession", "POST", "/api/platform/tasks/{id}/session", "Link task to portal session"),
                         action("invokeTaskSession", "POST", "/api/platform/tasks/{id}/invoke", "Spawn role session + prompt for task"),
-                        action("platformHome", "GET", "/api/platform/home", "App Home payload")
+                        action("platformHome", "GET", "/api/platform/home", "App Home payload"),
+                        action("machineContext", "GET", "/api/machine/context", "Machine Gateway live host context"),
+                        action("machineChat", "POST", "/api/machine/chat", "Machine Gateway chat (Auto + injected context)")
                 )
         );
     }
