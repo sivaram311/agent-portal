@@ -64,8 +64,9 @@ New-AgentSession -Title 'API bridge' -WorkspacePath agent-api -Provider cursor
 1. Read [ACCESS-PROTOCOLS.md](ACCESS-PROTOCOLS.md) and [PORT-REGISTRY.md](PORT-REGISTRY.md).
 2. Discover actions: `GET /api/agent/actions` or OpenAPI.
 3. Authenticate; never commit tokens.
-4. Create/reuse session on `agent-api` (or sandbox path).
-5. Use Changes APIs before promote.
+4. Prefer **Machine Gateway** for host-wide awareness: [MACHINE-GATEWAY.md](MACHINE-GATEWAY.md) (`GET /api/machine/context`, `POST /api/machine/chat`).
+5. Create/reuse session on `agent-api` (or sandbox path) for workspace-scoped work.
+6. Use Changes APIs before promote.
 
 ## Config
 

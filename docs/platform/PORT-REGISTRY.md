@@ -1,4 +1,4 @@
-# Port registry
+﻿# Port registry
 
 **Status:** Canonical markdown registry (Phase 0). Future: Postgres `port_lease` table maintained by a State sub-agent.
 
@@ -33,16 +33,16 @@ Any human or AI **must** read this before binding a port. After claiming, update
 | 443 | nginx-https | Deployment | host | — | reserved | Enable when origin TLS ready |
 | 3010 | h-drive-server | h-drive-server | host | 0.0.0.0 | active | Exposes H:\ over HTTP; open CORS |
 | 4010 | h-drive-server | h-drive-server | staging | 0.0.0.0 | active | PREPROD `F:\apps\h-drive-server` |
-| 4080 | agent-portal-api | agent-portal | staging | 0.0.0.0 | active | PREPROD `F:\apps\agent-portal`; agent-portal-staging.delena.buzz |
+| 4080 | agent-portal-api | agent-portal | staging | 0.0.0.0 | active | PREPROD `F:\apps\agent-portal`; agent-portal-staging.delena.buzz; Machine Gateway same `/api/machine/*` after promote |
 | 4200 | agent-portal-ui | agent-portal | host | 0.0.0.0 | active | DEV `ng serve` / delena.buzz / |
 | 4900 | css-auth | css | staging | 0.0.0.0 | active | Classic Preprod CSS IdP — keep |
 | 4910 | css-auth-next | css-next | staging | 0.0.0.0 | active | Side-fleet PREPROD; css-next-staging.delena.buzz → :4910 |
 | 5010 | h-drive-server | h-drive-server | prod | 0.0.0.0 | active | PROD `G:\apps\h-drive-server`; https://hdrive.delena.buzz |
-| 5080 | agent-portal-api | agent-portal | prod | 0.0.0.0 | active | PROD `G:\apps\agent-portal`; agent-portal.delena.buzz |
+| 5080 | agent-portal-api | agent-portal | prod | 0.0.0.0 | active | PROD `G:\apps\agent-portal`; agent-portal.delena.buzz; Machine Gateway same `/api/machine/*` after promote |
 | 5432 | postgres | docker/local | host | — | active | Shared; schemas per app |
 | 5900 | css-auth | css | prod | 0.0.0.0 | active | Classic Prod CSS; css.delena.buzz — keep |
 | 5910 | css-auth-next | css-next | prod | 0.0.0.0 | active | Side-fleet PROD; css-next.delena.buzz → :5910 |
-| 8080 | agent-portal-api | agent-portal | host | 0.0.0.0 | active | DEV Spring Boot JAR |
+| 8080 | agent-portal-api | agent-portal | host | 0.0.0.0 | active | DEV Spring Boot JAR; also serves Machine Gateway `/api/machine/*` (no extra port) |
 | 8081 | legacy-grok-or-other | grok_dev / misc | host | — | active | Confirm before reuse |
 | 8082 | filebridge | agent-portal/workspaces/FileBridge | host | 0.0.0.0 | active | Sample app |
 | 8091 | stack-pilot | stack-pilot | host | — | active | Remote/ops tooling |
@@ -75,6 +75,7 @@ Any human or AI **must** read this before binding a port. After claiming, update
 |--------------------|----------|
 | `https://delena.buzz/` | `127.0.0.1:4200` |
 | `https://delena.buzz/api/` | `127.0.0.1:8080` |
+| `https://delena.buzz/api/machine/` | `127.0.0.1:8080` (Machine Gateway — **no new port / no new DNS**) |
 | `https://delena.buzz/ws/` | `127.0.0.1:8080` |
 | `https://delena.buzz/auth/` | `127.0.0.1:5910` (css-next; Portal Wave 3) |
 | `https://delena.buzz/.well-known/` | `127.0.0.1:5910` |
@@ -95,6 +96,19 @@ Any human or AI **must** read this before binding a port. After claiming, update
 | `https://library.delena.buzz/` | `127.0.0.1:5330` (Library PROD — app TBD) |
 
 Future app subdomains: see [CLOUDFLARE-DNS-PROXY.md](CLOUDFLARE-DNS-PROXY.md).
+
+## Machine Gateway (Host Consciousness API) — edge contract
+
+| Decision | Value |
+|----------|-------|
+| New TCP port? | **No** — reuses agent-portal `:8080` / `:4080` / `:5080` |
+| New Cloudflare DNS / subdomain? | **No** — paths under existing hosts (`/api/machine/*`) |
+| New NGINX server block? | **No** — existing `/api` proxy is enough |
+| New CSS `clientId`? | **No** — `clientId=agent-portal` |
+| Public DEV URLs | `https://delena.buzz/api/machine/context`, `…/chat` |
+| Idea / collab SoT | `E:\MyWorkspace\machine-gateway` · [MACHINE-GATEWAY.md](MACHINE-GATEWAY.md) |
+
+Do **not** create `machine-gateway.delena.buzz` unless a future wave claims a dedicated port + CF upsert + NGINX (Ops-owned).
 
 ## Future: dedicated `port_lease` table
 

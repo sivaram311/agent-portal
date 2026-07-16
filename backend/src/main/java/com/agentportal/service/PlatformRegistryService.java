@@ -80,6 +80,8 @@ public class PlatformRegistryService {
             "listFiles", "readFile", "listChanges", "diffChange", "acceptChange", "rejectChange", "sendPrompt");
     private static final List<String> ACTIONS_REVIEW = List.of(
             "listChanges", "diffChange", "acceptChange", "rejectChange", "listAudit");
+    private static final List<String> ACTIONS_GATEWAY = List.of(
+            "machineContext", "machineChat", "listFiles", "readFile", "sendPrompt", "listPorts");
     private static final List<PlatformRoleDto> ROLE_DTOS = List.of(
             new PlatformRoleDto("ARCHITECTURE", "Architecture", "Engineering",
                     "sandbox/platform-tasks/architecture", "ap-platform-em",
@@ -117,6 +119,29 @@ public class PlatformRegistryService {
                     "sandbox/platform-tasks/security", "ap-platform-review",
                     List.of("read", "search", "audit", "docs"), ACTIONS_REVIEW,
                     "Audit for secrets, sandbox escapes, and protocol violations; require human merge approval.",
+                    true),
+            new PlatformRoleDto("GATEWAY_OBSERVE", "Gateway Observe", "MachineGateway",
+                    "machine-gateway", "ap-platform-state",
+                    TOOLS_READ, ACTIONS_GATEWAY,
+                    "Machine Gateway observe: read-only tools; no edits or shell.",
+                    false),
+            new PlatformRoleDto("GATEWAY_ADVISE", "Gateway Advise", "MachineGateway",
+                    "machine-gateway", "ap-platform-em",
+                    TOOLS_READ, List.of("machineContext", "machineChat", "listFiles", "readFile", "sendPrompt",
+                            "listMemory", "upsertMemory", "listPorts"),
+                    "Machine Gateway advise: read + memory notes; no filesystem edits or shell.",
+                    false),
+            new PlatformRoleDto("GATEWAY_ACT", "Gateway Act", "MachineGateway",
+                    "machine-gateway", "ap-platform-em",
+                    List.of("read", "search", "edit", "docs"), ACTIONS_GATEWAY,
+                    "Machine Gateway act: edits only under workspace/sandbox; no unrestricted shell kills.",
+                    false),
+            new PlatformRoleDto("GATEWAY_OPS", "Gateway Ops", "MachineGateway",
+                    "machine-gateway", "ap-platform-ops",
+                    List.of("read", "search", "edit", "shell", "ports", "docs"),
+                    List.of("machineContext", "machineChat", "listPorts", "claimPort", "releasePort",
+                            "listFiles", "readFile", "sendPrompt"),
+                    "Machine Gateway ops: shell kills only via LocalPort→PID allowlisted shapes.",
                     true)
     );
     private static final Map<String, PlatformPipelineDto> PIPELINES = new LinkedHashMap<>();

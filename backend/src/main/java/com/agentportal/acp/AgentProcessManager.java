@@ -6,6 +6,7 @@ import com.agentportal.repo.*;
 import com.agentportal.service.AntigravityCapabilityService;
 import com.agentportal.service.RoleAclService;
 import com.agentportal.service.SessionEventBus;
+import com.agentportal.machine.MachineToolGuard;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PreDestroy;
 import org.slf4j.Logger;
@@ -37,6 +38,7 @@ public class AgentProcessManager {
     private final PermissionRequestRepository permissionRepository;
     private final AntigravityCapabilityService antigravityCapabilityService;
     private final RoleAclService roleAclService;
+    private final MachineToolGuard machineToolGuard;
 
     public AgentProcessManager(
             AgentProperties properties,
@@ -48,7 +50,8 @@ public class AgentProcessManager {
             ToolRunRepository toolRunRepository,
             PermissionRequestRepository permissionRepository,
             AntigravityCapabilityService antigravityCapabilityService,
-            RoleAclService roleAclService
+            RoleAclService roleAclService,
+            MachineToolGuard machineToolGuard
     ) {
         this.properties = properties;
         this.mapper = mapper;
@@ -60,6 +63,7 @@ public class AgentProcessManager {
         this.permissionRepository = permissionRepository;
         this.antigravityCapabilityService = antigravityCapabilityService;
         this.roleAclService = roleAclService;
+        this.machineToolGuard = machineToolGuard;
     }
 
     public SessionAgentRuntime getOrStart(AgentSession session) throws Exception {
@@ -119,6 +123,7 @@ public class AgentProcessManager {
                                 toolRunRepository,
                                 permissionRepository,
                                 roleAclService,
+                                machineToolGuard,
                                 properties.isDefaultAutoApprove(),
                                 properties.getAntigravity().getCommand(),
                                 sub
@@ -162,7 +167,10 @@ public class AgentProcessManager {
                 toolRunRepository,
                 permissionRepository,
                 roleAclService,
-                properties.isDefaultAutoApprove()
+                machineToolGuard,
+                properties.isDefaultAutoApprove(),
+                null,
+                null
         );
         try {
             bridge.start();

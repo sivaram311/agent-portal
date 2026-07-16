@@ -7,6 +7,7 @@
 | Doc | Path |
 |-----|------|
 | Platform handbook | `agent-portal/docs/platform/README.md` |
+| Machine Gateway | `agent-portal/docs/platform/MACHINE-GATEWAY.md` |
 | Future implementation | `agent-portal/docs/platform/FUTURE-IMPLEMENTATION.md` |
 | OPS | `agent-portal/docs/OPS.md` |
 | Delena proxy | `agent-portal/docs/DELENA-PROXY.md` |

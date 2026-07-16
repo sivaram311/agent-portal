@@ -7,6 +7,7 @@ import com.agentportal.dto.PlatformRoleDto;
 import com.agentportal.repo.*;
 import com.agentportal.service.RoleAclService;
 import com.agentportal.service.SessionEventBus;
+import com.agentportal.machine.MachineToolGuard;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -42,6 +43,7 @@ public class AgentBridge implements AutoCloseable {
     private final ToolRunRepository toolRunRepository;
     private final PermissionRequestRepository permissionRepository;
     private final RoleAclService roleAclService;
+    private final MachineToolGuard machineToolGuard;
     private final boolean autoApprove;
     private final String acpCliCommand;
     private final String acpSubcommand;
@@ -71,7 +73,7 @@ public class AgentBridge implements AutoCloseable {
     ) {
         this(portalSessionId, workspacePath, existingCursorSessionId, properties, mapper, eventBus,
                 sessionRepository, messageRepository, eventRepository, toolRunRepository, permissionRepository,
-                roleAclService, autoApprove, null, null);
+                roleAclService, null, autoApprove, null, null);
     }
 
     public AgentBridge(
@@ -91,6 +93,29 @@ public class AgentBridge implements AutoCloseable {
             String acpCliCommand,
             String acpSubcommand
     ) {
+        this(portalSessionId, workspacePath, existingCursorSessionId, properties, mapper, eventBus,
+                sessionRepository, messageRepository, eventRepository, toolRunRepository, permissionRepository,
+                roleAclService, null, autoApprove, acpCliCommand, acpSubcommand);
+    }
+
+    public AgentBridge(
+            UUID portalSessionId,
+            String workspacePath,
+            String existingCursorSessionId,
+            AgentProperties properties,
+            ObjectMapper mapper,
+            SessionEventBus eventBus,
+            AgentSessionRepository sessionRepository,
+            ChatMessageRepository messageRepository,
+            AgentEventRepository eventRepository,
+            ToolRunRepository toolRunRepository,
+            PermissionRequestRepository permissionRepository,
+            RoleAclService roleAclService,
+            MachineToolGuard machineToolGuard,
+            boolean autoApprove,
+            String acpCliCommand,
+            String acpSubcommand
+    ) {
         this.portalSessionId = portalSessionId;
         this.workspacePath = workspacePath;
         this.cursorSessionId = existingCursorSessionId;
@@ -103,6 +128,7 @@ public class AgentBridge implements AutoCloseable {
         this.toolRunRepository = toolRunRepository;
         this.permissionRepository = permissionRepository;
         this.roleAclService = roleAclService;
+        this.machineToolGuard = machineToolGuard;
         this.autoApprove = autoApprove;
         this.acpCliCommand = acpCliCommand;
         this.acpSubcommand = acpSubcommand;
@@ -729,11 +755,29 @@ public class AgentBridge implements AutoCloseable {
                 return;
             }
 
+            if (machineToolGuard != null && platformRole != null) {
+                String deny = machineToolGuard.denyReasonOrNull(platformRole, category, workspacePath, params);
+                if (deny != null) {
+                    ObjectNode result = mapper.createObjectNode();
+                    ObjectNode outcome = result.putObject("outcome");
+                    outcome.put("outcome", "selected");
+                    outcome.put("optionId", "reject-once");
+                    client.respond(acpId, result);
+                    emit("permission_acl_denied", Map.of(
+                            "acpRequestId", acpId,
+                            "role", platformRole,
+                            "category", category,
+                            "reason", deny
+                    ));
+                    return;
+                }
+            }
+
             boolean requireHuman = role != null && role.humanApprovalRequired();
-            // When default auto-approve is on, run allow-always (no per-tool clicks),
-            // including roles that normally require human approval. Role tool ACLs
-            // still deny disallowed categories above.
-            if (autoApprove) {
+            // Gateway roles with humanApprovalRequired must not be silently allow-always'd
+            boolean gatewayRole = platformRole != null
+                    && platformRole.toUpperCase(Locale.ROOT).startsWith("GATEWAY_");
+            if (autoApprove && !(gatewayRole && requireHuman)) {
                 ObjectNode result = mapper.createObjectNode();
                 ObjectNode outcome = result.putObject("outcome");
                 outcome.put("outcome", "selected");

@@ -35,6 +35,8 @@ Postgres long strings: use `TEXT` / `@JdbcTypeCode(LONGVARCHAR)` — never `@Lob
 5. Enforced review/merge bot writing `review_event`
 6. **Dual-CLI subagent job runner** (Cursor `agent` + Antigravity `agy`) for promote/incident/docs — MyAgent role packs + Agent Portal predefined pipelines (`PROMOTE_Q1`/`Q2`). See `E:\MyAgent\ideas\dual-cli-subagent-workflow.md` and [SUBAGENTS-ROADMAP.md](SUBAGENTS-ROADMAP.md#dual-cli--portal-predefined-roadmap).
 
+**Shipped outside phase table (2026-07-16):** [Machine Gateway](MACHINE-GATEWAY.md) — `/api/machine/context` + `/api/machine/chat` on existing portal ports (no new CF DNS). Idea repo: `machine-gateway`. Branch: `feature/machine-gateway-v0`.
+
 ## Skills
 
 `ap-platform-ops` · `ap-platform-review` · `ap-platform-qa` · `ap-platform-state` · `ap-platform-em` · `ap-e2e-realme-p2-pro` · `ap-system-e2e-loop`

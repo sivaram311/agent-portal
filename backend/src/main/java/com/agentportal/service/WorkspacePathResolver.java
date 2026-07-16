@@ -81,7 +81,7 @@ public class WorkspacePathResolver {
                 || trimmed.startsWith("\\");
     }
 
-    static boolean isUnder(Path candidate, Path base) {
+    public static boolean isUnder(Path candidate, Path base) {
         Path c = candidate.toAbsolutePath().normalize();
         Path b = base.toAbsolutePath().normalize();
         if (c.startsWith(b)) {
