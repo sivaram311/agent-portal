@@ -1,5 +1,6 @@
 package com.agentportal.machine;
 
+import com.agentportal.acp.AgentProcessManager;
 import com.agentportal.config.AppProperties;
 import com.agentportal.domain.AgentSession;
 import com.agentportal.domain.SessionStatus;
@@ -120,13 +121,13 @@ public class MachineChatService {
         String user = CurrentUser.usernameOrAnonymous();
         List<AgentSession> owned = sessionRepository
                 .findByOwnerUsernameAndStatusNotOrderByUpdatedAtDesc(user, SessionStatus.ARCHIVED);
-        String marker = workspaceRel.replace('\\', '/');
+        Path expectedWs = workspacePathResolver.resolve(workspaceRel).toAbsolutePath().normalize();
         for (AgentSession s : owned) {
             if (s.getWorkspacePath() == null) {
                 continue;
             }
-            String wp = s.getWorkspacePath().replace('\\', '/');
-            boolean sameWs = wp.endsWith("/" + marker) || wp.endsWith(marker);
+            Path sessionWs = Path.of(s.getWorkspacePath()).toAbsolutePath().normalize();
+            boolean sameWs = sessionWs.equals(expectedWs);
             boolean gatewayTitle = s.getTitle() != null && s.getTitle().startsWith("Machine Gateway");
             if (sameWs && (platformRole.equalsIgnoreCase(s.getPlatformRole()) || gatewayTitle)) {
                 return sessionService.get(s.getId());
@@ -136,6 +137,12 @@ public class MachineChatService {
         String provider = request.provider() == null || request.provider().isBlank()
                 ? appProperties.getMachineGateway().getDefaultProvider()
                 : request.provider();
+        // Machine Gateway v0: Cursor ACP only — Antigravity print-mode bypasses MachineToolGuard
+        if (AgentProcessManager.normalizeProvider(provider).equals("antigravity")) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Machine Gateway chat requires provider=cursor (Antigravity print-mode bypasses tool guards)");
+        }
+        provider = "cursor";
         return sessionService.create(new CreateSessionRequest(
                 "Machine Gateway (" + platformRole + ")",
                 workspaceRel,

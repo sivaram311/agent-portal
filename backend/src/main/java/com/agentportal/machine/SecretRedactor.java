@@ -16,7 +16,7 @@ public final class SecretRedactor {
 
     private static final String REDACTED = "[REDACTED]";
     private static final Pattern SENSITIVE_KEY = Pattern.compile(
-            ".*(token|secret|password|passwd|api[_-]?key|private|credential|auth|jwt|bearer).*",
+            ".*(token|secret|password|passwd|passphrase|api[_-]?key|private|credential|auth|jwt|bearer|ssh|cert|cookie|session|salt).*",
             Pattern.CASE_INSENSITIVE
     );
 

@@ -17,10 +17,6 @@ import java.util.regex.Pattern;
 @Component
 public class MachineToolGuard {
 
-    private static final Pattern TERMINATION_HINT = Pattern.compile(
-            "(?i)(stop-process|taskkill|killall|kill\\s+-|pkill|\\bkill\\b)"
-    );
-    /** Allowlist: Stop-Process -Id <digits> [-Force] */
     private static final Pattern STOP_PROCESS_ID = Pattern.compile(
             "(?is)^\\s*Stop-Process\\s+-Id\\s+\\d+(?:\\s+-Force)?\\s*$"
     );
@@ -66,16 +62,13 @@ public class MachineToolGuard {
     }
 
     /**
-     * For shell tools that look like process termination: allow only port-lookup and PID-kill shapes.
-     * Non-termination shell commands pass.
+     * For GATEWAY sessions: shell commands must match allowlisted shapes only
+     * (port→PID lookup or PID termination). All other shell is rejected.
      */
     public void assertShellSafe(JsonNode params) {
         String command = extractCommand(params);
         if (command == null || command.isBlank()) {
-            return;
-        }
-        if (!TERMINATION_HINT.matcher(command).find()) {
-            return;
+            throw new SecurityException("GATEWAY shell guard: empty shell command rejected");
         }
         String normalized = command.replace('"', ' ').replace('\'', ' ').trim();
         if (STOP_PROCESS_ID.matcher(normalized).matches()
@@ -84,9 +77,8 @@ public class MachineToolGuard {
             return;
         }
         throw new SecurityException(
-                "GATEWAY shell guard: process termination must use allowlisted port→PID / -Id shapes "
-                        + "(Stop-Process -Id <pid>, taskkill /PID <pid>, Get-NetTCPConnection -LocalPort). "
-                        + "Mass kill by name is forbidden.");
+                "GATEWAY shell guard: only allowlisted port→PID / -Id shapes are permitted "
+                        + "(Stop-Process -Id <pid>, taskkill /PID <pid>, Get-NetTCPConnection -LocalPort).");
     }
 
     public String denyReasonOrNull(String platformRole, String category, String sessionWorkspacePath, JsonNode params) {
@@ -146,17 +138,40 @@ public class MachineToolGuard {
         if (!p.isAbsolute()) {
             p = workspace.resolve(trimmed);
         }
-        return p.toAbsolutePath().normalize();
+        p = p.toAbsolutePath().normalize();
+        try {
+            if (java.nio.file.Files.exists(p)) {
+                p = p.toRealPath();
+            }
+        } catch (Exception e) {
+            throw new SecurityException("GATEWAY path guard: cannot resolve real path: " + p);
+        }
+        return p;
     }
 
     private boolean isUnderAllowed(Path candidate, Path workspace, Path sandbox) {
-        if (WorkspacePathResolver.isUnder(candidate, workspace)) {
+        Path ws = realIfExists(workspace);
+        if (WorkspacePathResolver.isUnder(candidate, ws)) {
             return true;
         }
-        if (sandbox != null && WorkspacePathResolver.isUnder(candidate, sandbox)) {
-            return true;
+        if (sandbox != null) {
+            Path sb = realIfExists(sandbox);
+            if (WorkspacePathResolver.isUnder(candidate, sb)) {
+                return true;
+            }
         }
         return workspacePathResolver.isAllowed(candidate);
+    }
+
+    private static Path realIfExists(Path p) {
+        try {
+            if (java.nio.file.Files.exists(p)) {
+                return p.toRealPath();
+            }
+        } catch (Exception ignored) {
+            // fall through
+        }
+        return p.toAbsolutePath().normalize();
     }
 
     static List<String> extractPaths(JsonNode params) {
@@ -199,6 +214,14 @@ public class MachineToolGuard {
                 || key.equals("targetpath")
                 || key.equals("uri")
                 || key.equals("filename")
+                || key.equals("directory")
+                || key.equals("dir")
+                || key.equals("workdir")
+                || key.equals("cwd")
+                || key.equals("workspace")
+                || key.equals("location")
+                || key.equals("output")
+                || key.equals("outdir")
                 || key.endsWith("path");
     }
 

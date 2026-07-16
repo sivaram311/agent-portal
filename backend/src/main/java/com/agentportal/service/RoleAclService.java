@@ -61,10 +61,15 @@ public class RoleAclService {
                 text(params.path("toolCall"), "title"),
                 text(params.path("toolCall"), "kind"),
                 text(params.path("toolCall"), "toolName"),
+                text(params.path("toolCall"), "name"),
                 params.toString()
         ).toLowerCase(Locale.ROOT);
 
-        if (containsAny(blob, "shell", "bash", "powershell", "cmd.exe", "terminal", "exec")) {
+        // Prefer explicit tool identity before content keywords (prevents shell→read misclass)
+        if (containsAny(blob,
+                "shell", "bash", "powershell", "cmd.exe", "terminal", "exec",
+                "run_terminal", "run_command", "runterminal", "shelltool",
+                "\"name\":\"shell\"", "\"toolname\":\"shell\"", "kind\":\"shell")) {
             return "shell";
         }
         if (containsAny(blob, "deploy", "kubectl", "docker push", "helm ")) {

@@ -90,6 +90,20 @@ class MachineToolGuardTest {
         SecurityException ex = assertThrows(SecurityException.class, () -> guard.assertShellSafe(params));
         assertTrue(ex.getMessage().contains("allowlisted"));
     }
+
+    @Test
+    void rejectsArbitraryShell() {
+        ObjectNode params = mapper.createObjectNode();
+        params.put("command", "whoami");
+        assertThrows(SecurityException.class, () -> guard.assertShellSafe(params));
+    }
+
+    @Test
+    void allowsNetTcpPortLookup() {
+        ObjectNode params = mapper.createObjectNode();
+        params.put("command", "Get-NetTCPConnection -LocalPort 8080");
+        guard.assertShellSafe(params);
+    }
 }
 
 class MachineModeServiceTest {

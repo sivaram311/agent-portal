@@ -774,10 +774,10 @@ public class AgentBridge implements AutoCloseable {
             }
 
             boolean requireHuman = role != null && role.humanApprovalRequired();
-            // When default auto-approve is on, run allow-always (no per-tool clicks),
-            // including roles that normally require human approval. Role tool ACLs
-            // still deny disallowed categories above.
-            if (autoApprove) {
+            // Gateway roles with humanApprovalRequired must not be silently allow-always'd
+            boolean gatewayRole = platformRole != null
+                    && platformRole.toUpperCase(Locale.ROOT).startsWith("GATEWAY_");
+            if (autoApprove && !(gatewayRole && requireHuman)) {
                 ObjectNode result = mapper.createObjectNode();
                 ObjectNode outcome = result.putObject("outcome");
                 outcome.put("outcome", "selected");
