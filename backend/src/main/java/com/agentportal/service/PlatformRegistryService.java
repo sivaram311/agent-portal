@@ -417,7 +417,7 @@ public class PlatformRegistryService {
 
     @Transactional(readOnly = true)
     public PlatformRoleDto getRole(String roleId) {
-        String normalized = normalizeRole(roleId);
+        String normalized = requireText(roleId, "role").toUpperCase(Locale.ROOT);
         return ROLE_DTOS.stream()
                 .filter(r -> r.id().equals(normalized))
                 .findFirst()
