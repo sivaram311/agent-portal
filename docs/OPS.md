@@ -12,8 +12,8 @@ Machine standing orders: `E:\MyAgent\workflow\CONSCIOUS.md` (drives, ports, DB s
 
 | Piece | Location |
 |-------|----------|
-| Release package | **0.1.11** Â· `H:\releases\agent-portal-0.1.11\` (hybrid OAuth/PKCE + password) Â· F/G may still show 0.1.9 until promote |
-| Promote evidence | `H:\releases\agent-portal-0.1.11\evidence\` (oauth) Â· prior Wave 3 IdP: `0.1.9` |
+| Release package | **0.1.12** · `H:\releases\agent-portal-0.1.12\` (Machine Gateway GATEWAY role fix) · PREPROD F live; PROD G may lag |
+| Promote evidence | `H:\releases\agent-portal-0.1.12\evidence\q1\` · prior: `0.1.11` Machine Gateway ship |
 | Consumed by | ProdDeck â‰¥ **0.6.2** (`OS_EVENTS_FORWARD`) Â· AV classic â‰¥ **0.3.16** sessions |
 | Start script | `F:\` / `G:\apps\agent-portal\start.ps1` |
 | Nginx confs | `E:\Source\Deployment\conf\apps\agent-portal*.delena.buzz.conf` |
