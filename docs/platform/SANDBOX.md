@@ -14,7 +14,14 @@ Junctions (legacy portal workspaces remain the real folders):
 | `sandbox/demo` | `agent-portal/workspaces/demo` |
 | `sandbox/FileBridge` | `agent-portal/workspaces/FileBridge` |
 
-New greenfield projects: create `sandbox/<slug>/` and register in `sandbox/_registry.md` + claim ports via `/api/platform/ports/claim`.
+New greenfield projects: create `sandbox/<slug>/` and register in `sandbox/_registry.md` + claim ports via `/api/platform/ports/claim` when the app listens.
+
+Registered greenfield examples:
+
+| slug | path | notes |
+|------|------|-------|
+| library | `sandbox/library` | Phone-first docs app; ports 3330/4330/5330 |
+| mindmap | `sandbox/mindmap` | Offline machine AI operating-model map; **no port** — open `index.html` |
 
 ## Config
 
