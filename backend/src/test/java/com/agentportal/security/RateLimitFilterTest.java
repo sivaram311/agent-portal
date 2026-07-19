@@ -1,12 +1,42 @@
 package com.agentportal.security;
 
+import com.agentportal.config.AppProperties;
 import org.junit.jupiter.api.Test;
+import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.mock.web.MockHttpServletRequest;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 class RateLimitFilterTest {
+
+    @Test
+    void forgeCityRemainsRateLimitedWhenPortalIsOpenAccess() throws Exception {
+        AppProperties properties = new AppProperties();
+        properties.getSecurity().setOpenAccess(true);
+        RateLimitFilter filter = new RateLimitFilter(10, properties);
+        var chain = mock(jakarta.servlet.FilterChain.class);
+        MockHttpServletResponse lastResponse = null;
+
+        for (int i = 0; i < 11; i++) {
+            MockHttpServletRequest request =
+                    new MockHttpServletRequest("POST", "/api/integrations/forgecity/tamil-rewrite");
+            request.setRemoteAddr("203.0.113.8");
+            lastResponse = new MockHttpServletResponse();
+            filter.doFilter(request, lastResponse, chain);
+        }
+
+        assertEquals(429, lastResponse.getStatus());
+        assertEquals("no-store", lastResponse.getHeader("Cache-Control"));
+        assertEquals("{\"status\":\"busy\"}", lastResponse.getContentAsString());
+        verify(chain, times(10)).doFilter(
+                org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any()
+        );
+    }
 
     @Test
     void usesForwardedIpWhenPeerIsLoopback() {

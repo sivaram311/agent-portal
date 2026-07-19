@@ -7,7 +7,11 @@ import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
-@EnableConfigurationProperties({AgentProperties.class, AppProperties.class})
+@EnableConfigurationProperties({
+        AgentProperties.class,
+        AppProperties.class,
+        ForgeCityRewriteProperties.class
+})
 public class WebConfig {
 
     private final AppProperties appProperties;

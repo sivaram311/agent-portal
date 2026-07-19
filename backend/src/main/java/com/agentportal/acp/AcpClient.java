@@ -26,6 +26,7 @@ public class AcpClient implements Closeable {
     private final Process process;
     private final BufferedWriter stdin;
     private final ObjectMapper mapper;
+    private final boolean logPayloads;
     private final AtomicLong nextId = new AtomicLong(1);
     private final Map<Long, CompletableFuture<JsonNode>> pending = new ConcurrentHashMap<>();
     private final AtomicBoolean running = new AtomicBoolean(true);
@@ -40,8 +41,17 @@ public class AcpClient implements Closeable {
     private volatile BiConsumer<Long, JsonNode> extensionHandler = (id, n) -> {};
 
     public AcpClient(Process process, ObjectMapper mapper) {
+        this(process, mapper, true);
+    }
+
+    /**
+     * @param logPayloads false for privacy-sensitive ephemeral sessions whose JSON-RPC
+     *                    payloads must never be written to application logs
+     */
+    public AcpClient(Process process, ObjectMapper mapper, boolean logPayloads) {
         this.process = process;
         this.mapper = mapper;
+        this.logPayloads = logPayloads;
         this.stdin = new BufferedWriter(new OutputStreamWriter(process.getOutputStream(), StandardCharsets.UTF_8));
         reader.submit(this::readLoop);
     }
@@ -155,7 +165,9 @@ public class AcpClient implements Closeable {
         stdin.write(line);
         stdin.write('\n');
         stdin.flush();
-        log.debug("ACP >> {}", line);
+        if (logPayloads) {
+            log.debug("ACP >> {}", line);
+        }
     }
 
     private void readLoop() {
@@ -166,12 +178,18 @@ public class AcpClient implements Closeable {
                 if (line.isBlank()) {
                     continue;
                 }
-                log.debug("ACP << {}", line);
+                if (logPayloads) {
+                    log.debug("ACP << {}", line);
+                }
                 try {
                     JsonNode msg = mapper.readTree(line);
                     handleMessage(msg);
                 } catch (Exception e) {
-                    log.warn("Failed to parse ACP line: {}", line, e);
+                    if (logPayloads) {
+                        log.warn("Failed to parse ACP line: {}", line, e);
+                    } else {
+                        log.warn("Failed to parse redacted ACP line");
+                    }
                 }
             }
         } catch (IOException e) {
@@ -214,7 +232,13 @@ public class AcpClient implements Closeable {
                     extensionHandler.accept(id, msg);
                 }
             }
-            case "cursor/update_todos", "cursor/task", "cursor/generate_image" -> updateHandler.accept(msg);
+            case "cursor/update_todos", "cursor/task", "cursor/generate_image" -> {
+                if (id != null) {
+                    extensionHandler.accept(id, msg);
+                } else {
+                    updateHandler.accept(msg);
+                }
+            }
             default -> {
                 if (id != null && method.startsWith("cursor/")) {
                     extensionHandler.accept(id, msg);
@@ -227,6 +251,23 @@ public class AcpClient implements Closeable {
 
     public boolean isAlive() {
         return process.isAlive() && running.get();
+    }
+
+    /** Immediately closes an ephemeral client and its process tree without the normal grace wait. */
+    public void closeImmediately() {
+        running.set(false);
+        try {
+            stdin.close();
+        } catch (IOException ignored) {
+        }
+        process.descendants().forEach(handle -> {
+            try {
+                handle.destroyForcibly();
+            } catch (RuntimeException ignored) {
+            }
+        });
+        process.destroyForcibly();
+        reader.shutdownNow();
     }
 
     @Override

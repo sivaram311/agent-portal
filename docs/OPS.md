@@ -1,5 +1,20 @@
 ﻿# Operations
 
+## ForgeCity Tamil rewrite (privacy-sensitive)
+
+Dedicated endpoint for ForgeCity launcher notification rewrite. **Not** a normal Agent Portal session.
+
+| Item | Value |
+|------|-------|
+| Path | `POST /api/integrations/forgecity/tamil-rewrite` |
+| Auth | `X-ForgeCity-Key` (dedicated; **not** CSS JWT / global `X-API-Key`) |
+| Enable | `FORGECITY_REWRITE_ENABLED=true` |
+| Key | `FORGECITY_REWRITE_API_KEY` (env only) |
+| Behavior | Ephemeral Cursor ACP turn; **no** ChatMessage / AgentSession persistence; reject tools; suppress payload logs |
+| Consumer | ForgeCity `0.4.0-tamil-agent-dev` — [forgecity TAMIL-REWRITE-SPEC](../../sandbox/forgecity-launcher/docs/TAMIL-REWRITE-SPEC.md) |
+
+Disabled by default. Do not enable on PREPROD/PROD without an explicit ops decision and rate-limit review.
+
 ## Deployed environments (2026-07-12)
 
 Machine standing orders: `E:\MyAgent\workflow\CONSCIOUS.md` (drives, ports, DB schemas, CSS, promote evidence).

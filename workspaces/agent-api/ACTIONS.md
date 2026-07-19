@@ -61,5 +61,6 @@ Each UI action below maps to one OpenAPI `operationId` and backend route. All ba
 | Machine Gateway (canonical) | `machine` | POST | `/api/machine` |
 | Machine context (alias) | `machineContext` | GET | `/api/machine/context` |
 | Machine chat (alias) | `machineChat` | POST | `/api/machine/chat` |
+| ForgeCity Tamil rewrite | `rewriteForgeCityTamil` | POST | `/api/integrations/forgecity/tamil-rewrite` |
 | Swarm tick | `swarmTick` | POST | `/api/platform/swarm/tick` |
 | Update session role | `updateSessionRole` | PATCH | `/api/sessions/{id}/platform-role` |

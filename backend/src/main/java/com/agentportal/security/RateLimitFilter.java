@@ -48,11 +48,12 @@ public class RateLimitFilter extends OncePerRequestFilter {
             HttpServletResponse response,
             FilterChain filterChain
     ) throws ServletException, IOException {
-        if (appProperties.getSecurity().isOpenAccess()) {
+        String path = request.getRequestURI();
+        boolean forgeCityRewrite = path.equals("/api/integrations/forgecity/tamil-rewrite");
+        if (appProperties.getSecurity().isOpenAccess() && !forgeCityRewrite) {
             filterChain.doFilter(request, response);
             return;
         }
-        String path = request.getRequestURI();
         if (!path.startsWith("/api/") || path.startsWith("/api/health") || path.startsWith("/api/auth/config")
                 || path.startsWith("/api/auth/oauth/token")) {
             filterChain.doFilter(request, response);
@@ -70,7 +71,12 @@ public class RateLimitFilter extends OncePerRequestFilter {
         if (window.count.get() > limitPerMinute) {
             response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
             response.setContentType("application/json");
-            response.getWriter().write("{\"error\":\"Rate limit exceeded\"}");
+            if (forgeCityRewrite) {
+                response.setHeader("Cache-Control", "no-store");
+                response.getWriter().write("{\"status\":\"busy\"}");
+            } else {
+                response.getWriter().write("{\"error\":\"Rate limit exceeded\"}");
+            }
             return;
         }
         filterChain.doFilter(request, response);
