@@ -67,6 +67,7 @@ public class SecurityConfig {
                             "/api/presets",
                             "/api/agent/actions",
                             "/api/os-events",
+                            "/api/integrations/forgecity/tamil-rewrite",
                             "/h2-console/**"
                     ).permitAll();
                     auth.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll();
@@ -135,7 +136,8 @@ public class SecurityConfig {
                     return;
                 }
                 String path = request.getRequestURI();
-                if (path.startsWith("/api/health") || path.startsWith("/api/auth/config")
+                if (path.equals("/api/integrations/forgecity/tamil-rewrite")
+                        || path.startsWith("/api/health") || path.startsWith("/api/auth/config")
                         || path.startsWith("/api/presets")
                         || path.startsWith("/api/agent/actions")
                         || path.startsWith("/api/os-events")

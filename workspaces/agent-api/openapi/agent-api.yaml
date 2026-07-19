@@ -28,6 +28,8 @@ tags:
     description: Session collaborators.
   - name: Audit
     description: Audit activity records.
+  - name: Integrations
+    description: Dedicated, isolated integration endpoints.
 security:
   - bearerAuth: []
   - apiKeyAuth: []
@@ -82,6 +84,46 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/SessionPreset'
+  /api/integrations/forgecity/tamil-rewrite:
+    post:
+      tags: [Integrations]
+      operationId: rewriteForgeCityTamil
+      summary: Rewrite one ForgeCity notification as concise Tamil.
+      description: |
+        Disabled by default. Uses a dedicated key and an ephemeral Cursor ACP
+        process; it does not create Agent Portal session, message, or audit records.
+      security:
+        - forgeCityKey: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ForgeCityTamilRewriteRequest'
+      responses:
+        '200':
+          description: Tamil rewrite. The response is not stored by Agent Portal.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: no-store
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ForgeCityTamilRewriteResponse'
+        '400':
+          description: Invalid exact request contract or bounds.
+        '401':
+          description: Missing or incorrect dedicated key.
+        '429':
+          description: Rate or concurrency limit reached.
+        '502':
+          description: Provider output failed validation.
+        '503':
+          description: Integration disabled or invalidly configured.
+        '504':
+          description: Hard ACP deadline exceeded.
   /api/sessions:
     get:
       tags: [Sessions]
@@ -710,6 +752,11 @@ components:
       in: header
       name: X-API-Key
       description: Optional portal API key fallback when configured.
+    forgeCityKey:
+      type: apiKey
+      in: header
+      name: X-ForgeCity-Key
+      description: Dedicated ForgeCity integration key; not the portal API key.
   parameters:
     SessionId:
       name: id
@@ -735,6 +782,43 @@ components:
           schema:
             $ref: '#/components/schemas/Error'
   schemas:
+    ForgeCityTamilRewriteRequest:
+      type: object
+      required: [schemaVersion, appLabel, title, text, maxChars]
+      additionalProperties: false
+      properties:
+        schemaVersion:
+          type: integer
+          enum: [1]
+        appLabel:
+          type: string
+          minLength: 1
+          maxLength: 80
+        title:
+          type: string
+          maxLength: 200
+        text:
+          type: string
+          maxLength: 2000
+        maxChars:
+          type: integer
+          minimum: 1
+          maximum: 2000
+    ForgeCityTamilRewriteResponse:
+      type: object
+      required: [schemaVersion, status, tamil]
+      additionalProperties: false
+      properties:
+        schemaVersion:
+          type: integer
+          enum: [1]
+        status:
+          type: string
+          enum: [ok]
+        tamil:
+          type: string
+          minLength: 1
+          maxLength: 2000
     Error:
       type: object
       properties:
