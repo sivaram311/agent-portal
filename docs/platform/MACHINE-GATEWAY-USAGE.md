@@ -12,7 +12,7 @@ One REST entry for external AIs to read live host/control-plane context and opti
 
 Canonical path: **`POST /api/machine`**.
 
-Use **hostname URLs only**. Bare public-IP edges (`http://103.118.183.185` / `:4081`) are **disabled**.
+Use **hostname URLs only**. Bare public-IP edges (`http://<ORIGIN_IP>` / `:4081`) are **disabled**.
 
 ## Auth
 

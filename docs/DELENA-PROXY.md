@@ -11,7 +11,7 @@ Canonical NGINX files live outside this repo: `E:\Source\Deployment\` (`conf\del
 ```
 Browser (HTTPS)
   → Cloudflare (Flexible SSL, proxied DNS)
-  → Origin 103.118.183.185:80 (Windows Firewall: allow TCP 80)
+  → Origin <ORIGIN_IP>:80 (Windows Firewall: allow TCP 80)
   → NGINX (C:\nginx-1.30.3)
        ├─ /api/*, /ws     → 127.0.0.1:8080  Agent Portal (DEV)
        ├─ /auth/*, /.well-known/* → 127.0.0.1:5910  css-next (password + JWKS)
@@ -53,7 +53,7 @@ Admin password: `G:\apps\css-next\.env` (`CSS_ADMIN_PASSWORD`) — not README `a
 
 | Setting | Value |
 |---------|--------|
-| DNS A `delena.buzz` / `www` | `103.118.183.185`, **proxied** |
+| DNS A `delena.buzz` / `www` | `<ORIGIN_IP>`, **proxied** |
 | SSL/TLS mode | **Flexible** (origin is HTTP-only on :80) |
 | Firewall on origin | Inbound allow **TCP 80** (`NGINX HTTP 80`) |
 

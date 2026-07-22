@@ -22,7 +22,7 @@ description: >-
 
 1. `e2e/README.md`
 2. `docs/platform/ACCESS-PROTOCOLS.md`
-3. Prefer **`https://delena.buzz`** over public IP (`103.118.183.185`)
+3. Prefer **`https://delena.buzz`** over public IP (`<ORIGIN_IP>`)
 
 ## Spec
 

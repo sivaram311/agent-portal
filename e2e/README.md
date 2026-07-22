@@ -54,7 +54,7 @@ npm run test:mobile
 Against a remote or LAN host (frontend bound via `ng serve --host 0.0.0.0`):
 
 ```powershell
-$env:APP_URL = "http://103.118.183.185:4200"
+$env:APP_URL = "https://delena.buzz"   # prefer hostname; do not hardcode VPS origin IP
 npm run test:mobile
 ```
 
