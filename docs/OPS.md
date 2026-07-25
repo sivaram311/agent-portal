@@ -412,6 +412,14 @@ When CSS is enabled, owners can `POST /api/sessions/{id}/collaborators` with `{ 
 
 Live preprod/prod: `app.rate-limit.per-minute=180`. Hotfix JAR swapped to F/G `agent-portal.jar` 2026-07-15 (VERSION **0.1.9** IdP env + nginx; jar body still 0.1.8 artifact until next bake).
 
+## Device push tokens (mobile client)
+
+`POST /api/devices` `{ "token", "platform" }` (authenticated) — upserts by `token`, sets `ownerUsername` from the caller. `DELETE /api/devices/{token}` — idempotent unregister.
+
+`PushNotificationService.notifyOwner(...)` is called from `SessionEventBus` for the same four events `WebhookService` already fires (`run_completed`/`run_failed`/`input_required`/`run_cancelled`), resolving the session owner via `AgentSessionRepository`. **No Firebase credentials are configured** — it currently only logs what it would send (truncated token, event type, session id) and returns; wiring in real sending is one isolated method (`PushNotificationService.sendToDevice`, marked `TODO(firebase)`) plus adding the `firebase-admin` dependency, once a Firebase project exists. Table `device_tokens` is Hibernate `ddl-auto=update`-managed (no Flyway migration needed).
+
+Consumer: `agent-portal-extended` (Android) — see its own `docs/HANDOFF.md`.
+
 ## Audit
 
 `GET /api/audit?limit=50` â€” own events for normal users; all events for `ROLE_ADMIN`.  
