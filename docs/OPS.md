@@ -13,7 +13,7 @@ Dedicated endpoint for ForgeCity launcher notification rewrite. **Not** a normal
 | Behavior | Ephemeral Cursor ACP turn; **no** ChatMessage / AgentSession persistence; reject tools; suppress payload logs |
 | Consumer | ForgeCity `0.4.0-tamil-agent-dev` — [forgecity TAMIL-REWRITE-SPEC](../../sandbox/forgecity-launcher/docs/TAMIL-REWRITE-SPEC.md) |
 
-Disabled by default. Do not enable on PREPROD/PROD without an explicit ops decision and rate-limit review.
+Default in code/docs remains off; **enabled on DEV/PREPROD/PROD** as of 2026-07-20 ops request (keys in each env `.env` only; distinct per env).
 
 ## Deployed environments (2026-07-12)
 
@@ -27,8 +27,8 @@ Machine standing orders: `E:\MyAgent\workflow\CONSCIOUS.md` (drives, ports, DB s
 
 | Piece | Location |
 |-------|----------|
-| Release package | **0.1.13** · `H:\releases\agent-portal-0.1.13\` (canonical POST /api/machine) · PREPROD F live; PROD G may lag |
-| Promote evidence | `H:\releases\agent-portal-0.1.13\evidence\q1\` · prior: `0.1.12` GATEWAY role fix |
+| Release package | **0.1.14** · `H:\releases\agent-portal-0.1.14\` (`v0.1.14`) · ForgeCity Tamil rewrite · F+G live |
+| Promote evidence | `H:\releases\agent-portal-0.1.14\evidence\q1\` + `q2\` · prior: `0.1.13` machine gateway |
 | Consumed by | ProdDeck â‰¥ **0.6.2** (`OS_EVENTS_FORWARD`) Â· AV classic â‰¥ **0.3.16** sessions |
 | Start script | `F:\` / `G:\apps\agent-portal\start.ps1` |
 | Nginx confs | `E:\Source\Deployment\conf\apps\agent-portal*.delena.buzz.conf` |

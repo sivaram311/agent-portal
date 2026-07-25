@@ -58,6 +58,10 @@ Any human or AI **must** read this before binding a port. After claiming, update
 | 4312 | agentverse-upgrade | agentverse-upgrade | staging | 0.0.0.0 | active | PREPROD `F:\apps\agentverse-upgrade`; agentverse-upgrade-staging.delena.buzz |
 | 5312 | agentverse-upgrade | agentverse-upgrade | prod | 0.0.0.0 | active | PROD `G:\apps\agentverse-upgrade`; agentverse-upgrade.delena.buzz |
 | 3330 | library | library | host | 0.0.0.0 | reserved | DEV `E:\MyWorkspace\sandbox\library`; https://library-dev.delena.buzz |
+| 3360 | rd-center | rd-center | host | 0.0.0.0 | reserved | DEV `E:\MyWorkspace\rd-center-project`; https://rd-center-dev.delena.buzz → :3360 |
+| 3370 | production-house | production-house | host | 0.0.0.0 | active | DEV `E:\MyWorkspace\sandbox\production-house\web`; Vite+R3F Phase 0.1 |
+| 4370 | production-house | production-house | staging | 0.0.0.0 | active | PREPROD `F:\apps\production-house`; https://production-house-staging.delena.buzz → :4370 |
+| 5370 | production-house | production-house | prod | 0.0.0.0 | active | PROD `G:\apps\production-house`; https://production-house.delena.buzz → :5370 |
 | 4330 | library | library | staging | 0.0.0.0 | reserved | PREPROD `F:\apps\library`; https://library-staging.delena.buzz |
 | 5330 | library | library | prod | 0.0.0.0 | reserved | PROD `G:\apps\library`; https://library.delena.buzz |
 
@@ -95,6 +99,9 @@ Any human or AI **must** read this before binding a port. After claiming, update
 | `https://library-dev.delena.buzz/` | `127.0.0.1:3330` (Library DEV) |
 | `https://library-staging.delena.buzz/` | `127.0.0.1:4330` (Library PREPROD — app TBD) |
 | `https://library.delena.buzz/` | `127.0.0.1:5330` (Library PROD — app TBD) |
+| `https://rd-center-dev.delena.buzz/` | `127.0.0.1:3360` (RD Center DEV) |
+| `https://rd-center-staging.delena.buzz/` | `127.0.0.1:4360` (RD Center PREPROD — reserved) |
+| `https://rd-center.delena.buzz/` | `127.0.0.1:5360` (RD Center PROD — reserved) |
 
 Future app subdomains: see [CLOUDFLARE-DNS-PROXY.md](CLOUDFLARE-DNS-PROXY.md).
 
@@ -132,3 +139,7 @@ CREATE TABLE port_lease (
 ```
 
 State sub-agent will own CRUD; Builder agents call an API instead of editing this markdown.
+
+| 3350-3352 | machine-sentinel | DEV 3350+3351 active; 3352 reserved | API/UI/watcher | Grok GO 2026-07-16; UI+CSS 2026-07-17; session-0 tasks |
+| 4350-4352 | machine-sentinel | PREPROD reserved | | |
+| 5350-5352 | machine-sentinel | PROD reserved | | |

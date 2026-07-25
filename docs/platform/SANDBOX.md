@@ -22,6 +22,7 @@ Registered greenfield examples:
 |------|------|-------|
 | library | `sandbox/library` | Phone-first docs app; ports 3330/4330/5330 |
 | mindmap | `sandbox/mindmap` | Offline machine AI operating-model map; **no port** — open `index.html` |
+| production-house | `sandbox/production-house` | Phase 0.1 Vite+R3F film lot; DEV **:3370** |
 
 ## Config
 
