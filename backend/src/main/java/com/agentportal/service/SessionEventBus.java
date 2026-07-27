@@ -31,10 +31,19 @@ public class SessionEventBus {
     public void publish(UUID sessionId, AgentEventDto event) {
         messagingTemplate.convertAndSend("/topic/sessions/" + sessionId, event);
         String type = event.type();
-        if ("run_completed".equals(type) || "run_failed".equals(type) || "input_required".equals(type)
-                || "run_cancelled".equals(type)) {
+        boolean isWebhookEvent = "run_completed".equals(type) || "run_failed".equals(type)
+                || "input_required".equals(type) || "run_cancelled".equals(type);
+        // permission_required / plan_required are the events that actually carry a
+        // permissionId a human can act on (Cursor ACP tool/plan approval) --
+        // input_required above is Antigravity's free-text nudge and never has one.
+        // Mobile push cares about both sets; the existing external webhook contract
+        // (webhookService.publish) is left unchanged, only push gets the extra two.
+        boolean isPushEvent = isWebhookEvent || "permission_required".equals(type) || "plan_required".equals(type);
+        if (isWebhookEvent || isPushEvent) {
             Map<String, Object> payload = event.payload() == null ? Map.of() : event.payload();
-            webhookService.publish(type, sessionId.toString(), payload);
+            if (isWebhookEvent) {
+                webhookService.publish(type, sessionId.toString(), payload);
+            }
             agentSessionRepository.findById(sessionId).ifPresent(session ->
                     pushNotificationService.notifyOwner(session.getOwnerUsername(), type, sessionId.toString(), payload));
         }

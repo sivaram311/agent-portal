@@ -63,6 +63,11 @@ $env:APP_CORS_ORIGINS = if ($dotenv["APP_CORS_ORIGINS"]) { $dotenv["APP_CORS_ORI
 $env:AGENT_WORKSPACE_ROOT = if ($dotenv["AGENT_WORKSPACE_ROOT"]) { $dotenv["AGENT_WORKSPACE_ROOT"] } else { Join-Path $Root "workspaces" }
 if ($dotenv["AGENT_WORKSPACE_ALLOWED_ROOTS"]) { $env:AGENT_WORKSPACE_ALLOWED_ROOTS = $dotenv["AGENT_WORKSPACE_ALLOWED_ROOTS"] }
 
+# Firebase Admin SDK service-account key (mobile push notifications).
+# Machine-wide secrets convention -- never committed, never echoed.
+$firebaseCreds = "E:\MyAgent\workflow\secrets\firebase-admin-agent-portal.json"
+if (Test-Path $firebaseCreds) { $env:FIREBASE_CREDENTIALS_PATH = $firebaseCreds }
+
 $cursorAgentDir = Join-Path $env:LOCALAPPDATA "cursor-agent"
 $defaultAgentCmd = Join-Path $cursorAgentDir "agent.cmd"
 $env:CURSOR_AGENT_CMD = if ($dotenv["CURSOR_AGENT_CMD"]) { $dotenv["CURSOR_AGENT_CMD"] } else { $defaultAgentCmd }
