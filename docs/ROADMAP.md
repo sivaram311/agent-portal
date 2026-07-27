@@ -25,7 +25,7 @@ Prioritized improvements and the Cursor skills (subagents) that own each track.
 | P3 | Ops | `ap-ops` | [OPS.md](OPS.md) |
 | P3 | CSS starter | `ap-css-starter` | Portal uses `com.css:css-spring-boot-starter` |
 | P4 | Dual-CLI promote jobs | `ap-platform-em` + MyAgent `promote-*` | **Backlog** — Cursor CLI + Antigravity job runner; configure via Portal pipelines later (`E:\MyAgent\ideas\dual-cli-subagent-workflow.md`, platform SUBAGENTS-ROADMAP) |
-| P2 | Android mobile client | `agent-portal-extended` | Skeleton shipped (`agent-portal-extended` repo) — Compose UI + network/data layer, no device verification yet |
+| P2 | Android mobile client | `agent-portal-extended` | **`v0.3.0-happy-path-dev`** — supervisor happy path (Needs you → Decision sheet → stream → Archive); SSO/FCM on-device still open |
 
 ## How to use
 
