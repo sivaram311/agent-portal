@@ -720,8 +720,9 @@ public class AntigravityBridge implements SessionAgentRuntime {
                     toolName = "tool";
                 }
                 String toolCallId = firstText(node, "toolCallId", "tool_call_id", "id");
-                if (toolCallId == null) {
-                    toolCallId = UUID.randomUUID().toString();
+                if (toolCallId == null || toolCallId.isBlank()) {
+                    // No stable id — skip rather than inventing UUIDs that inflate tool noise.
+                    return;
                 }
                 emit("tool_call", Map.of(
                         "toolCallId", toolCallId,

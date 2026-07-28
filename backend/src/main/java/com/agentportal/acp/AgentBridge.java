@@ -457,9 +457,13 @@ public class AgentBridge implements AutoCloseable {
     private void handleToolCall(JsonNode update) {
         String toolCallId = firstNonBlank(
                 update.path("toolCallId").asText(null),
-                update.path("tool_call_id").asText(null),
-                UUID.randomUUID().toString()
+                update.path("tool_call_id").asText(null)
         );
+        // Never invent an id — updates without toolCallId would duplicate rows and inflate counts.
+        if (toolCallId == null || toolCallId.isBlank()) {
+            log.debug("Skipping tool_call update with no toolCallId: {}", update.path("status").asText(""));
+            return;
+        }
         if (abandonedToolCallIds.contains(toolCallId)) {
             return;
         }
