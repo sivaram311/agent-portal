@@ -14,6 +14,45 @@ import static org.mockito.Mockito.verify;
 class RateLimitFilterTest {
 
     @Test
+    void androidClientHeaderIsExempt() throws Exception {
+        AppProperties properties = new AppProperties();
+        RateLimitFilter filter = new RateLimitFilter(2, properties);
+        var chain = mock(jakarta.servlet.FilterChain.class);
+
+        for (int i = 0; i < 5; i++) {
+            MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/sessions");
+            request.setRemoteAddr("203.0.113.8");
+            request.addHeader(RateLimitFilter.CLIENT_HEADER, RateLimitFilter.CLIENT_ANDROID);
+            MockHttpServletResponse response = new MockHttpServletResponse();
+            filter.doFilter(request, response, chain);
+            assertEquals(200, response.getStatus());
+        }
+        verify(chain, times(5)).doFilter(
+                org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any()
+        );
+    }
+
+    @Test
+    void zeroLimitMeansUnlimited() throws Exception {
+        AppProperties properties = new AppProperties();
+        RateLimitFilter filter = new RateLimitFilter(0, properties);
+        var chain = mock(jakarta.servlet.FilterChain.class);
+
+        for (int i = 0; i < 5; i++) {
+            MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/sessions");
+            request.setRemoteAddr("203.0.113.8");
+            MockHttpServletResponse response = new MockHttpServletResponse();
+            filter.doFilter(request, response, chain);
+            assertEquals(200, response.getStatus());
+        }
+        verify(chain, times(5)).doFilter(
+                org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any()
+        );
+    }
+
+    @Test
     void forgeCityRemainsRateLimitedWhenPortalIsOpenAccess() throws Exception {
         AppProperties properties = new AppProperties();
         properties.getSecurity().setOpenAccess(true);

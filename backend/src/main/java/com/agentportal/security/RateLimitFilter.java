@@ -26,9 +26,17 @@ import java.util.concurrent.atomic.AtomicInteger;
  * When the direct peer is loopback/private, honor {@code X-Forwarded-For} / {@code X-Real-Ip} /
  * {@code CF-Connecting-IP} (set by the trusted AV proxy). Prefer authenticated principal when
  * present so users are not merged into one IP bucket.
+ *
+ * <p>Native Android (Agent Portal Extended) sends {@code X-Agent-Portal-Client: android}
+ * and is exempt — phone polling + chat + WS-adjacent REST would otherwise trip the
+ * shared per-minute budget. Set {@code app.rate-limit.per-minute=0} to disable for everyone.
  */
 @Component
 public class RateLimitFilter extends OncePerRequestFilter {
+
+    /** Recognized by the Android client; see NetworkModule client interceptor. */
+    public static final String CLIENT_HEADER = "X-Agent-Portal-Client";
+    public static final String CLIENT_ANDROID = "android";
 
     private final int limitPerMinute;
     private final AppProperties appProperties;
@@ -38,7 +46,8 @@ public class RateLimitFilter extends OncePerRequestFilter {
             @org.springframework.beans.factory.annotation.Value("${app.rate-limit.per-minute:120}") int limitPerMinute,
             AppProperties appProperties
     ) {
-        this.limitPerMinute = Math.max(10, limitPerMinute);
+        // 0 (or negative) = unlimited for all clients
+        this.limitPerMinute = limitPerMinute;
         this.appProperties = appProperties;
     }
 
@@ -56,6 +65,10 @@ public class RateLimitFilter extends OncePerRequestFilter {
         }
         if (!path.startsWith("/api/") || path.startsWith("/api/health") || path.startsWith("/api/auth/config")
                 || path.startsWith("/api/auth/oauth/token")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+        if (isExemptClient(request) || limitPerMinute <= 0) {
             filterChain.doFilter(request, response);
             return;
         }
@@ -80,6 +93,11 @@ public class RateLimitFilter extends OncePerRequestFilter {
             return;
         }
         filterChain.doFilter(request, response);
+    }
+
+    static boolean isExemptClient(HttpServletRequest request) {
+        String client = request.getHeader(CLIENT_HEADER);
+        return client != null && CLIENT_ANDROID.equalsIgnoreCase(client.trim());
     }
 
     static String clientKey(HttpServletRequest request) {
