@@ -277,7 +277,9 @@ Important env (from `.env` or process):
 | `CLOUDFLARE_ZONE_NAME` | Zone hostname (e.g. `delena.buzz`) |
 | `CLOUDFLARE_ACCOUNT_ID` | Cloudflare account ID |
 
-When restarting only the API, stop the Java process listening on the **target env port** â€” DEV **8080**, PREPROD **4080**, PROD **5080** (or matching JAR on that drive). Do **not** `Stop-Process` by broad name match on `cursor` / `node` / `agent` â€” those include the Cursor IDE agent and will kill your editing session.
+When restarting only the API, stop the Java process listening on the **target env port** — DEV **8080**, PREPROD **4080**, PROD **5080** (or matching JAR on that drive). Do **not** `Stop-Process` by broad name match on `cursor` / `node` / `agent` — those include the Cursor IDE agent and will kill your editing session.
+
+**DEV restart:** always use `scripts/start-dev-backend.ps1` (loads `.env` for `CSS_*`). A bare `java -jar …backend-0.0.1-SNAPSHOT.jar` falls back to `css.auth-url=http://localhost:9000`, which makes `/api/auth/config` advertise localhost and breaks the Android app (`CLEARTEXT communication to localhost not permitted`). After a correct restart, confirm `GET /api/auth/config` shows `authUrl=https://delena.buzz` and `issuer=https://css-next.delena.buzz`.
 
 ## Cloudflare DNS / zone
 
@@ -408,9 +410,11 @@ When CSS is enabled, owners can `POST /api/sessions/{id}/collaborators` with `{ 
 
 ## Rate limit (loopback / AgentVerse proxy)
 
-`RateLimitFilter` keys by **authenticated principal + client IP** when possible. When the direct peer is loopback/private (Next.js `/api/portal` proxy on `:4312`/`:5312` â†’ Portal `:4080`/`:5080`), honor `X-Forwarded-For` / `X-Real-IP` / `CF-Connecting-IP` so all AV users are not merged into one `127.0.0.1` bucket. CSS JWT filter runs **before** rate limit so `sub` is available.
+`RateLimitFilter` keys by **authenticated principal + client IP** when possible. When the direct peer is loopback/private (Next.js `/api/portal` proxy on `:4312`/`:5312` → Portal `:4080`/`:5080`), honor `X-Forwarded-For` / `X-Real-IP` / `CF-Connecting-IP` so all AV users are not merged into one `127.0.0.1` bucket. CSS JWT filter runs **before** rate limit so `sub` is available.
 
-Live preprod/prod: `app.rate-limit.per-minute=180`. Hotfix JAR swapped to F/G `agent-portal.jar` 2026-07-15 (VERSION **0.1.9** IdP env + nginx; jar body still 0.1.8 artifact until next bake).
+Live DEV: `app.rate-limit.per-minute=120`. Live preprod/prod: `180`. Set `app.rate-limit.per-minute=0` to disable for all clients.
+
+**Android exemption (2026-07-29):** requests with header `X-Agent-Portal-Client: android` skip the rate limit (native app polling would otherwise hit 120/min). Shipped in Agent Portal `RateLimitFilter` + `agent-portal-extended` **v0.4.5**. Web / AgentVerse clients are unchanged. PREPROD/PROD jars need a rebuild/restart to pick up the exemption.
 
 ## Device push tokens (mobile client)
 
