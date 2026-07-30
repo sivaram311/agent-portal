@@ -50,8 +50,11 @@ public class SessionController {
     }
 
     @GetMapping("/{id}/tools")
-    public List<ToolRunDto> tools(@PathVariable UUID id) {
-        return sessionService.toolRuns(id);
+    public List<ToolRunDto> tools(
+            @PathVariable UUID id,
+            @RequestParam(name = "compact", defaultValue = "false") boolean compact
+    ) {
+        return sessionService.toolRuns(id, compact);
     }
 
     @GetMapping("/{id}/permissions")

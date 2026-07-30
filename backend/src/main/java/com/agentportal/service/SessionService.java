@@ -175,8 +175,14 @@ public class SessionService {
     }
 
     public List<ToolRunDto> toolRuns(UUID id) {
+        return toolRuns(id, false);
+    }
+
+    public List<ToolRunDto> toolRuns(UUID id, boolean compact) {
         require(id);
-        return toolRunRepository.findBySessionIdOrderByStartedAtAsc(id).stream().map(ToolRunDto::from).toList();
+        return toolRunRepository.findBySessionIdOrderByStartedAtAsc(id).stream()
+                .map(t -> ToolRunDto.from(t, compact))
+                .toList();
     }
 
     public List<Map<String, Object>> events(UUID id) {
