@@ -27,8 +27,8 @@ Machine standing orders: `E:\MyAgent\workflow\CONSCIOUS.md` (drives, ports, DB s
 
 | Piece | Location |
 |-------|----------|
-| Release package | **0.1.14** · `H:\releases\agent-portal-0.1.14\` (`v0.1.14`) · ForgeCity Tamil rewrite · F+G live |
-| Promote evidence | `H:\releases\agent-portal-0.1.14\evidence\q1\` + `q2\` · prior: `0.1.13` machine gateway |
+| Release package | **0.1.15** · `H:\releases\agent-portal-0.1.15\` (`v0.1.15`) · mobile diagnostics + ForgeCity · F+G live |
+| Promote evidence | `H:\releases\agent-portal-0.1.15\evidence\q1\` + `q2\` · prior: `0.1.14` |
 | Consumed by | ProdDeck â‰¥ **0.6.2** (`OS_EVENTS_FORWARD`) Â· AV classic â‰¥ **0.3.16** sessions |
 | Start script | `F:\` / `G:\apps\agent-portal\start.ps1` |
 | Nginx confs | `E:\Source\Deployment\conf\apps\agent-portal*.delena.buzz.conf` |
