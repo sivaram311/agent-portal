@@ -11,6 +11,7 @@ public class AppProperties {
     private final Security security = new Security();
     private final Webhooks webhooks = new Webhooks();
     private final MachineGateway machineGateway = new MachineGateway();
+    private final Diagnostics diagnostics = new Diagnostics();
 
     public Cors getCors() {
         return cors;
@@ -26,6 +27,33 @@ public class AppProperties {
 
     public MachineGateway getMachineGateway() {
         return machineGateway;
+    }
+
+    public Diagnostics getDiagnostics() {
+        return diagnostics;
+    }
+
+    public static class Diagnostics {
+        /** Directory for uploaded mobile client logs (created on demand). */
+        private String dir = "./logs/mobile-diagnostics";
+        /** Max accepted POST body size for log content (bytes). */
+        private long maxBodyBytes = 1_048_576L;
+
+        public String getDir() {
+            return dir;
+        }
+
+        public void setDir(String dir) {
+            this.dir = dir;
+        }
+
+        public long getMaxBodyBytes() {
+            return maxBodyBytes;
+        }
+
+        public void setMaxBodyBytes(long maxBodyBytes) {
+            this.maxBodyBytes = maxBodyBytes;
+        }
     }
 
     public static class Cors {

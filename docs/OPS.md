@@ -416,6 +416,27 @@ Live DEV: `app.rate-limit.per-minute=120`. Live preprod/prod: `180`. Set `app.ra
 
 **Android exemption (2026-07-29):** requests with header `X-Agent-Portal-Client: android` skip the rate limit (native app polling would otherwise hit 120/min). Shipped in Agent Portal `RateLimitFilter` + `agent-portal-extended` **v0.4.5**. Web / AgentVerse clients are unchanged. PREPROD/PROD jars need a rebuild/restart to pick up the exemption.
 
+## Mobile diagnostics logs
+
+Android (**v0.4.7+**) uploads troubleshooting dumps to the portal.
+
+| Item | Value |
+|------|-------|
+| Upload | `POST /api/diagnostics/client-logs` (authenticated JWT) |
+| List | `GET /api/diagnostics/client-logs?limit=50` (**ROLE_ADMIN**) |
+| Download | `GET /api/diagnostics/client-logs/file?path=yyyy-MM-dd/file.log` (**ROLE_ADMIN**) |
+| Dir | `app.diagnostics.dir` / `AGENT_DIAGNOSTICS_DIR` (default `./logs/mobile-diagnostics` under the backend cwd) |
+| Max body | `app.diagnostics.max-body-bytes` (default 1 MiB) |
+
+Files land as `{dir}/{UTC-date}/{user}_{deviceId}_{epoch}_{reason}.log`. Tail on DEV:
+
+```powershell
+Get-ChildItem E:\MyWorkspace\agent-portal\backend\logs\mobile-diagnostics -Recurse -Filter *.log |
+  Sort-Object LastWriteTime -Descending | Select-Object -First 5 FullName
+```
+
+Always restart DEV with `scripts/start-dev-backend.ps1` after backend changes (bare `java -jar` drops CSS env → localhost cleartext on the phone).
+
 ## Device push tokens (mobile client)
 
 `POST /api/devices` `{ "token", "platform" }` (authenticated) — upserts by `token`, sets `ownerUsername` from the caller. `DELETE /api/devices/{token}` — idempotent unregister.
