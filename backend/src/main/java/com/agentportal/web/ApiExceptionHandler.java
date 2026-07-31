@@ -70,6 +70,13 @@ public class ApiExceptionHandler {
         if (msg == null || msg.isBlank()) {
             msg = cur.getClass().getSimpleName();
         }
+        // H2 file DB can close under the live JVM (AUTO_SERVER / lock); don't leak Hibernate jargon to clients.
+        String lower = msg.toLowerCase();
+        if (lower.contains("database has been closed")
+                || lower.contains("jdbc connection")
+                || (lower.contains("hibernate") && (lower.contains("rollback") || lower.contains("transaction")))) {
+            return "Portal database is temporarily unavailable. Wait a moment and pull to refresh; if it persists, the DEV backend needs a restart.";
+        }
         return msg;
     }
 }
