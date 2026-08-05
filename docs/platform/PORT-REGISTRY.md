@@ -59,7 +59,7 @@ Any human or AI **must** read this before binding a port. After claiming, update
 | 5312 | agentverse-upgrade | agentverse-upgrade | prod | 0.0.0.0 | active | PROD `G:\apps\agentverse-upgrade`; agentverse-upgrade.delena.buzz |
 | 3330 | library | library | host | 0.0.0.0 | reserved | DEV `E:\MyWorkspace\sandbox\library`; https://library-dev.delena.buzz |
 | 3360 | rd-center | rd-center | host | 0.0.0.0 | reserved | DEV `E:\MyWorkspace\rd-center-project`; https://rd-center-dev.delena.buzz → :3360 |
-| 3370 | production-house | production-house | host | 0.0.0.0 | active | DEV `E:\MyWorkspace\sandbox\production-house\web`; Vite+R3F Phase 0.1 |
+| 3370 | production-house | production-house | host | 0.0.0.0 | active | DEV `E:\MyWorkspace\sandbox\production-house\web`; https://production-house-dev.delena.buzz → :3370; Vite+R3F Phase 0.1 |
 | 4370 | production-house | production-house | staging | 0.0.0.0 | active | PREPROD `F:\apps\production-house`; https://production-house-staging.delena.buzz → :4370 |
 | 5370 | production-house | production-house | prod | 0.0.0.0 | active | PROD `G:\apps\production-house`; https://production-house.delena.buzz → :5370 |
 | 4330 | library | library | staging | 0.0.0.0 | reserved | PREPROD `F:\apps\library`; https://library-staging.delena.buzz |
@@ -100,6 +100,7 @@ Any human or AI **must** read this before binding a port. After claiming, update
 | `https://library-staging.delena.buzz/` | `127.0.0.1:4330` (Library PREPROD — app TBD) |
 | `https://library.delena.buzz/` | `127.0.0.1:5330` (Library PROD — app TBD) |
 | `https://rd-center-dev.delena.buzz/` | `127.0.0.1:3360` (RD Center DEV) |
+| `https://production-house-dev.delena.buzz/` | `127.0.0.1:3370` (Production House DEV) |
 | `https://rd-center-staging.delena.buzz/` | `127.0.0.1:4360` (RD Center PREPROD — reserved) |
 | `https://rd-center.delena.buzz/` | `127.0.0.1:5360` (RD Center PROD — reserved) |
 
