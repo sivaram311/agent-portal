@@ -31,6 +31,12 @@ const MCP_OAUTH_CLIENT_ID = process.env.MCP_OAUTH_CLIENT_ID || 'agent-portal-spa
 const MCP_OAUTH_CLIENT_SECRET = process.env.MCP_OAUTH_CLIENT_SECRET || '';
 const DEFAULT_WORKSPACE = process.env.DEFAULT_WORKSPACE || 'agent-api';
 const DEFAULT_PROVIDER = process.env.DEFAULT_PROVIDER || 'cursor';
+/** Polling defaults for waitForIdle. timeoutMs (env/arg) wins over maxAttempts. */
+const DEFAULT_WAIT_MAX_ATTEMPTS = Number(process.env.MCP_WAIT_MAX_ATTEMPTS || 300);
+const DEFAULT_WAIT_INTERVAL_MS = Number(process.env.MCP_WAIT_INTERVAL_MS || 1000);
+const DEFAULT_WAIT_TIMEOUT_MS = process.env.MCP_WAIT_TIMEOUT_MS
+  ? Number(process.env.MCP_WAIT_TIMEOUT_MS)
+  : null;
 
 const oauth = createOauth({
   publicBase: PUBLIC_BASE,
@@ -83,6 +89,11 @@ const tools = [
       properties: {
         sessionId: { type: 'string', description: 'Session UUID' },
         prompt: { type: 'string', description: 'User prompt text' },
+        timeoutMs: {
+          type: 'number',
+          description:
+            'Max ms to wait for idle (overrides MCP_WAIT_TIMEOUT_MS / maxAttempts). On timeout, returns an error with sessionId.',
+        },
       },
       required: ['sessionId', 'prompt'],
     },
@@ -138,6 +149,11 @@ const tools = [
         waitForReply: {
           type: 'boolean',
           description: 'If true, poll until reply (default true)',
+        },
+        timeoutMs: {
+          type: 'number',
+          description:
+            'Max ms to wait for idle when waitForReply=true (overrides MCP_WAIT_TIMEOUT_MS / maxAttempts).',
         },
       },
       required: ['message'],
@@ -215,17 +231,53 @@ async function portalFetch(path, options = {}, retry = true) {
   return response.json();
 }
 
-async function waitForIdle(sessionId, maxAttempts = 300) {
+async function waitForIdle(sessionId, options = {}) {
+  const intervalMs = options.intervalMs ?? DEFAULT_WAIT_INTERVAL_MS;
+  const maxAttempts = options.maxAttempts ?? DEFAULT_WAIT_MAX_ATTEMPTS;
+  const timeoutMs =
+    options.timeoutMs !== undefined && options.timeoutMs !== null
+      ? Number(options.timeoutMs)
+      : DEFAULT_WAIT_TIMEOUT_MS;
+
+  const started = Date.now();
   let status = 'STREAMING';
-  for (let i = 0; i < maxAttempts; i++) {
-    await new Promise((r) => setTimeout(r, 1000));
+  let attempts = 0;
+
+  console.log(
+    `[MCP] waitForIdle start session=${sessionId} timeoutMs=${timeoutMs ?? 'none'} maxAttempts=${maxAttempts} intervalMs=${intervalMs}`
+  );
+
+  while (true) {
+    const elapsed = Date.now() - started;
+    const timedOut =
+      timeoutMs != null && Number.isFinite(timeoutMs)
+        ? elapsed >= timeoutMs
+        : attempts >= maxAttempts;
+
+    if (timedOut) {
+      const waitedMs = Date.now() - started;
+      console.log(
+        `[MCP] waitForIdle timeout session=${sessionId} status=${status} waitedMs=${waitedMs} attempts=${attempts}`
+      );
+      throw new Error(
+        `Timed out waiting for session ${sessionId} to leave STREAMING. ` +
+          `Final status: ${status}. Waited ${waitedMs}ms` +
+          (timeoutMs != null ? ` (timeoutMs=${timeoutMs})` : ` (maxAttempts=${maxAttempts})`) +
+          `. Use get_session_transcript later or set waitForReply=false.`
+      );
+    }
+
+    await new Promise((r) => setTimeout(r, intervalMs));
+    attempts += 1;
     const session = await portalFetch(`/api/sessions/${sessionId}`);
     status = session.status;
     if (status !== 'STREAMING') {
+      console.log(
+        `[MCP] waitForIdle done session=${sessionId} status=${status} waitedMs=${Date.now() - started} attempts=${attempts}`
+      );
       return status;
     }
   }
-  return status;
 }
 
 function latestAssistantText(messages) {
@@ -260,12 +312,14 @@ async function handleTool(name, args = {}) {
       return textResult(`Session created:\n${JSON.stringify(session, null, 2)}`);
     }
     case 'send_prompt': {
-      const { sessionId, prompt } = args;
+      const { sessionId, prompt, timeoutMs } = args;
       await portalFetch(`/api/sessions/${sessionId}/prompt`, {
         method: 'POST',
         body: JSON.stringify({ prompt }),
       });
-      const status = await waitForIdle(sessionId);
+      const status = await waitForIdle(sessionId, {
+        ...(timeoutMs != null ? { timeoutMs } : {}),
+      });
       const messages = await portalFetch(`/api/sessions/${sessionId}/messages`);
       return textResult(
         `Run finished with status: ${status}\n\nResponse:\n${latestAssistantText(messages)}`
@@ -297,14 +351,18 @@ async function handleTool(name, args = {}) {
           sessionId: args.sessionId || null,
         }),
       });
-      if (!wait) {
-        return textResult(JSON.stringify(accepted, null, 2));
-      }
       const sessionId = accepted.sessionId || accepted.session_id;
+      if (!wait) {
+        return textResult(
+          `Accepted (waitForReply=false).\nsessionId: ${sessionId || 'unknown'}\n\n${JSON.stringify(accepted, null, 2)}`
+        );
+      }
       if (!sessionId) {
         return textResult(JSON.stringify(accepted, null, 2));
       }
-      const status = await waitForIdle(sessionId);
+      const status = await waitForIdle(sessionId, {
+        ...(args.timeoutMs != null ? { timeoutMs: args.timeoutMs } : {}),
+      });
       const messages = await portalFetch(`/api/sessions/${sessionId}/messages`);
       return textResult(
         `Machine chat status: ${status}\nsessionId: ${sessionId}\n\nResponse:\n${latestAssistantText(messages)}`

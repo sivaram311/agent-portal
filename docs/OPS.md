@@ -232,6 +232,8 @@ Default `APP_CORS_ORIGINS=*` â€” any browser/AI origin may call `/api/**`. 
 
 PROD Streamable HTTP URL for Spark Connected Apps: `https://agent-portal.delena.buzz/mcp/` (host process `:5430`, nginx `/mcp/`). Runbook: [`workspaces/agent-api/mcp-bridge/README.md`](../workspaces/agent-api/mcp-bridge/README.md). Do not paste `/mcp/sse` into Spark.
 
+Wait defaults (bridge `.env`): set `MCP_WAIT_TIMEOUT_MS=90000` so external MCP clients (Grok/Spark) get a clear timeout instead of a 5-minute hang. Per-call override: tool arg `timeoutMs` on `send_prompt` / `machine_chat`. Restart after env changes: `workspaces/agent-api/mcp-bridge/start.ps1`.
+
 
 Set `AGENT_PORTAL_API_KEY` or `app.security.api-key`. Clients must send `X-API-Key`. `/api/health` and `/api/auth/config` stay open.
 

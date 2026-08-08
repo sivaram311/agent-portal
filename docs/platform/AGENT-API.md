@@ -80,6 +80,7 @@ For Chrome / [gemini.google.com](https://gemini.google.com) **Spark Connected Ap
 | Client ID / Secret | Leave empty |
 | Docs / runbook | [`workspaces/agent-api/mcp-bridge/README.md`](../../workspaces/agent-api/mcp-bridge/README.md) |
 | Host port | `:5430` (see [PORT-REGISTRY.md](PORT-REGISTRY.md)) |
+| Wait timeout | `MCP_WAIT_TIMEOUT_MS=90000` (recommended); optional tool arg `timeoutMs` |
 
 The bridge calls Portal with CSS JWT (`clientId=agent-portal`) or `X-API-Key`. Secrets stay in the bridge `.env` (never commit).
 

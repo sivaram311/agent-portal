@@ -23,11 +23,24 @@ Gemini Spark expects **Streamable HTTP** (not legacy `/sse`). Leave Client ID / 
 | `portal_health` | Portal `/api/health` |
 | `list_sessions` | List sessions |
 | `create_session` | New Cursor/Antigravity session |
-| `send_prompt` | Prompt + wait for reply |
+| `send_prompt` | Prompt + wait for reply (optional `timeoutMs`) |
 | `get_session_transcript` | Full transcript |
 | `cancel_run` | Cancel in-flight run |
 | `machine_context` | Host context snapshot |
-| `machine_chat` | Machine Gateway chat (+ wait) |
+| `machine_chat` | Machine Gateway chat (+ wait; optional `timeoutMs`, `waitForReply`) |
+
+### Wait / timeout behaviour
+
+`send_prompt` and `machine_chat` poll until the session leaves `STREAMING`. External MCP clients (Grok, Spark, etc.) often time out in 10–60s, so keep bridge waits shorter than the client.
+
+| Parameter / env | Default | Notes |
+|-----------------|---------|--------|
+| Tool arg `timeoutMs` | — | Per-call absolute wait; overrides env |
+| `MCP_WAIT_TIMEOUT_MS` | unset | **Recommended prod: `90000`** |
+| `MCP_WAIT_INTERVAL_MS` | `1000` | Poll interval |
+| `MCP_WAIT_MAX_ATTEMPTS` | `300` | Fallback when no `timeoutMs` (≈5 min at 1s) |
+
+On timeout the tool returns `isError: true` with `sessionId`, final status, waited duration, and a hint to use `get_session_transcript` later or `waitForReply=false` on `machine_chat`.
 
 ## Connect in Gemini Spark
 
