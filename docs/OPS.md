@@ -228,6 +228,10 @@ docker compose exec -T postgres psql -U agent agentportal < backup.sql
 
 Default `APP_CORS_ORIGINS=*` â€” any browser/AI origin may call `/api/**`. **Authentication is unchanged** (CSS JWT or `X-API-Key`). Discovery: `GET /api/agent/actions` (public). Contract: [platform/AGENT-API.md](platform/AGENT-API.md) and `workspaces/agent-api/`.
 
+### Gemini Spark MCP bridge
+
+PROD Streamable HTTP URL for Spark Connected Apps: `https://agent-portal.delena.buzz/mcp/` (host process `:5430`, nginx `/mcp/`). Runbook: [`workspaces/agent-api/mcp-bridge/README.md`](../workspaces/agent-api/mcp-bridge/README.md). Do not paste `/mcp/sse` into Spark.
+
 
 Set `AGENT_PORTAL_API_KEY` or `app.security.api-key`. Clients must send `X-API-Key`. `/api/health` and `/api/auth/config` stay open.
 

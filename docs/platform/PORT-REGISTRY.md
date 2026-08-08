@@ -40,6 +40,9 @@ Any human or AI **must** read this before binding a port. After claiming, update
 | 4910 | css-auth-next | css-next | staging | 0.0.0.0 | active | Side-fleet PREPROD; css-next-staging.delena.buzz → :4910 |
 | 5010 | h-drive-server | h-drive-server | prod | 0.0.0.0 | active | PROD `G:\apps\h-drive-server`; https://hdrive.delena.buzz |
 | 5080 | agent-portal-api | agent-portal | prod | 0.0.0.0 | active | PROD `G:\apps\agent-portal`; agent-portal.delena.buzz; Machine Gateway same `/api/machine/*` after promote |
+| 5430 | agent-portal-mcp-bridge | agent-portal | prod | 0.0.0.0 | active | Gemini Spark MCP Streamable HTTP; public `https://agent-portal.delena.buzz/mcp/` → nginx `/mcp/` → `:5430` |
+| 4430 | agent-portal-mcp-bridge | agent-portal | staging | 0.0.0.0 | reserved | PREPROD Spark MCP (mirror of :5430) |
+| 3430 | agent-portal-mcp-bridge | agent-portal | host | 0.0.0.0 | reserved | DEV Spark MCP |
 | 5432 | postgres | docker/local | host | — | active | Shared; schemas per app |
 | 5900 | css-auth | css | prod | 0.0.0.0 | active | Classic Prod CSS; css.delena.buzz — keep |
 | 5910 | css-auth-next | css-next | prod | 0.0.0.0 | active | Side-fleet PROD; css-next.delena.buzz → :5910 |
@@ -58,6 +61,9 @@ Any human or AI **must** read this before binding a port. After claiming, update
 | 4312 | agentverse-upgrade | agentverse-upgrade | staging | 0.0.0.0 | active | PREPROD `F:\apps\agentverse-upgrade`; agentverse-upgrade-staging.delena.buzz |
 | 5312 | agentverse-upgrade | agentverse-upgrade | prod | 0.0.0.0 | active | PROD `G:\apps\agentverse-upgrade`; agentverse-upgrade.delena.buzz |
 | 3330 | library | library | host | 0.0.0.0 | reserved | DEV `E:\MyWorkspace\sandbox\library`; https://library-dev.delena.buzz |
+| 3420 | colorshape-fun | colorshape-fun | host | 0.0.0.0 | active | DEV `E:\MyWorkspace\color-shape-fun`; https://colorshape-fun-dev.delena.buzz → :3420; Expo Router SDK 57 web dev server |
+| 4420 | colorshape-fun | colorshape-fun | staging | 0.0.0.0 | reserved | PREPROD `F:\apps\colorshape-fun`; https://colorshape-fun-staging.delena.buzz |
+| 5420 | colorshape-fun | colorshape-fun | prod | 0.0.0.0 | reserved | PROD `G:\apps\colorshape-fun`; https://colorshape-fun.delena.buzz |
 | 3360 | rd-center | rd-center | host | 0.0.0.0 | reserved | DEV `E:\MyWorkspace\rd-center-project`; https://rd-center-dev.delena.buzz → :3360 |
 | 3370 | production-house | production-house | host | 0.0.0.0 | active | DEV `E:\MyWorkspace\sandbox\production-house\web`; https://production-house-dev.delena.buzz → :3370; Vite+R3F Phase 0.1 |
 | 4370 | production-house | production-house | staging | 0.0.0.0 | active | PREPROD `F:\apps\production-house`; https://production-house-staging.delena.buzz → :4370 |
@@ -86,6 +92,7 @@ Any human or AI **must** read this before binding a port. After claiming, update
 | `https://delena.buzz/.well-known/` | `127.0.0.1:5910` |
 | `https://agent-portal-staging.delena.buzz/` | static `F:\apps\agent-portal\ui` + API `:4080`; `/auth` → `:5910` |
 | `https://agent-portal.delena.buzz/` | static `G:\apps\agent-portal\ui` + API `:5080`; `/auth` → `:5910` |
+| `https://agent-portal.delena.buzz/mcp/` | `127.0.0.1:5430` (Gemini Spark MCP bridge — Streamable HTTP; legacy SSE at `/mcp/sse`) |
 | `https://hdrive.delena.buzz/` | `127.0.0.1:5010` (H: file expose) |
 | `https://css.delena.buzz/` | `127.0.0.1:5900` |
 | `https://home-staging.delena.buzz/` | `127.0.0.1:4320` (ProdDeck **0.6.1**) |
@@ -101,6 +108,7 @@ Any human or AI **must** read this before binding a port. After claiming, update
 | `https://library.delena.buzz/` | `127.0.0.1:5330` (Library PROD — app TBD) |
 | `https://rd-center-dev.delena.buzz/` | `127.0.0.1:3360` (RD Center DEV) |
 | `https://production-house-dev.delena.buzz/` | `127.0.0.1:3370` (Production House DEV) |
+| `https://colorshape-fun-dev.delena.buzz/` | `127.0.0.1:3420` (ColorShape Fun DEV) |
 | `https://rd-center-staging.delena.buzz/` | `127.0.0.1:4360` (RD Center PREPROD — reserved) |
 | `https://rd-center.delena.buzz/` | `127.0.0.1:5360` (RD Center PROD — reserved) |
 

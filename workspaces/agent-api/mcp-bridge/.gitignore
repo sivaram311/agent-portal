@@ -1,0 +1,4 @@
+.env
+.spark-bearer.txt
+.spark-oauth.txt
+node_modules/

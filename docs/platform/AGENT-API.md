@@ -11,6 +11,7 @@ Workspace: [`workspaces/agent-api/`](../../workspaces/agent-api/).
 | Action map (UI → HTTP) | [`workspaces/agent-api/ACTIONS.md`](../../workspaces/agent-api/ACTIONS.md) |
 | OpenAPI 3 | [`workspaces/agent-api/openapi/agent-api.yaml`](../../workspaces/agent-api/openapi/agent-api.yaml) |
 | PowerShell client | [`workspaces/agent-api/client/`](../../workspaces/agent-api/client/) |
+| Gemini Spark MCP bridge | [`workspaces/agent-api/mcp-bridge/`](../../workspaces/agent-api/mcp-bridge/) |
 | Live catalog | `GET /api/agent/actions` (public) |
 
 ## Base URLs
@@ -67,6 +68,20 @@ New-AgentSession -Title 'API bridge' -WorkspacePath agent-api -Provider cursor
 4. Prefer **Machine Gateway** for host-wide awareness: [MACHINE-GATEWAY.md](MACHINE-GATEWAY.md) / [MACHINE-GATEWAY-USAGE.md](MACHINE-GATEWAY-USAGE.md). Canonical: `POST /api/machine` (context + optional chat). Aliases: `GET /api/machine/context`, `POST /api/machine/chat`. Live run output: `/ws` or poll session `messages`/`events`.
 5. Create/reuse session on `agent-api` (or sandbox path) for workspace-scoped work.
 6. Use Changes APIs before promote.
+
+## Gemini Spark MCP
+
+For Chrome / [gemini.google.com](https://gemini.google.com) **Spark Connected Apps**, use the MCP bridge (not raw REST):
+
+| Item | Value |
+|------|--------|
+| PROD URL | `https://agent-portal.delena.buzz/mcp/` (Streamable HTTP — trailing slash) |
+| Transport | Streamable HTTP (do **not** paste `/mcp/sse` for Spark) |
+| Client ID / Secret | Leave empty |
+| Docs / runbook | [`workspaces/agent-api/mcp-bridge/README.md`](../../workspaces/agent-api/mcp-bridge/README.md) |
+| Host port | `:5430` (see [PORT-REGISTRY.md](PORT-REGISTRY.md)) |
+
+The bridge calls Portal with CSS JWT (`clientId=agent-portal`) or `X-API-Key`. Secrets stay in the bridge `.env` (never commit).
 
 ## Config
 

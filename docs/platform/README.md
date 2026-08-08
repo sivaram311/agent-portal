@@ -14,7 +14,7 @@ Live Agent Portal URLs: DEV `https://delena.buzz`, PREPROD `https://agent-portal
 | [PORT-REGISTRY.md](PORT-REGISTRY.md) | Who owns which TCP port |
 | [SANDBOX.md](SANDBOX.md) | Sandbox root and agent write boundaries |
 | [MACHINE-MAP.md](MACHINE-MAP.md) | E: drive / MyWorkspace / Source layout |
-| [AGENT-API.md](AGENT-API.md) | How any AI talks to Agent Portal + CSS |
+| [AGENT-API.md](AGENT-API.md) | How any AI talks to Agent Portal + CSS + Gemini Spark MCP (`/mcp/`) |
 | [CSS-APP-HOME.md](CSS-APP-HOME.md) | Post-login app launcher (planned) |
 | [CLOUDFLARE-DNS-PROXY.md](CLOUDFLARE-DNS-PROXY.md) | Subdomains → NGINX → host services |
 | [VERSIONING-PROMOTE.md](VERSIONING-PROMOTE.md) | Sandbox → version → staging → prod (+ dependency git tags; machine SoT `E:\MyAgent\workflow\deps\`) |

@@ -27,6 +27,7 @@ workspaces/**/*.out.txt
 workspaces/**/*.err.txt
 workspaces/**/*.ps1
 !workspaces/agent-api/client/*.ps1
+!workspaces/agent-api/mcp-bridge/*.ps1
 workspaces/**/*.class
 workspaces/**/agy-*.txt
 workspaces/**/.test-*
