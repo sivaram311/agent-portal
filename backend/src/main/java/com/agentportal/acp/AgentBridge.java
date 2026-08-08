@@ -242,13 +242,22 @@ public class AgentBridge implements AutoCloseable {
         client.onExtensionRequest(this::handleExtensionRequest);
 
         await(client.initialize(), deadlineNanos, "initialize");
-        try {
-            await(client.authenticate(), deadlineNanos, "authenticate");
-        } catch (AcpStartTimeoutException e) {
-            throw e;
-        } catch (Exception e) {
-            log.warn("ACP authenticate returned error (may already be logged in): {}", e.getMessage());
-        }
+        // Fire-and-forget: measured on 2026-08-08, the CLI's own `authenticate()` RPC
+        // reply takes ~7s even when already logged in via `agent login` (verified
+        // separately via `agent status`) — its outcome doesn't gate readiness, only
+        // its round trip is slow. Blocking on it (even briefly) starved session/new
+        // of the budget it actually needs, guaranteeing every start timed out at the
+        // authenticate step before session/new was ever attempted. Log the eventual
+        // result for visibility without holding up the critical path.
+        String authSessionId = portalSessionId.toString();
+        client.authenticate().whenComplete((result, err) -> {
+            if (err != null) {
+                log.warn("ACP authenticate (async, off critical path) session={} returned error "
+                        + "(may already be logged in via CLI): {}", authSessionId, rootMessage(err));
+            } else {
+                log.info("ACP authenticate (async, off critical path) session={} ok", authSessionId);
+            }
+        });
     }
 
     private <T> T await(CompletableFuture<T> future, long deadlineNanos, String step) throws Exception {

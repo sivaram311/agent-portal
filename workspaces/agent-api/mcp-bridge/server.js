@@ -37,6 +37,10 @@ const DEFAULT_WAIT_INTERVAL_MS = Number(process.env.MCP_WAIT_INTERVAL_MS || 1000
 const DEFAULT_WAIT_TIMEOUT_MS = process.env.MCP_WAIT_TIMEOUT_MS
   ? Number(process.env.MCP_WAIT_TIMEOUT_MS)
   : null;
+/** Fail-fast for portal calls that start ACP (prompt / machine chat). Portal may block ≤60s on initialize. */
+const DEFAULT_PORTAL_ACCEPT_TIMEOUT_MS = Number(
+  process.env.MCP_PORTAL_ACCEPT_TIMEOUT_MS || 10000
+);
 
 const oauth = createOauth({
   publicBase: PUBLIC_BASE,
@@ -48,6 +52,15 @@ const oauth = createOauth({
 
 let cachedToken = null;
 let tokenExpiresAt = 0;
+/**
+ * Guards concurrent CSS logins: without this, several near-simultaneous portal
+ * calls arriving before cachedToken is set each independently call loginCss(),
+ * firing overlapping /auth/login requests. One of those racing requests can
+ * come back a transient 401 even with correct credentials (observed 2026-08-08,
+ * three concurrent "CSS login start" lines within <1s). Callers now share one
+ * in-flight login promise instead of each starting their own.
+ */
+let loginInFlight = null;
 
 const tools = [
   {
@@ -161,21 +174,50 @@ const tools = [
   },
 ];
 
+async function fetchWithTimeout(url, options = {}, timeoutMs) {
+  if (timeoutMs == null || !Number.isFinite(timeoutMs) || timeoutMs <= 0) {
+    return fetch(url, options);
+  }
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } catch (err) {
+    if (err?.name === 'AbortError') {
+      const e = new Error(
+        `Request timed out after ${timeoutMs}ms: ${options.method || 'GET'} ${url}`
+      );
+      e.code = 'FETCH_TIMEOUT';
+      e.timeoutMs = timeoutMs;
+      throw e;
+    }
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 async function loginCss() {
   if (!CSS_USERNAME || !CSS_PASSWORD) {
     throw new Error(
       'Portal auth required: set PORTAL_API_KEY or CSS_USERNAME + CSS_PASSWORD'
     );
   }
-  const res = await fetch(`${CSS_AUTH_URL}/auth/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      username: CSS_USERNAME,
-      password: CSS_PASSWORD,
-      clientId: CSS_CLIENT_ID,
-    }),
-  });
+  const started = Date.now();
+  console.log(`[MCP] CSS login start at=${new Date().toISOString()}`);
+  const res = await fetchWithTimeout(
+    `${CSS_AUTH_URL}/auth/login`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        username: CSS_USERNAME,
+        password: CSS_PASSWORD,
+        clientId: CSS_CLIENT_ID,
+      }),
+    },
+    10000
+  );
   const text = await res.text();
   if (!res.ok) {
     throw new Error(`CSS login failed (${res.status}): ${text}`);
@@ -189,6 +231,7 @@ async function loginCss() {
   // Refresh a bit early; CSS tokens typically ~1h — default 50m if unknown.
   const ttlMs = Number(process.env.CSS_TOKEN_TTL_MS || 50 * 60 * 1000);
   tokenExpiresAt = Date.now() + ttlMs;
+  console.log(`[MCP] CSS login ok waitedMs=${Date.now() - started}`);
   return token;
 }
 
@@ -199,19 +242,50 @@ async function authHeaders() {
     return headers;
   }
   if (!cachedToken || Date.now() >= tokenExpiresAt) {
-    await loginCss();
+    if (loginInFlight) {
+      console.log('[MCP] CSS login reuse in-flight login (concurrent caller)');
+    } else {
+      loginInFlight = loginCss().finally(() => {
+        loginInFlight = null;
+      });
+    }
+    await loginInFlight;
   }
   headers.Authorization = `Bearer ${cachedToken}`;
   return headers;
 }
 
 async function portalFetch(path, options = {}, retry = true) {
+  const { timeoutMs, headers: optionHeaders, ...fetchOptions } = options;
   const url = `${PORTAL_URL}${path}`;
+  const started = Date.now();
   const headers = {
     ...(await authHeaders()),
-    ...options.headers,
+    ...optionHeaders,
   };
-  const response = await fetch(url, { ...options, headers });
+  let response;
+  try {
+    response = await fetchWithTimeout(url, { ...fetchOptions, headers }, timeoutMs);
+  } catch (err) {
+    if (err?.code === 'FETCH_TIMEOUT') {
+      const waitedMs = Date.now() - started;
+      console.log(
+        `[MCP] portalFetch timeout path=${path} waitedMs=${waitedMs} timeoutMs=${timeoutMs}`
+      );
+      const e = new Error(
+        `Portal accept timed out after ${waitedMs}ms calling ${path} ` +
+          `(limit ${timeoutMs}ms). No usable response yet. ` +
+          `Likely Cursor ACP getOrStart/initialize is blocked (portal waits up to 60s). ` +
+          `Check portal health / agent process, retry later, or use waitForReply=false after a successful accept.`
+      );
+      e.code = 'PORTAL_ACCEPT_TIMEOUT';
+      e.path = path;
+      e.waitedMs = waitedMs;
+      e.timeoutMs = timeoutMs;
+      throw e;
+    }
+    throw err;
+  }
   if (response.status === 401 && retry && !PORTAL_API_KEY) {
     cachedToken = null;
     tokenExpiresAt = 0;
@@ -313,10 +387,32 @@ async function handleTool(name, args = {}) {
     }
     case 'send_prompt': {
       const { sessionId, prompt, timeoutMs } = args;
-      await portalFetch(`/api/sessions/${sessionId}/prompt`, {
-        method: 'POST',
-        body: JSON.stringify({ prompt }),
-      });
+      const t0 = Date.now();
+      console.log(
+        `[MCP] send_prompt enter sessionId=${sessionId} timeoutMs=${timeoutMs ?? 'default'} ` +
+          `promptLen=${String(prompt || '').length} acceptTimeoutMs=${DEFAULT_PORTAL_ACCEPT_TIMEOUT_MS} ` +
+          `at=${new Date().toISOString()}`
+      );
+      let accept;
+      try {
+        accept = await portalFetch(`/api/sessions/${sessionId}/prompt`, {
+          method: 'POST',
+          body: JSON.stringify({ prompt }),
+          timeoutMs: DEFAULT_PORTAL_ACCEPT_TIMEOUT_MS,
+        });
+      } catch (err) {
+        const waitedMs = Date.now() - t0;
+        console.log(
+          `[MCP] send_prompt accept_failed waitedMs=${waitedMs} err=${err.message}`
+        );
+        return errorResult(
+          `send_prompt failed before waitForIdle (${waitedMs}ms). ${err.message}`
+        );
+      }
+      console.log(
+        `[MCP] send_prompt accept_ok waitedMs=${Date.now() - t0} sessionId=${sessionId} ` +
+          `acceptKeys=${accept && typeof accept === 'object' ? Object.keys(accept).join(',') : typeof accept}`
+      );
       const status = await waitForIdle(sessionId, {
         ...(timeoutMs != null ? { timeoutMs } : {}),
       });
@@ -342,16 +438,39 @@ async function handleTool(name, args = {}) {
     }
     case 'machine_chat': {
       const wait = args.waitForReply !== false;
-      const accepted = await portalFetch('/api/machine/chat', {
-        method: 'POST',
-        body: JSON.stringify({
-          message: args.message,
-          mode: args.mode || 'act',
-          provider: args.provider || DEFAULT_PROVIDER,
-          sessionId: args.sessionId || null,
-        }),
-      });
+      const t0 = Date.now();
+      console.log(
+        `[MCP] machine_chat enter waitForReply=${wait} timeoutMs=${args.timeoutMs ?? 'default'} ` +
+          `mode=${args.mode || 'act'} sessionId=${args.sessionId || 'new'} ` +
+          `msgLen=${String(args.message || '').length} acceptTimeoutMs=${DEFAULT_PORTAL_ACCEPT_TIMEOUT_MS} ` +
+          `at=${new Date().toISOString()}`
+      );
+      let accepted;
+      try {
+        accepted = await portalFetch('/api/machine/chat', {
+          method: 'POST',
+          body: JSON.stringify({
+            message: args.message,
+            mode: args.mode || 'act',
+            provider: args.provider || DEFAULT_PROVIDER,
+            sessionId: args.sessionId || null,
+          }),
+          timeoutMs: DEFAULT_PORTAL_ACCEPT_TIMEOUT_MS,
+        });
+      } catch (err) {
+        const waitedMs = Date.now() - t0;
+        console.log(
+          `[MCP] machine_chat accept_failed waitedMs=${waitedMs} err=${err.message}`
+        );
+        return errorResult(
+          `machine_chat failed before waitForIdle (${waitedMs}ms). ${err.message}`
+        );
+      }
       const sessionId = accepted.sessionId || accepted.session_id;
+      console.log(
+        `[MCP] machine_chat accept_ok waitedMs=${Date.now() - t0} sessionId=${sessionId || 'none'} ` +
+          `status=${accepted.status || 'n/a'}`
+      );
       if (!wait) {
         return textResult(
           `Accepted (waitForReply=false).\nsessionId: ${sessionId || 'unknown'}\n\n${JSON.stringify(accepted, null, 2)}`
@@ -375,6 +494,10 @@ async function handleTool(name, args = {}) {
 
 function textResult(text) {
   return { content: [{ type: 'text', text }] };
+}
+
+function errorResult(text) {
+  return { isError: true, content: [{ type: 'text', text }] };
 }
 
 function createMcpServer() {

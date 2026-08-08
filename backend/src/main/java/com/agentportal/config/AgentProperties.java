@@ -38,14 +38,20 @@ public class AgentProperties {
         private String apiKey = "";
         private String model = "";
         /**
-         * Hard budget for ACP process start (initialize + authenticate + session/new|load).
-         * Kept short so external MCP clients fail fast instead of hanging on accept. Must stay
-         * below the caller's own accept timeout (e.g. the MCP bridge's MCP_PORTAL_ACCEPT_TIMEOUT_MS,
-         * default 10s) with headroom for session resolution + context build on top.
+         * Hard budget for ACP process start (initialize + session/new|load; authenticate() is
+         * fire-and-forget off this critical path, see AgentBridge.spawnAcpProcess()). Measured
+         * 2026-08-08 on this host: a cold session/new alone takes ~10.3s (Cursor cloud API round
+         * trip fetching the model catalog) plus ~2s for spawn+initialize — ~12.3s minimum for a
+         * genuinely cold start, independent of anything tunable here. 12s was chosen to fit that
+         * with a little margin; this deliberately exceeds a plain caller's ~10s accept timeout for
+         * the first (cold) call to a session — the MCP bridge's MCP_PORTAL_ACCEPT_TIMEOUT_MS must
+         * be raised to match (see mcp-bridge/.env). Once a session's runtime is cached (isHealthy()
+         * in AgentProcessManager), every subsequent call reuses it and returns near-instantly — this
+         * budget only matters for the first call after a portal restart.
          */
-        private long startTimeoutSeconds = 7;
+        private long startTimeoutSeconds = 12;
         /** Max seconds for session/load before falling back to session/new. */
-        private long sessionLoadTimeoutSeconds = 4;
+        private long sessionLoadTimeoutSeconds = 6;
         /**
          * Extra seconds beyond startTimeoutSeconds before the outer watchdog in
          * AgentProcessManager gives up and returns an error even if the start path is stuck in a

@@ -39,8 +39,11 @@ Gemini Spark expects **Streamable HTTP** (not legacy `/sse`). Leave Client ID / 
 | `MCP_WAIT_TIMEOUT_MS` | unset | **Recommended prod: `90000`** |
 | `MCP_WAIT_INTERVAL_MS` | `1000` | Poll interval |
 | `MCP_WAIT_MAX_ATTEMPTS` | `300` | Fallback when no `timeoutMs` (≈5 min at 1s) |
+| `MCP_PORTAL_ACCEPT_TIMEOUT_MS` | `15000` | Fail-fast if portal `/prompt` or `/machine/chat` does not accept. Must stay ≥ the portal's ACP cold-start budget (`agent.cursor.start-timeout-seconds` + `start-watchdog-buffer-seconds`, 12s+2s by default) |
 
 On timeout the tool returns `isError: true` with `sessionId`, final status, waited duration, and a hint to use `get_session_transcript` later or `waitForReply=false` on `machine_chat`.
+
+If the **accept** call itself exceeds `MCP_PORTAL_ACCEPT_TIMEOUT_MS`, the bridge returns `isError` immediately (never enters `waitForIdle`). A cold ACP session (first call after a portal restart) legitimately needs ~11-14s on hosts with slow Cursor-cloud round trips — that's expected, not a hang. Every call after the first reuses the cached, healthy session and returns in well under a second; a *sustained* accept timeout on every call (not just the first) means ACP `initialize`/`getOrStart` is genuinely wedged on the portal host.
 
 ## Connect in Gemini Spark
 

@@ -2,3 +2,5 @@
 .spark-bearer.txt
 .spark-oauth.txt
 node_modules/
+mcp-bridge.out.log
+mcp-bridge.err.log
