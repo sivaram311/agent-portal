@@ -37,9 +37,14 @@ const DEFAULT_WAIT_INTERVAL_MS = Number(process.env.MCP_WAIT_INTERVAL_MS || 1000
 const DEFAULT_WAIT_TIMEOUT_MS = process.env.MCP_WAIT_TIMEOUT_MS
   ? Number(process.env.MCP_WAIT_TIMEOUT_MS)
   : null;
-/** Fail-fast for portal calls that start ACP (prompt / machine chat). Portal may block ≤60s on initialize. */
+/**
+ * Fail-fast for portal calls that start ACP (prompt / machine chat). Must stay >= the portal's
+ * ACP cold-start hard cap (agent.cursor.start-timeout-seconds + start-watchdog-buffer-seconds,
+ * 12s+2s=14s by default as of 2026-08-09) or a fresh deploy with no env override silently
+ * regresses to aborting accept before a cold session/new can ever complete.
+ */
 const DEFAULT_PORTAL_ACCEPT_TIMEOUT_MS = Number(
-  process.env.MCP_PORTAL_ACCEPT_TIMEOUT_MS || 10000
+  process.env.MCP_PORTAL_ACCEPT_TIMEOUT_MS || 15000
 );
 
 const oauth = createOauth({
@@ -275,7 +280,9 @@ async function portalFetch(path, options = {}, retry = true) {
       const e = new Error(
         `Portal accept timed out after ${waitedMs}ms calling ${path} ` +
           `(limit ${timeoutMs}ms). No usable response yet. ` +
-          `Likely Cursor ACP getOrStart/initialize is blocked (portal waits up to 60s). ` +
+          `A cold ACP session (first call after a portal restart) can legitimately take ~14s; ` +
+          `if this keeps failing on every call, not just the first, Cursor ACP getOrStart/ ` +
+          `initialize is likely wedged on the portal host. ` +
           `Check portal health / agent process, retry later, or use waitForReply=false after a successful accept.`
       );
       e.code = 'PORTAL_ACCEPT_TIMEOUT';
