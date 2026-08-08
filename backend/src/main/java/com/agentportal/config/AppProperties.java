@@ -7,11 +7,35 @@ import java.util.List;
 @ConfigurationProperties(prefix = "app")
 public class AppProperties {
 
+    /** Human-readable app name, shown in the UI header/footer and /api/health (CONSCIOUS rule 24). */
+    private String name = "agent-portal";
+    /**
+     * Release version shown in the UI and /api/health. Bound from APP_VERSION, set by the
+     * env's start script from the release tag (e.g. F:/G: start.ps1 read VERSION on disk).
+     * DEV without an explicit override reports "dev".
+     */
+    private String version = "dev";
     private final Cors cors = new Cors();
     private final Security security = new Security();
     private final Webhooks webhooks = new Webhooks();
     private final MachineGateway machineGateway = new MachineGateway();
     private final Diagnostics diagnostics = new Diagnostics();
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getVersion() {
+        return version;
+    }
+
+    public void setVersion(String version) {
+        this.version = version;
+    }
 
     public Cors getCors() {
         return cors;

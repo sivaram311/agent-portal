@@ -920,6 +920,12 @@ public class AntigravityBridge implements SessionAgentRuntime {
         cancel();
     }
 
+    @Override
+    public boolean isHealthy() {
+        Process p = activeProcess.get();
+        return p == null || p.isAlive();
+    }
+
     private Path brainRoot() {
         String configured = properties.getAntigravity().getBrainRoot();
         if (configured == null || configured.isBlank()) {

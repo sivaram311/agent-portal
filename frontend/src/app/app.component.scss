@@ -76,6 +76,15 @@
   color: #042f2e;
 }
 
+.brand-inline .app-version {
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: var(--ap-text-muted);
+  border: 1px solid var(--ap-border);
+  border-radius: 999px;
+  padding: 0.1rem 0.45rem;
+}
+
 .icon-btn {
   min-width: var(--ap-touch);
   padding-inline: 0.7rem;
@@ -598,6 +607,11 @@
   .brand-inline strong {
     font-size: 0.82rem;
     font-weight: 650;
+  }
+
+  .brand-inline .app-version {
+    font-size: 0.6rem;
+    padding: 0.05rem 0.3rem;
   }
 
   .topbar-right {

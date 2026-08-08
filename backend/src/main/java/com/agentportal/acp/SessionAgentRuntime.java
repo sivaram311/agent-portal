@@ -24,6 +24,11 @@ public interface SessionAgentRuntime extends AutoCloseable {
         return false;
     }
 
+    /** True when the underlying agent process is alive and usable. */
+    default boolean isHealthy() {
+        return true;
+    }
+
     @Override
     void close();
 }

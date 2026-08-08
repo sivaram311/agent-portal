@@ -87,6 +87,8 @@ export interface AgentEvent {
 
 export interface HealthInfo {
   status: string;
+  name?: string;
+  version?: string;
   workspaceRoot: string;
   cursorCommand: string;
   cursorCommandExists: boolean;

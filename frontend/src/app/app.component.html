@@ -32,6 +32,9 @@
         <div class="brand-inline">
           <span class="mark">A</span>
           <strong>Agent Portal</strong>
+          @if (health?.version) {
+            <span class="app-version" title="{{ health?.name }} release version">v{{ health?.version }}</span>
+          }
         </div>
       </div>
       <div class="topbar-right">

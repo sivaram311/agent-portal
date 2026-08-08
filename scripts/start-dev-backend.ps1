@@ -1,4 +1,4 @@
-#Requires -Version 5.1
+﻿#Requires -Version 5.1
 <#
 .SYNOPSIS
   Start (or restart) only the Agent Portal DEV backend, as a detached Windows
@@ -72,6 +72,9 @@ $cursorAgentDir = Join-Path $env:LOCALAPPDATA "cursor-agent"
 $defaultAgentCmd = Join-Path $cursorAgentDir "agent.cmd"
 $env:CURSOR_AGENT_CMD = if ($dotenv["CURSOR_AGENT_CMD"]) { $dotenv["CURSOR_AGENT_CMD"] } else { $defaultAgentCmd }
 if ($dotenv["CURSOR_API_KEY"]) { $env:CURSOR_API_KEY = $dotenv["CURSOR_API_KEY"] }
+if ($dotenv["CURSOR_ACP_START_TIMEOUT_SECONDS"]) { $env:CURSOR_ACP_START_TIMEOUT_SECONDS = $dotenv["CURSOR_ACP_START_TIMEOUT_SECONDS"] }
+if ($dotenv["CURSOR_ACP_SESSION_LOAD_TIMEOUT_SECONDS"]) { $env:CURSOR_ACP_SESSION_LOAD_TIMEOUT_SECONDS = $dotenv["CURSOR_ACP_SESSION_LOAD_TIMEOUT_SECONDS"] }
+if ($dotenv["CURSOR_ACP_START_WATCHDOG_BUFFER_SECONDS"]) { $env:CURSOR_ACP_START_WATCHDOG_BUFFER_SECONDS = $dotenv["CURSOR_ACP_START_WATCHDOG_BUFFER_SECONDS"] }
 $env:AGENT_DEFAULT_AUTO_APPROVE = if ($dotenv["AGENT_DEFAULT_AUTO_APPROVE"]) { $dotenv["AGENT_DEFAULT_AUTO_APPROVE"] } else { "true" }
 if (Test-Path $cursorAgentDir) { $env:Path = "$cursorAgentDir;" + $env:Path }
 
@@ -104,3 +107,4 @@ do {
 
 $cfg = Invoke-RestMethod "http://127.0.0.1:8080/api/auth/config"
 Write-Host ("cssEnabled=" + $cfg.cssEnabled + " authUrl=" + $cfg.authUrl + " issuer=" + $cfg.issuer)
+

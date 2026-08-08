@@ -42,6 +42,11 @@ public class CursorSessionRuntime implements SessionAgentRuntime {
     }
 
     @Override
+    public boolean isHealthy() {
+        return bridge.isAlive();
+    }
+
+    @Override
     public void close() {
         bridge.close();
     }

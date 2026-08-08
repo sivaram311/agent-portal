@@ -277,6 +277,11 @@ Important env (from `.env` or process):
 | `AGENT_ANTIGRAVITY_SKIP_PERMISSIONS` | Antigravity `--dangerously-skip-permissions`. PREPROD/PROD: `true` |
 | `CURSOR_AGENT_CMD` | Absolute path to `agent.cmd` (required on Windows for CreateProcess) |
 | `CURSOR_API_KEY` | Cursor ACP auth |
+| `CURSOR_ACP_START_TIMEOUT_SECONDS` | Hard budget for ACP initialize+auth+session (default `7`). Must stay below the caller's own accept timeout (mcp-bridge `MCP_PORTAL_ACCEPT_TIMEOUT_MS`, default 10s) with headroom for session resolve + context build on top, or callers give up before the portal replies |
+| `CURSOR_ACP_SESSION_LOAD_TIMEOUT_SECONDS` | Max seconds for `session/load` before falling back to `session/new` (default `4`) |
+| `CURSOR_ACP_START_WATCHDOG_BUFFER_SECONDS` | Outer hard-timeout buffer beyond `CURSOR_ACP_START_TIMEOUT_SECONDS`; bounds the *entire* ACP start path incl. `ProcessBuilder.start()` itself, not just the JSON-RPC round trips (default `2`) |
+| `APP_NAME` | App name reported in `/api/health` and the UI header (default `agent-portal`) |
+| `APP_VERSION` | Release version reported in `/api/health` and the UI header. Set from the release tag when deploying to F:/G: (default `dev`) |
 | `CSS_ENABLED` | Enable JWT resource-server mode |
 | `CLOUDFLARE_API_TOKEN` | Cloudflare API token (Zone Edit: DNS read/write + zone read) |
 | `CLOUDFLARE_ZONE_ID` | Zone ID for DNS / tunnel APIs |
@@ -359,7 +364,8 @@ Realme P2 Pro checklist, audit screenshots, and Playwright commands: [MOBILE-QA.
 
 | Symptom | Likely cause | Fix |
 |---------|--------------|-----|
-| Prompt 500 / hang after resume | Stale `cursorSessionId`; `session/load` wedges stdio | Fixed in `AgentBridge` (15s timeout â†’ close â†’ `session/new`). Rebuild/restart backend. |
+| Prompt 500 / hang after resume | Stale `cursorSessionId`; `session/load` wedges stdio | Fixed in `AgentBridge` (`CURSOR_ACP_SESSION_LOAD_TIMEOUT_SECONDS`, default 4s â†’ close â†’ `session/new`). Rebuild/restart backend. |
+| `POST /api/machine/chat` / `send_prompt` hangs 10-60s+ then external caller (mcp-bridge) times out at its own accept timeout | Every ACP cold start ran with no outer bound beyond the per-JSON-RPC-call `await()`; `ProcessBuilder.start()` itself and any pre-start DB/FS work were unbounded, and `CURSOR_ACP_START_TIMEOUT_SECONDS` could be configured (or defaulted) at/above the caller's own accept timeout, guaranteeing a lost race even on a clean fail-fast | Fixed 2026-08-08: `AgentProcessManager.getOrStart()` now wraps the whole start path in a hard outer watchdog (`CURSOR_ACP_START_TIMEOUT_SECONDS` + `CURSOR_ACP_START_WATCHDOG_BUFFER_SECONDS`, default 7+2=9s) and fails fast with HTTP 504 instead of blocking. Tightened defaults so the portal's budget stays comfortably under mcp-bridge's default 10s accept timeout. If PROD/PREPROD still show 60s+ hangs in `*.out.log` (`Starting ACP...` to `ACP authenticate returned error` gap), the deployed jar predates this fix — redeploy. Also verify the Cursor CLI is actually logged in for the account context the JVM runs under ("Authentication required. Please run 'agent login' first" in the log means the timeout fix alone won't make prompts succeed). |
 | `workspacePath is not allowed` / `must stay under â€¦` | Path outside sandbox and allowlist, or missing `AGENT_WORKSPACE_ROOT` | Point at a path under the root, or add a prefix to `AGENT_WORKSPACE_ALLOWED_ROOTS`; set root via `run-host-stack.ps1` |
 | Permissions stuck | Auto-approve off + pending dialog | Set `AGENT_DEFAULT_AUTO_APPROVE=true` or decide in UI |
 | Orphan `cursor-agent` after backend kill | ACP child left behind | Kill only the child whose parent was the dead portal Java PID â€” never mass-kill by process name |

@@ -136,44 +136,83 @@ public class AgentBridge implements AutoCloseable {
 
     public synchronized void start() throws Exception {
         if (client != null && client.isAlive()) {
+            log.info("ACP already running for session {} (reuse in-process client)", portalSessionId);
             return;
         }
+        long startedAt = System.currentTimeMillis();
+        long budgetSec = Math.max(3, properties.getCursor().getStartTimeoutSeconds());
+        long deadlineNanos = System.nanoTime() + TimeUnit.SECONDS.toNanos(budgetSec);
+        long loadTimeoutSec = Math.max(2, properties.getCursor().getSessionLoadTimeoutSeconds());
+
         Path cwd = Path.of(workspacePath).toAbsolutePath().normalize();
         Files.createDirectories(cwd);
 
-        spawnAcpProcess(cwd);
+        log.info(
+                "ACP start begin session={} cwd={} budgetSec={} hasCursorSessionId={}",
+                portalSessionId,
+                cwd,
+                budgetSec,
+                cursorSessionId != null && !cursorSessionId.isBlank()
+        );
 
-        if (cursorSessionId != null && !cursorSessionId.isBlank()) {
-            try {
-                // Stale ids often hang until timeout — keep this short and fall back.
-                cursorSessionId = client.sessionLoad(cursorSessionId, cwd.toString()).get(15, TimeUnit.SECONDS);
-            } catch (Exception e) {
-                log.warn("session/load failed ({}), restarting ACP for a fresh session/new", rootMessage(e));
-                cursorSessionId = null;
-                // A timed-out session/load can leave the stdio JSON-RPC client wedged.
-                close();
-                spawnAcpProcess(cwd);
+        try {
+            spawnAcpProcess(cwd, deadlineNanos);
+
+            if (cursorSessionId != null && !cursorSessionId.isBlank()) {
+                try {
+                    // Stale ids often hang — keep load short and fall back within remaining budget.
+                    long loadDeadline = Math.min(
+                            deadlineNanos,
+                            System.nanoTime() + TimeUnit.SECONDS.toNanos(loadTimeoutSec)
+                    );
+                    cursorSessionId = await(
+                            client.sessionLoad(cursorSessionId, cwd.toString()),
+                            loadDeadline,
+                            "session/load"
+                    );
+                } catch (Exception e) {
+                    log.warn("session/load failed ({}), restarting ACP for a fresh session/new", rootMessage(e));
+                    cursorSessionId = null;
+                    // A timed-out session/load can leave the stdio JSON-RPC client wedged.
+                    closeImmediately();
+                    spawnAcpProcess(cwd, deadlineNanos);
+                }
             }
-        }
-        if (cursorSessionId == null || cursorSessionId.isBlank()) {
-            cursorSessionId = client.sessionNew(cwd.toString()).get(60, TimeUnit.SECONDS);
-        }
-        if (cursorSessionId == null || cursorSessionId.isBlank()) {
-            throw new IllegalStateException("Cursor ACP session/new returned empty sessionId");
-        }
+            if (cursorSessionId == null || cursorSessionId.isBlank()) {
+                cursorSessionId = await(client.sessionNew(cwd.toString()), deadlineNanos, "session/new");
+            }
+            if (cursorSessionId == null || cursorSessionId.isBlank()) {
+                throw new IllegalStateException("Cursor ACP session/new returned empty sessionId");
+            }
 
-        AgentSession session = sessionRepository.findById(portalSessionId).orElseThrow();
-        session.setCursorSessionId(cursorSessionId);
-        session.setStatus(SessionStatus.IDLE);
-        sessionRepository.save(session);
+            AgentSession session = sessionRepository.findById(portalSessionId).orElseThrow();
+            session.setCursorSessionId(cursorSessionId);
+            session.setStatus(SessionStatus.IDLE);
+            sessionRepository.save(session);
 
-        emit("bridge_ready", Map.of(
-                "cursorSessionId", cursorSessionId,
-                "workspacePath", cwd.toString()
-        ));
+            log.info(
+                    "ACP start ok session={} cursorSessionId={} waitedMs={}",
+                    portalSessionId,
+                    cursorSessionId,
+                    System.currentTimeMillis() - startedAt
+            );
+            emit("bridge_ready", Map.of(
+                    "cursorSessionId", cursorSessionId,
+                    "workspacePath", cwd.toString()
+            ));
+        } catch (Exception e) {
+            log.warn(
+                    "ACP start failed session={} waitedMs={}: {}",
+                    portalSessionId,
+                    System.currentTimeMillis() - startedAt,
+                    rootMessage(e)
+            );
+            closeImmediately();
+            throw e;
+        }
     }
 
-    private void spawnAcpProcess(Path cwd) throws Exception {
+    private void spawnAcpProcess(Path cwd, long deadlineNanos) throws Exception {
         List<String> command = buildCommand();
         ProcessBuilder pb = new ProcessBuilder(command);
         pb.directory(cwd.toFile());
@@ -184,7 +223,7 @@ public class AgentBridge implements AutoCloseable {
             env.put("CURSOR_API_KEY", apiKey);
         }
 
-        log.info("Starting ACP for session {} in {}", portalSessionId, cwd);
+        log.info("Starting ACP process for session {} in {} cmd={}", portalSessionId, cwd, redactCommand(command));
         Process process = pb.start();
 
         // Drain stderr so the process never blocks on a full pipe.
@@ -202,12 +241,51 @@ public class AgentBridge implements AutoCloseable {
         client.onPermissionRequest(this::handlePermissionRequest);
         client.onExtensionRequest(this::handleExtensionRequest);
 
-        client.initialize().get(60, TimeUnit.SECONDS);
+        await(client.initialize(), deadlineNanos, "initialize");
         try {
-            client.authenticate().get(60, TimeUnit.SECONDS);
+            await(client.authenticate(), deadlineNanos, "authenticate");
+        } catch (AcpStartTimeoutException e) {
+            throw e;
         } catch (Exception e) {
             log.warn("ACP authenticate returned error (may already be logged in): {}", e.getMessage());
         }
+    }
+
+    private <T> T await(CompletableFuture<T> future, long deadlineNanos, String step) throws Exception {
+        long totalBudgetMs = properties.getCursor().getStartTimeoutSeconds() * 1000L;
+        long remainingMs = TimeUnit.NANOSECONDS.toMillis(deadlineNanos - System.nanoTime());
+        if (remainingMs <= 0) {
+            future.cancel(true);
+            throw new AcpStartTimeoutException(portalSessionId, totalBudgetMs, totalBudgetMs, step, null);
+        }
+        long startedWaitAt = System.currentTimeMillis();
+        try {
+            return future.get(remainingMs, TimeUnit.MILLISECONDS);
+        } catch (java.util.concurrent.TimeoutException e) {
+            future.cancel(true);
+            long waitedMs = System.currentTimeMillis() - startedWaitAt;
+            throw new AcpStartTimeoutException(portalSessionId, waitedMs, remainingMs, step, e);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            future.cancel(true);
+            throw e;
+        } catch (java.util.concurrent.ExecutionException e) {
+            Throwable cause = e.getCause() == null ? e : e.getCause();
+            if (cause instanceof Exception ex) {
+                throw ex;
+            }
+            throw new IllegalStateException(cause);
+        }
+    }
+
+    private static String redactCommand(List<String> command) {
+        List<String> copy = new ArrayList<>(command);
+        for (int i = 0; i < copy.size() - 1; i++) {
+            if ("--api-key".equals(copy.get(i))) {
+                copy.set(i + 1, "***");
+            }
+        }
+        return String.join(" ", copy);
     }
 
     private List<String> buildCommand() {
@@ -971,14 +1049,27 @@ public class AgentBridge implements AutoCloseable {
         return (msg == null || msg.isBlank()) ? cur.getClass().getSimpleName() : msg;
     }
 
+    public boolean isAlive() {
+        return client != null && client.isAlive();
+    }
+
     public String getCursorSessionId() {
         return cursorSessionId;
+    }
+
+    /** Destroy the ACP process tree immediately (cmd.exe wrappers can orphan node children). */
+    public synchronized void closeImmediately() {
+        if (client != null) {
+            client.closeImmediately();
+            client = null;
+        }
     }
 
     @Override
     public synchronized void close() {
         if (client != null) {
-            client.close();
+            // Prefer tree kill — Windows cmd.exe /c agent.cmd leaves orphan node ACP processes otherwise.
+            client.closeImmediately();
             client = null;
         }
     }

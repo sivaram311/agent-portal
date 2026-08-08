@@ -47,6 +47,8 @@ public class HealthController {
 
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("status", "ok");
+        body.put("name", appProperties.getName());
+        body.put("version", appProperties.getVersion());
         body.put("workspaceRoot", agentProperties.getWorkspace().getRoot());
 
         body.put("cursorCommand", cursorCmd);

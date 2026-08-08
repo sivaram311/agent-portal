@@ -37,6 +37,22 @@ public class AgentProperties {
         private String command = "agent";
         private String apiKey = "";
         private String model = "";
+        /**
+         * Hard budget for ACP process start (initialize + authenticate + session/new|load).
+         * Kept short so external MCP clients fail fast instead of hanging on accept. Must stay
+         * below the caller's own accept timeout (e.g. the MCP bridge's MCP_PORTAL_ACCEPT_TIMEOUT_MS,
+         * default 10s) with headroom for session resolution + context build on top.
+         */
+        private long startTimeoutSeconds = 7;
+        /** Max seconds for session/load before falling back to session/new. */
+        private long sessionLoadTimeoutSeconds = 4;
+        /**
+         * Extra seconds beyond startTimeoutSeconds before the outer watchdog in
+         * AgentProcessManager gives up and returns an error even if the start path is stuck in a
+         * non-cancellable blocking call (e.g. ProcessBuilder.start() itself hanging). This bounds
+         * the *entire* getOrStart() call, not just the individual ACP JSON-RPC round trips.
+         */
+        private long startWatchdogBufferSeconds = 2;
 
         public String getCommand() {
             return command;
@@ -60,6 +76,30 @@ public class AgentProperties {
 
         public void setModel(String model) {
             this.model = model;
+        }
+
+        public long getStartTimeoutSeconds() {
+            return startTimeoutSeconds;
+        }
+
+        public void setStartTimeoutSeconds(long startTimeoutSeconds) {
+            this.startTimeoutSeconds = startTimeoutSeconds;
+        }
+
+        public long getSessionLoadTimeoutSeconds() {
+            return sessionLoadTimeoutSeconds;
+        }
+
+        public void setSessionLoadTimeoutSeconds(long sessionLoadTimeoutSeconds) {
+            this.sessionLoadTimeoutSeconds = sessionLoadTimeoutSeconds;
+        }
+
+        public long getStartWatchdogBufferSeconds() {
+            return startWatchdogBufferSeconds;
+        }
+
+        public void setStartWatchdogBufferSeconds(long startWatchdogBufferSeconds) {
+            this.startWatchdogBufferSeconds = startWatchdogBufferSeconds;
         }
     }
 
